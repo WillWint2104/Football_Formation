@@ -22,7 +22,7 @@ A football (soccer) team management app for coaches and analysts. Two core featu
 
 ## Design system
 
-The app uses the "Apex Pitch Evolution" design language: violet primary, cyan accents, near-black tactical surfaces, light gray architectural backgrounds. Modern athletic-corporate. All color tokens are in `tailwind.config.ts` — use Tailwind classes like `bg-primary`, `text-secondary`, `bg-surface-container` instead of hardcoded hex values. **Never hardcode colors.**
+The app uses the "Apex Pitch Evolution" design language: violet primary, cyan accents, near-black tactical surfaces, light gray architectural backgrounds. Modern athletic-corporate. All design tokens (colors, font families, font sizes, spacing, radii, shadows) live in the `@theme` block of `app/globals.css` — Tailwind v4 reads tokens from CSS, not from a JS config file (there is no `tailwind.config.ts`). Use Tailwind classes like `bg-primary`, `text-secondary`, `bg-surface-container` instead of hardcoded hex values. **Never hardcode colors.**
 
 ### Typography
 
@@ -87,6 +87,19 @@ Use Tailwind classes: `font-display`, `font-sans`, `font-mono`.
 - [ ] Phase 4: Supabase migration
 
 Update this checklist as phases complete.
+
+## Roadmap / Known Future Features
+
+### Custom slot positioning (Phase 1.5 / Phase 2)
+
+Users will eventually need to nudge player tokens off their formation defaults — e.g. pulling a CB slightly wider or a CDM deeper without switching formations. Implementation sketch:
+- Each lineup assignment carries optional position overrides: { slotId, playerId, xOverride?, yOverride? }
+- Render order: if override present → use override coords; else use formation default
+- Per-formation override state so cycling 4-3-3 → 4-4-2 → 4-3-3 preserves tweaks per formation
+- "Reset to formation defaults" button per lineup
+- Drag-to-reposition on pitch must coexist with drop-from-bar events (dnd-kit supports both via sortable + droppable contexts)
+
+Do not implement now — base lineup builder must be solid first. This is a roadmap note.
 
 ## Working with this codebase
 
