@@ -10,8 +10,8 @@ import type { Player } from "./types";
  * the implementation here while keeping the signature stable.
  *
  * @throws Error with `cause` set to the underlying ENOENT / SyntaxError when
- *         the file cannot be read or parsed, so server-component error
- *         boundaries surface a useful message instead of a raw Node error.
+ *         the file cannot be read or parsed. Throws without `cause` when the
+ *         JSON is structurally wrong (missing `players` key or not an array).
  */
 export async function getPlayers(): Promise<Player[]> {
   const filePath = path.join(process.cwd(), "data", "players.json");
@@ -23,12 +23,25 @@ export async function getPlayers(): Promise<Player[]> {
     throw new Error(`getPlayers: failed to read ${filePath}`, { cause });
   }
 
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(raw) as { players: Player[] };
-    return parsed.players;
+    parsed = JSON.parse(raw);
   } catch (cause) {
     throw new Error(`getPlayers: failed to parse ${filePath} as JSON`, {
       cause,
     });
   }
+
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !("players" in parsed) ||
+    !Array.isArray((parsed as { players: unknown }).players)
+  ) {
+    throw new Error(
+      `getPlayers: ${filePath} did not contain the expected { players: [...] } shape`,
+    );
+  }
+
+  return (parsed as { players: Player[] }).players;
 }
