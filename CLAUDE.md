@@ -11,7 +11,7 @@ A football (soccer) team management app for coaches and analysts. Two core featu
 
 ## Tech stack
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS v4
 - **Components:** shadcn/ui (Radix-based, restyled to match design system)
@@ -108,3 +108,15 @@ Do not implement now — base lineup builder must be solid first. This is a road
 - Before pushing, run CodeRabbit: `coderabbit review --plain` and fix anything it flags.
 - Branch protection on `main` requires CodeRabbit pass + passing CI before merge.
 - Commits should be small and conventional: `feat(lineup): add formation selector`, `fix(roster): correct fitness bar percentage rounding`.
+
+### PR workflow
+
+1. After pushing a feature branch, immediately run: `gh pr create --fill --base main`
+2. Wait 3-5 minutes for CodeRabbit to review. Check with: `gh pr view --comments`
+3. If CodeRabbit's review is "skipped" or missing, comment: `gh pr comment --body "@coderabbitai full review"`
+4. Once CodeRabbit posts findings, read them with: `gh pr view --comments`
+5. For each actionable finding: fix it, or push back with a reasoned reply explaining why no change is needed
+6. Push fixes as additional commits to the same branch
+7. Re-check CodeRabbit's review on the updated PR
+8. Repeat until CodeRabbit has no unresolved actionable findings
+9. Never tell the human to merge until step 8 is complete

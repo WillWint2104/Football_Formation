@@ -50,7 +50,7 @@ export function Sidebar() {
         href={item.href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex items-center gap-3 rounded px-3 py-2.5 text-body-md transition-colors",
+          "flex items-center gap-3 rounded px-3 py-3 text-body-md transition-colors",
           active
             ? "bg-secondary-container text-on-secondary-container font-semibold"
             : "text-on-tertiary-container hover:bg-tertiary-container hover:text-on-tertiary",
@@ -81,7 +81,7 @@ export function Sidebar() {
         <div className="px-3 pt-2 pb-3">
           <button
             type="button"
-            className="w-full bg-primary text-on-primary rounded-lg py-2.5 px-4 font-display text-headline-sm hover:bg-primary-container transition-colors inline-flex items-center justify-center gap-2"
+            className="w-full bg-primary text-on-primary rounded-lg py-3 px-4 font-display text-headline-sm hover:bg-primary-container transition-colors inline-flex items-center justify-center gap-2"
           >
             <Zap className="size-4" aria-hidden="true" />
             Quick Strategy
