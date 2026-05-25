@@ -12,6 +12,7 @@
 @theme inline {
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-hanken), system-ui, sans-serif;
+  --font-heading: var(--font-hanken), system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
@@ -104,6 +105,33 @@
   /* Background */
   --color-background: #f8f9fb;
   --color-on-background: #191c1e;
+
+  /*
+   * Shadcn primitive compatibility shims.
+   *
+   * `components/ui/*` was scaffolded by shadcn 4.x with its neutral token
+   * namespace (foreground / muted / popover / border / destructive / ring /
+   * card / accent / *-foreground). We removed those tokens when porting the
+   * design system to @theme; these aliases map the shadcn names back onto our
+   * tokens so the primitives render with the project's palette without any
+   * per-component rewrite.
+   */
+  --color-foreground: var(--color-on-surface);
+  --color-border: var(--color-outline-variant);
+  --color-input: var(--color-outline-variant);
+  --color-ring: var(--color-secondary);
+  --color-muted: var(--color-surface-container);
+  --color-muted-foreground: var(--color-on-surface-variant);
+  --color-accent: var(--color-surface-container-high);
+  --color-accent-foreground: var(--color-on-surface);
+  --color-popover: var(--color-surface-container-lowest);
+  --color-popover-foreground: var(--color-on-surface);
+  --color-card: var(--color-surface-container-lowest);
+  --color-card-foreground: var(--color-on-surface);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary-foreground: var(--color-on-secondary);
+  --color-destructive: var(--color-error);
+  --color-destructive-foreground: var(--color-on-error);
 
   /* Spacing tokens used by layout chrome */
   --spacing-sidebar: 280px;
