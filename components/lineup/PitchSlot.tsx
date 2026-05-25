@@ -83,7 +83,7 @@ export function PitchSlot({
           : "translate(-50%, -50%)",
         zIndex: isDragging ? 50 : undefined,
       }}
-      className="group absolute flex flex-col items-center gap-1.5 select-none"
+      className="group absolute flex flex-col items-center gap-2 select-none"
     >
       <div className="relative">
         {player ? (
@@ -154,7 +154,7 @@ export function PitchSlot({
       </div>
 
       {player ? (
-        <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-mono text-label-caps uppercase whitespace-nowrap">
+        <span className="px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container font-mono text-label-caps uppercase whitespace-nowrap">
           {surname}
         </span>
       ) : (

@@ -14,7 +14,7 @@ export default async function LineupPage() {
   const formation = FORMATIONS.find((f) => f.id === "442") ?? FORMATIONS[0];
 
   return (
-    <div className="mx-auto max-w-6xl flex flex-col gap-6">
+    <div className="mx-auto max-w-6xl flex flex-col gap-6 px-4 md:px-10">
       <div>
         <h1 className="font-display text-headline-md text-on-surface">
           Lineup Builder

@@ -47,7 +47,7 @@ export function PitchCanvas({
   return (
     <div
       ref={containerRef}
-      role="img"
+      role="region"
       aria-label={`Tactical pitch — ${formation.name}`}
       className={cn(
         "relative bg-tertiary",

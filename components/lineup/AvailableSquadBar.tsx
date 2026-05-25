@@ -46,7 +46,7 @@ export function AvailableSquadBar({
   const filterEmpty = !squadEmpty && filtered.length === 0;
 
   return (
-    <div className="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-ambient p-4">
+    <div className="bg-surface-container-lowest rounded-lg border border-outline-variant p-4 transition-shadow hover:shadow-ambient">
       <div className="flex items-center justify-between mb-3 gap-3">
         <div className="font-mono text-label-caps uppercase text-on-surface-variant">
           Available Squad

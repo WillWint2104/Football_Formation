@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -48,6 +49,7 @@ export function LineupBoard({ formation }: LineupBoardProps) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
   );
 
   useEffect(() => {
@@ -197,8 +199,9 @@ export function LineupBoard({ formation }: LineupBoardProps) {
         />
         <div className="flex justify-end">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
+            className="border border-outline"
             onClick={handleResetSlotPositions}
             disabled={!hasOverrides}
           >

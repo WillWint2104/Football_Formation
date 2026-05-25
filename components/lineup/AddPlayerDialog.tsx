@@ -110,7 +110,7 @@ export function AddPlayerDialog({ onAdd }: AddPlayerDialogProps) {
           noValidate
           className="flex flex-col gap-3"
         >
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="add-player-name">Name</Label>
             <Input
               id="add-player-name"
@@ -124,7 +124,7 @@ export function AddPlayerDialog({ onAdd }: AddPlayerDialogProps) {
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="add-player-position">Position</Label>
             <select
               id="add-player-position"
@@ -134,7 +134,7 @@ export function AddPlayerDialog({ onAdd }: AddPlayerDialogProps) {
               }
               aria-invalid={Boolean(errors.position)}
               className={cn(
-                "h-8 rounded-lg border border-input bg-transparent px-2.5",
+                "h-8 rounded border border-input bg-transparent px-2",
                 "font-sans text-body-md text-on-surface",
                 "outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
                 "transition-colors",
@@ -154,7 +154,7 @@ export function AddPlayerDialog({ onAdd }: AddPlayerDialogProps) {
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="add-player-jersey">Jersey number</Label>
             <Input
               id="add-player-jersey"
@@ -175,7 +175,13 @@ export function AddPlayerDialog({ onAdd }: AddPlayerDialogProps) {
 
           <DialogFooter>
             <DialogClose
-              render={<Button type="button" variant="outline" />}
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="border border-outline"
+                />
+              }
             >
               Cancel
             </DialogClose>

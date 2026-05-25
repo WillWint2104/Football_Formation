@@ -139,7 +139,8 @@ export function ImportSquadDialog({ onImport }: ImportSquadDialogProps) {
         render={
           <Button
             size="icon-sm"
-            variant="outline"
+            variant="ghost"
+            className="border border-outline"
             title="Import squad from JSON"
           />
         }
@@ -153,6 +154,8 @@ export function ImportSquadDialog({ onImport }: ImportSquadDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <Textarea
+            id="import-squad-json"
+            aria-label="Squad JSON input: array of entries with name, num, and pos"
             value={text}
             onChange={(event) => setText(event.target.value)}
             rows={10}
@@ -172,7 +175,15 @@ export function ImportSquadDialog({ onImport }: ImportSquadDialogProps) {
             </p>
           )}
           <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
+            <DialogClose
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="border border-outline"
+                />
+              }
+            >
               Cancel
             </DialogClose>
             <Button type="submit">Import</Button>

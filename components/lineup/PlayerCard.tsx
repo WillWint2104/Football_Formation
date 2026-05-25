@@ -53,14 +53,14 @@ export function PlayerCard({
       >
         {getInitials(player.name)}
       </div>
-      <div className="flex flex-col items-center w-full gap-0.5">
+      <div className="flex flex-col items-center w-full gap-1">
         <span className="font-mono text-data-numeral text-on-surface">
           #{player.jersey}
         </span>
         <span className="font-sans text-body-md text-on-surface truncate w-full text-center">
           {player.name}
         </span>
-        <span className="font-mono text-label-caps uppercase px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">
+        <span className="font-mono text-label-caps uppercase px-2 py-1 rounded bg-surface-container-high text-on-surface-variant">
           {player.position}
         </span>
       </div>
