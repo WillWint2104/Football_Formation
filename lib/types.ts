@@ -18,7 +18,7 @@ export interface Player {
   name: string;
   jersey: number;
   position: Position;
-  nationality: string;
+  nationality?: string;
   contractStatus: string;
   contractYear: number;
   squadTier: string;
