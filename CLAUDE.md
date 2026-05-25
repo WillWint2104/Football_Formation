@@ -109,13 +109,53 @@ Do not implement now — base lineup builder must be solid first. This is a road
 - Branch protection on `main` requires CodeRabbit pass + passing CI before merge.
 - Commits should be small and conventional: `feat(lineup): add formation selector`, `fix(roster): correct fitness bar percentage rounding`.
 
-### PR workflow (MANDATORY — do not push without opening a PR)
+### PR workflow (MANDATORY)
 
-1. After committing on a feature branch, run BOTH commands as one chained command:
+1. After committing on a feature branch, push and open the PR as one chained command:
    `git push -u origin <branch-name> && gh pr create --fill --base main`
-   The `&&` ensures the PR is opened immediately after every successful push. NEVER run `git push` alone on a feature branch.
-2. Wait 3-5 minutes, then check the review: `gh pr view --comments`
-3. If CodeRabbit's review is "skipped" or missing, force it: `gh pr comment --body "@coderabbitai full review"`
-4. Read findings, fix actionable items, push fixes (which will reuse the existing PR)
-5. Repeat until clean
-6. Never tell the human to merge until step 5 is clean
+   NEVER push without opening a PR.
+
+2. After opening or pushing to a PR, ALWAYS pull CodeRabbit's actual review comments — DO NOT rely on the GitHub status check badge. The "CodeRabbit — Review skipped" badge is misleading; it just means "no NEW commits since the last review," not "no review exists." The real review lives as PR comments.
+
+   Pull comments with:
+   `gh pr view <PR-number-or-branch> --comments`
+
+   This returns ALL CodeRabbit comments including the Walkthrough, actionable comments, and nitpicks. Wait 3-5 minutes after pushing before pulling if no reviews appear immediately (CodeRabbit takes a moment to run).
+
+3. If `gh pr view --comments` returns no CodeRabbit content after 5 minutes, then post a trigger:
+   `gh pr comment --body "@coderabbitai review"`
+   Wait another 3 minutes and re-pull comments.
+
+4. Read CodeRabbit's findings. For each actionable comment:
+   - If it's a real issue: fix in code, commit, push (CodeRabbit will re-review the new commit automatically)
+   - If it's wrong or you disagree: reply to the specific comment thread on GitHub with reasoning. Do this via:
+     `gh pr comment --body "..."` (general reply)
+     or use the GitHub UI for inline replies on specific code lines.
+   - If it's a nitpick to defer: reply with "Acknowledged, deferring to follow-up PR"
+
+5. Repeat steps 2-4 until no unaddressed actionable comments remain.
+
+6. Only after step 5 is clean: report PR readiness to the human. Never say "PR ready to merge" without confirming CodeRabbit's comments have been read and addressed.
+
+The "Review skipped" GitHub badge is NOT a signal — ignore it. The signal is the content of `gh pr view --comments`.
+
+### Auto-fix authorization (when to fix without asking)
+
+After pulling CodeRabbit comments, classify each actionable finding:
+
+**Auto-fix immediately (no need to ask)** — fix in code, commit with `fix(<scope>): <concise summary of what CodeRabbit caught>`, push. The new commit triggers an incremental re-review. Examples:
+- Design system violations explicitly documented in CLAUDE.md (4px baseline grid, default rounding, page margins, button variants, color tokens)
+- Accessibility fixes documented in CLAUDE.md (missing aria-label, wrong ARIA role, missing keyboard fallback for required interactions)
+- TypeScript strict violations (any types, missing types)
+- Lint errors
+
+**Escalate to human (ask before fixing)** — pause and present the finding with your recommendation. Examples:
+- Architectural decisions (refactor X into Y, change a state model, swap a library)
+- Feature behavior changes (CodeRabbit suggests doing something differently than the current intent)
+- Threshold or rule changes (lowering a coverage threshold, disabling a check, changing a config)
+- Anything that requires interpreting product intent
+- Anything that touches more than 3 files
+
+**Defer (acknowledge and move on)** — reply to the comment with `Acknowledged, deferring to follow-up PR` if it's a nitpick that's not blocking and not in the auto-fix list. Don't fix nitpicks unless the human asks.
+
+Loop until CodeRabbit posts no new actionable findings, OR until the only remaining items are escalation/defer category, then stop and report status to the human.
