@@ -80,8 +80,8 @@ Use Tailwind classes: `font-display`, `font-sans`, `font-mono`.
 
 ## Current state
 
-- [ ] Phase 0: Project scaffolded, tokens wired, mock data seeded
-- [ ] Phase 1: Lineup builder
+- [x] Phase 0: Project scaffolded, tokens wired, mock data seeded
+- [x] Phase 1: Lineup builder (in active PR)
 - [ ] Phase 2: Roster
 - [ ] Phase 3: Cross-feature integration (click roster → see in lineup)
 - [ ] Phase 4: Supabase migration
@@ -109,14 +109,13 @@ Do not implement now — base lineup builder must be solid first. This is a road
 - Branch protection on `main` requires CodeRabbit pass + passing CI before merge.
 - Commits should be small and conventional: `feat(lineup): add formation selector`, `fix(roster): correct fitness bar percentage rounding`.
 
-### PR workflow
+### PR workflow (MANDATORY — do not push without opening a PR)
 
-1. After pushing a feature branch, immediately run: `gh pr create --fill --base main`
-2. Wait 3-5 minutes for CodeRabbit to review. Check with: `gh pr view --comments`
-3. If CodeRabbit's review is "skipped" or missing, comment: `gh pr comment --body "@coderabbitai full review"`
-4. Once CodeRabbit posts findings, read them with: `gh pr view --comments`
-5. For each actionable finding: fix it, or push back with a reasoned reply explaining why no change is needed
-6. Push fixes as additional commits to the same branch
-7. Re-check CodeRabbit's review on the updated PR
-8. Repeat until CodeRabbit has no unresolved actionable findings
-9. Never tell the human to merge until step 8 is complete
+1. After committing on a feature branch, run BOTH commands as one chained command:
+   `git push -u origin <branch-name> && gh pr create --fill --base main`
+   The `&&` ensures the PR is opened immediately after every successful push. NEVER run `git push` alone on a feature branch.
+2. Wait 3-5 minutes, then check the review: `gh pr view --comments`
+3. If CodeRabbit's review is "skipped" or missing, force it: `gh pr comment --body "@coderabbitai full review"`
+4. Read findings, fix actionable items, push fixes (which will reuse the existing PR)
+5. Repeat until clean
+6. Never tell the human to merge until step 5 is clean
