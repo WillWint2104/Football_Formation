@@ -81,7 +81,7 @@ Use Tailwind classes: `font-display`, `font-sans`, `font-mono`.
 ## Current state
 
 - [x] Phase 0: Project scaffolded, tokens wired, mock data seeded
-- [x] Phase 1: Lineup builder (in active PR)
+- [x] Phase 1: Lineup builder (MERGED — PR #2)
 - [ ] Phase 2: Roster
 - [ ] Phase 3: Cross-feature integration (click roster → see in lineup)
 - [ ] Phase 4: Supabase migration
