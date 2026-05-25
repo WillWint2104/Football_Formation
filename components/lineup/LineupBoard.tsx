@@ -221,8 +221,10 @@ export function LineupBoard({ formation }: LineupBoardProps) {
               className="inline-flex items-center gap-1"
             >
               <Button
+                id="squad-tab"
                 role="tab"
                 aria-selected={activePanel === "squad"}
+                aria-controls="squad-panel"
                 variant={activePanel === "squad" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActivePanel("squad")}
@@ -231,8 +233,10 @@ export function LineupBoard({ formation }: LineupBoardProps) {
                 <span>Squad</span>
               </Button>
               <Button
+                id="setup-tab"
                 role="tab"
                 aria-selected={activePanel === "setup"}
+                aria-controls="setup-panel"
                 variant={activePanel === "setup" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setActivePanel("setup")}
@@ -279,14 +283,26 @@ export function LineupBoard({ formation }: LineupBoardProps) {
           </Button>
         </div>
         {activePanel === "squad" ? (
-          <AvailableSquadBar
-            players={squad}
-            placedIds={placedIds}
-            onAddPlayer={handleAddPlayer}
-            onImportPlayers={handleImportPlayers}
-          />
+          <div
+            id="squad-panel"
+            role="tabpanel"
+            aria-labelledby="squad-tab"
+          >
+            <AvailableSquadBar
+              players={squad}
+              placedIds={placedIds}
+              onAddPlayer={handleAddPlayer}
+              onImportPlayers={handleImportPlayers}
+            />
+          </div>
         ) : (
-          <SetupPanel slotsFilled={slotsFilled} totalSlots={totalSlots} />
+          <div
+            id="setup-panel"
+            role="tabpanel"
+            aria-labelledby="setup-tab"
+          >
+            <SetupPanel slotsFilled={slotsFilled} totalSlots={totalSlots} />
+          </div>
         )}
       </div>
       <DragOverlay>
