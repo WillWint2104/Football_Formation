@@ -1,6 +1,6 @@
 import { getPlayers } from "@/lib/data";
 import { FORMATIONS } from "@/lib/formations";
-import { LineupBoard } from "@/components/lineup/LineupBoard";
+import LineupBoard from "@/components/lineup/LineupBoardClient";
 
 export default async function LineupPage() {
   // Pre-load the roster from data/players.json via the data seam. The result

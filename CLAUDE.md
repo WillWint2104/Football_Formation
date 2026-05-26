@@ -109,6 +109,14 @@ Do not implement now — base lineup builder must be solid first. This is a road
 - Branch protection on `main` requires CodeRabbit pass + passing CI before merge.
 - Commits should be small and conventional: `feat(lineup): add formation selector`, `fix(roster): correct fitness bar percentage rounding`.
 
+### Dev server hygiene
+
+- At the start of every Claude Code session, check whether port 3000 is in use before starting a new dev server.
+- Use this PowerShell one-liner to check: `netstat -ano | findstr :3000`
+- If a process is already running, ASK the human whether to attach to the existing server (refresh browser to see changes) or kill it and start fresh. Don't just spawn a second server on port 3001 — that creates a confusing dual-server state.
+- Always kill the dev server cleanly at the end of a session (or before opening a PR) so the next session starts from a clean state.
+- The hot reload of an existing dev server is sufficient for verifying changes that have already been written to disk — there's no need to restart the server to "smoke test" most changes.
+
 ### PR workflow (MANDATORY)
 
 1. After committing on a feature branch, push and open the PR as one chained command:

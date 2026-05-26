@@ -11,12 +11,14 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { RotateCcw } from "lucide-react";
+import { Maximize2, PlayCircle, RotateCcw, SlidersHorizontal, Users } from "lucide-react";
 import type { Formation, Player } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { PitchCanvas } from "./PitchCanvas";
 import { AvailableSquadBar } from "./AvailableSquadBar";
 import { PlayerCard } from "./PlayerCard";
+import { SetupPanel } from "./SetupPanel";
 
 interface LineupBoardProps {
   formation: Formation;
@@ -43,6 +45,8 @@ export function LineupBoard({ formation }: LineupBoardProps) {
   >({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activePanel, setActivePanel] = useState<"squad" | "setup">("squad");
+  const [toast, setToast] = useState<string | null>(null);
 
   const pitchContainerRef = useRef<HTMLDivElement>(null);
   const pitchInnerRef = useRef<HTMLDivElement>(null);
@@ -172,12 +176,25 @@ export function LineupBoard({ formation }: LineupBoardProps) {
     setSquad((prev) => [...prev, ...batch]);
   }, []);
 
+  const handlePresent = useCallback(() => {
+    console.log("Present mode — coming soon");
+    setToast("Present mode coming in a future release.");
+  }, []);
+
+  useEffect(() => {
+    if (toast === null) return;
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
   const activePlayer =
     activeId !== null && activeId.startsWith("player-")
       ? (playerById.get(activeId.replace(/^player-/, "")) ?? null)
       : null;
 
   const hasOverrides = Object.keys(slotOverrides).length > 0;
+  const slotsFilled = Object.keys(assignments).length;
+  const totalSlots = formation.slots.length;
 
   return (
     <DndContext
@@ -187,6 +204,60 @@ export function LineupBoard({ formation }: LineupBoardProps) {
       onDragCancel={handleDragCancel}
     >
       <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-surface-container-lowest rounded-lg border border-outline-variant p-3">
+          <div className="justify-self-start">
+            <h2 className="font-display text-headline-sm text-on-surface">
+              Tactical Canvas
+            </h2>
+          </div>
+          <div className="justify-self-center flex items-center gap-2">
+            <Button variant="default" size="sm" onClick={handlePresent}>
+              <PlayCircle />
+              <span>Present</span>
+            </Button>
+            <div
+              role="tablist"
+              aria-label="Right panel"
+              className="inline-flex items-center gap-1"
+            >
+              <Button
+                id="squad-tab"
+                role="tab"
+                aria-selected={activePanel === "squad"}
+                aria-controls="squad-panel"
+                variant={activePanel === "squad" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActivePanel("squad")}
+              >
+                <Users />
+                <span>Squad</span>
+              </Button>
+              <Button
+                id="setup-tab"
+                role="tab"
+                aria-selected={activePanel === "setup"}
+                aria-controls="setup-panel"
+                variant={activePanel === "setup" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActivePanel("setup")}
+              >
+                <SlidersHorizontal />
+                <span>Setup</span>
+              </Button>
+            </div>
+          </div>
+          <div className="justify-self-end">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="border border-outline"
+              onClick={toggleFullscreen}
+              aria-label="Expand canvas"
+            >
+              <Maximize2 />
+            </Button>
+          </div>
+        </div>
         <PitchCanvas
           formation={formation}
           assignedPlayers={assignedPlayers}
@@ -211,16 +282,45 @@ export function LineupBoard({ formation }: LineupBoardProps) {
             </span>
           </Button>
         </div>
-        <AvailableSquadBar
-          players={squad}
-          placedIds={placedIds}
-          onAddPlayer={handleAddPlayer}
-          onImportPlayers={handleImportPlayers}
-        />
+        {activePanel === "squad" ? (
+          <div
+            id="squad-panel"
+            role="tabpanel"
+            aria-labelledby="squad-tab"
+          >
+            <AvailableSquadBar
+              players={squad}
+              placedIds={placedIds}
+              onAddPlayer={handleAddPlayer}
+              onImportPlayers={handleImportPlayers}
+            />
+          </div>
+        ) : (
+          <div
+            id="setup-panel"
+            role="tabpanel"
+            aria-labelledby="setup-tab"
+          >
+            <SetupPanel slotsFilled={slotsFilled} totalSlots={totalSlots} />
+          </div>
+        )}
       </div>
       <DragOverlay>
         {activePlayer ? <PlayerCard player={activePlayer} overlay /> : null}
       </DragOverlay>
+      {toast !== null && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={cn(
+            "fixed bottom-6 right-6 z-50",
+            "bg-on-surface text-surface rounded shadow-overlay",
+            "font-sans text-body-md px-4 py-3",
+          )}
+        >
+          {toast}
+        </div>
+      )}
     </DndContext>
   );
 }
