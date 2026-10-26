@@ -37,7 +37,7 @@ jobs:
         run: npm run lint
       - name: TypeScript
         run: npm run typecheck
-      - name: Tests when available
-        run: npm run test --if-present
+      - name: Domain, persistence and access-control tests
+        run: npm test
       - name: Production build (default Turbopack)
         run: npm run build

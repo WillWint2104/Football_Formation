@@ -94,10 +94,17 @@ Use Tailwind classes: `font-display`, `font-sans`, `font-mono`.
 Owner-approved implementation direction: desktop-first (1920 × 1080 and
 1366 × 768, larger/fullscreen displays). Preserve existing responsive behavior,
 but defer additional tablet/mobile optimization and testing. PR #6 shared shell
-is merged. PR 01 is shared models/schema validation only, with its own review gate;
-do not merge it without owner approval. Calendar UI, authentication/persistence,
-PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+is merged. PR 01 shared models/schema validation is merged as GitHub PR #7.
+PR 02 authenticated persistence is authorized for implementation and review only;
+do not merge, deploy or provision hosted resources without owner approval.
+Calendar UI, PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
 See `docs/shared-domain-models.md` and `docs/2d-launch-sequence.md`.
+
+The coaching backend uses server-only Supabase clients. User-scoped reads use RLS;
+schema-validated writes use a restricted RPC with a verified Auth actor and an
+expected organization version. Service credentials must never reach browser code.
+All data consumers must validate retrieved records using the PR 01 contracts.
+See `docs/authenticated-persistence.md` for setup, migration and verification limits.
 
 - [x] Phase 0: Project scaffolded, tokens wired, mock data seeded
 - [x] Phase 1: Lineup builder (MERGED — PR #2)
