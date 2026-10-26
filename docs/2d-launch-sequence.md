@@ -1,8 +1,9 @@
 # 2D-first implementation sequence
 
 PR 00 (dependency security and CI) was approved and merged as GitHub PR #5.
-PR 00A (shared application shell) is authorised for implementation and review,
-but not merging. Each later PR needs its own approval. No manual deployment,
+PR 00A (shared application shell) was approved and merged as GitHub PR #6.
+PR 01 (shared domain models and validation) is authorised for implementation and
+review, but not merging. Each later PR needs its own approval. No manual deployment,
 paid service or hosted backend provisioning is authorised by the roadmap.
 
 | Milestone | PRs | Deliverable |
@@ -31,3 +32,15 @@ Preserve the approved Football Formation identity, A calendar palette and B
 tactical contrast. This roadmap does not authorise a visual redesign. V013, 3D
 players, stadiums, 3D cameras and Meshy work remain paused. Advanced director roles,
 bulk session JSON import and natural-language authoring remain outside launch scope.
+
+## Desktop-first scope and PR 01 boundary
+
+Prioritise 1920 × 1080 desktop, 1366 × 768 laptop, larger monitors and fullscreen
+mouse/keyboard workflows. Preserve the responsive shell already implemented;
+tablet/mobile-specific design, controls and testing are deferred indefinitely.
+This update supersedes mobile/narrow-screen optimization gates in earlier proposals.
+
+PR 01 introduces models and validation only; the pure animation evaluator proposed
+in the original audit moves to PR 06. No calendar UI, persistence implementation,
+authentication, PDF generation or tactical editor is included. See
+`shared-domain-models.md` for the schema and future storage obligations.
