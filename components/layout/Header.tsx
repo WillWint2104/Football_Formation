@@ -12,6 +12,8 @@ export function Header() {
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
       ? "Calendar"
+      : ["/sessions", "/templates", "/exercises", "/coaches"].includes(pathname)
+        ? ({ "/sessions": "Sessions", "/templates": "Session templates", "/exercises": "Exercise library", "/coaches": "Coach directory" }[pathname])
       : ["/roster", "/player-profiles"].includes(pathname)
         ? "Squad"
         : "Coaching workspace";

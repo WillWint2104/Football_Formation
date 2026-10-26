@@ -36,8 +36,10 @@ introduced. Existing modal/panel primitives and light surfaces are preserved.
 | Global workspace | Route now | State |
 | --- | --- | --- |
 | Calendar | `/calendar` (`/team-schedule` redirects) | Interactive calendar; sample/saved modes documented in `interactive-calendar.md` |
-| Sessions | No route exposed | Planned, noninteractive navigation entry |
-| Exercise Library | No route exposed | Planned, noninteractive navigation entry |
+| Sessions | `/sessions` | Independent plans and exact booking/session revisions |
+| Templates | `/templates` | Reusable session snapshots and version history |
+| Exercise Library | `/exercises` | Reusable exercise content and version history |
+| Coaches | `/coaches` | Directory records and team assignments; no account provisioning |
 | Tactics | `/lineup` | Working lineup builder |
 | Squad | `/roster` | Existing placeholder, explicitly Planned |
 | Settings | No route exposed | Planned, noninteractive navigation entry |

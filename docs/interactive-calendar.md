@@ -2,7 +2,8 @@
 
 The canonical route is `/calendar`; `/team-schedule` redirects there. The existing
 lineup and shared shell remain intact. Calendar is now an available navigation
-destination. Session and exercise libraries remain planned.
+destination. Session, template, exercise and coach editing is documented in
+`session-library.md` (PR 04).
 
 ## Behaviour and boundaries
 
@@ -19,10 +20,10 @@ destination. Session and exercise libraries remain planned.
   resolve only the newest booking revision and its exact pinned session revision.
 - Add session creates an independent **draft** with a type, team, optional lead
   coach and schedule. It does not generate exercises or infer coaching content.
-  Teams and directory coaches must already exist in saved organisations.
+  Teams must already exist; PR 04 provides the coach directory and activity editor.
 - Reschedule appends a new booking revision without changing session pins, staff,
   activities, documents or historical bookings. Detailed session editing follows
-  separately. Scheduling uses a keyboard-accessible modal, not drag-only controls.
+  in the session library. Scheduling uses a keyboard-accessible modal, not drag-only controls.
 - Start/end wall times are resolved against the explicit zone. DST gaps are
   rejected; repeated hours require the coach to choose a UTC occurrence. End date
   is explicit for overnight bookings. Team, staff and matching field-area overlaps
@@ -90,7 +91,8 @@ become denser. Neither enhancement is implemented or required for this refinemen
    Retain migration backup/recovery evidence before release activation.
 
 Remaining risks: hosted Auth/PostgREST are unverified; directory provisioning is
-operator-only; full organisation snapshots retain a 10 MiB limit; overlaps are
+operator-only for teams; full organisation snapshots retain a 10 MiB limit; overlaps are
 advisory; large histories need targeted queries/writes later. There is no UI for
-session-library editing, PDF attachments, diagram authoring or account invitations
-in this PR. No hosted resources or manual deployments are part of this change.
+PDF attachments, diagram authoring or account invitations in this PR. Session
+library editing is added in PR 04; see `session-library.md`. No hosted resources
+or manual deployments are part of this change.
