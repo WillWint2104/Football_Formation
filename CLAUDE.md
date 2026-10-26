@@ -91,6 +91,14 @@ Use Tailwind classes: `font-display`, `font-sans`, `font-mono`.
 
 ## Current state
 
+Owner-approved implementation direction: desktop-first (1920 × 1080 and
+1366 × 768, larger/fullscreen displays). Preserve existing responsive behavior,
+but defer additional tablet/mobile optimization and testing. PR #6 shared shell
+is merged. PR 01 is shared models/schema validation only, with its own review gate;
+do not merge it without owner approval. Calendar UI, authentication/persistence,
+PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+See `docs/shared-domain-models.md` and `docs/2d-launch-sequence.md`.
+
 - [x] Phase 0: Project scaffolded, tokens wired, mock data seeded
 - [x] Phase 1: Lineup builder (MERGED — PR #2)
 - [ ] Phase 2: Roster
