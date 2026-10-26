@@ -130,7 +130,7 @@ After explicit hosted-resource/cost approval:
    through the approved operator workflow. Configure the site URL and exact callback
    allowlist, email delivery and the magic-link/invite templates for `/auth/callback`.
    PKCE links must be opened in the requesting browser; token-hash templates must use
-   the supported `magiclink`/`invite` type. Do not send arbitrary `next` URLs.
+   the documented `email`/`invite` type. Do not send arbitrary `next` URLs.
 4. Bootstrap the organization and owner membership with
    `supabase/admin/bootstrap_organization.sql` through a privileged operator connection.
    Add later invited members explicitly; no public self-enrolment is implemented.

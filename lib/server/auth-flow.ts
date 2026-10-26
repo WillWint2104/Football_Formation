@@ -29,3 +29,30 @@ export async function requestSignInLink(
   }
   return "check-email";
 }
+
+type CallbackAuth = {
+  exchangeCodeForSession(code: string): Promise<{ error: unknown }>;
+  verifyOtp(input: {
+    token_hash: string;
+    type: "email" | "invite";
+  }): Promise<{ error: unknown }>;
+};
+
+/** Accept PKCE or the documented email/invite token-hash flow, never arbitrary OTP types. */
+export async function completeSignIn(
+  auth: CallbackAuth,
+  params: URLSearchParams,
+): Promise<boolean> {
+  const code = params.get("code");
+  if (code && code.length <= 2048)
+    return !(await auth.exchangeCodeForSession(code)).error;
+  const tokenHash = params.get("token_hash");
+  const type = params.get("type");
+  if (
+    tokenHash &&
+    tokenHash.length <= 512 &&
+    (type === "email" || type === "invite")
+  )
+    return !(await auth.verifyOtp({ token_hash: tokenHash, type })).error;
+  return false;
+}

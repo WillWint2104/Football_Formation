@@ -7,6 +7,26 @@ import { fixture } from "../domain/fixture";
 
 const actor = "00000000-0000-4000-8000-000000000001";
 
+test("a compact request that exceeds the serialized bundle limit returns 413 before privileged access", async () => {
+  const bundle = fixture();
+  bundle.sessions[0].content.focus = Array.from({ length: 760_000 }, () => "x");
+  assert.ok(
+    Buffer.byteLength(JSON.stringify(bundle), "utf8") < 10 * 1024 * 1024,
+  );
+  let writerAcquired = false;
+  const reader = createClient("http://127.0.0.1:54321", "public-test-key", {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const store = new SupabaseCoachingStore(reader, () => {
+    writerAcquired = true;
+    throw new Error("Writer must not be acquired");
+  });
+  await assert.rejects(store.save("club-demo", actor, 0, bundle), {
+    status: 413,
+  });
+  assert.equal(writerAcquired, false);
+});
+
 test("real Supabase SDK separates user-scoped reads from server-only RPC writes", async () => {
   const calls: {
     path: string;

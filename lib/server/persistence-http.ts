@@ -37,6 +37,15 @@ export function errorResponse(error: unknown): Response {
   );
 }
 
+/** Malformed request bytes are a client error, including an incomplete final UTF-8 sequence. */
+function decodeChunk(decode: () => string): string {
+  try {
+    return decode();
+  } catch {
+    throw new PersistenceError(400, "Coaching data must be valid UTF-8");
+  }
+}
+
 /** Bound bytes while streaming, including requests with missing or forged Content-Length. */
 export async function readBoundedJson(request: Request): Promise<unknown> {
   if (
@@ -60,9 +69,9 @@ export async function readBoundedJson(request: Request): Promise<unknown> {
         await reader.cancel();
         throw new PersistenceError(413, "Coaching data exceeds 10 MiB");
       }
-      text += decoder.decode(value, { stream: true });
+      text += decodeChunk(() => decoder.decode(value, { stream: true }));
     }
-    text += decoder.decode();
+    text += decodeChunk(() => decoder.decode());
   } finally {
     reader.releaseLock();
   }

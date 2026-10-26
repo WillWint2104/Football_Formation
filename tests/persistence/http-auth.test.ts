@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { verifiedUser } from "../../lib/server/auth";
-import { requestSignInLink } from "../../lib/server/auth-flow";
+import { completeSignIn, requestSignInLink } from "../../lib/server/auth-flow";
 import { backendConfigSchema } from "../../lib/server/config";
 import { PersistenceError } from "../../lib/server/errors";
 import { handlePersistence } from "../../lib/server/persistence-http";
@@ -13,6 +13,83 @@ import { fixture } from "../domain/fixture";
 
 const origin = "https://football.example";
 const alice = "00000000-0000-4000-8000-000000000001";
+
+test("malformed and truncated UTF-8 request bodies return 400 without touching the writer", async () => {
+  const { authenticate, calls } = harness();
+  for (const bytes of [[0xff], [0xc3]]) {
+    const request = new Request(`${origin}/snapshot`, {
+      method: "POST",
+      headers: { origin, "content-type": "application/json" },
+      body: Uint8Array.from(bytes),
+    });
+    const response = await handlePersistence(
+      request,
+      "club-demo",
+      origin,
+      authenticate,
+    );
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), {
+      error: "Coaching data must be valid UTF-8",
+    });
+  }
+  assert.equal(calls.length, 0);
+});
+
+test("callbacks accept PKCE and documented email/invite hashes while rejecting other OTP flows", async () => {
+  const calls: unknown[] = [];
+  const auth = {
+    exchangeCodeForSession: async (code: string) => {
+      calls.push(code);
+      return { error: null };
+    },
+    verifyOtp: async (input: {
+      token_hash: string;
+      type: "email" | "invite";
+    }) => {
+      calls.push(input);
+      return { error: null };
+    },
+  };
+  assert.equal(
+    await completeSignIn(
+      auth,
+      new URLSearchParams("code=pkce-code&next=https://attacker.example"),
+    ),
+    true,
+  );
+  for (const type of ["email", "invite"])
+    assert.equal(
+      await completeSignIn(
+        auth,
+        new URLSearchParams({ type, token_hash: "test-hash" }),
+      ),
+      true,
+    );
+  assert.deepEqual(calls, [
+    "pkce-code",
+    { type: "email", token_hash: "test-hash" },
+    { type: "invite", token_hash: "test-hash" },
+  ]);
+  for (const params of [
+    "",
+    "type=recovery&token_hash=test",
+    "type=email_change&token_hash=test",
+    "type=email",
+  ])
+    assert.equal(
+      await completeSignIn(auth, new URLSearchParams(params)),
+      false,
+    );
+  assert.equal(calls.length, 3);
+  assert.equal(
+    await completeSignIn(
+      { ...auth, verifyOtp: async () => ({ error: new Error("expired") }) },
+      new URLSearchParams("type=email&token_hash=test"),
+    ),
+    false,
+  );
+});
 
 /** Construct the request boundary while keeping real SQL/RLS verification in database.test.ts. */
 function harness() {

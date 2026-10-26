@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { backendConfig } from "@/lib/server/config";
 import { userClient } from "@/lib/server/supabase";
+import { completeSignIn } from "@/lib/server/auth-flow";
 
 /** Complete PKCE sign-in or an invited account's email token; redirects are fixed, never caller-supplied. */
 export async function GET(request: Request) {
@@ -10,19 +11,7 @@ export async function GET(request: Request) {
     if (url.origin !== config.origin)
       return new Response("Invalid sign-in origin", { status: 400 });
     const client = await userClient(config);
-    const code = url.searchParams.get("code");
-    const tokenHash = url.searchParams.get("token_hash");
-    const type = url.searchParams.get("type");
-    let failed = true;
-    if (code && code.length <= 2048)
-      failed = !!(await client.auth.exchangeCodeForSession(code)).error;
-    else if (
-      tokenHash &&
-      tokenHash.length <= 512 &&
-      (type === "invite" || type === "magiclink")
-    )
-      failed = !!(await client.auth.verifyOtp({ token_hash: tokenHash, type }))
-        .error;
+    const failed = !(await completeSignIn(client.auth, url.searchParams));
     const response = NextResponse.redirect(
       new URL(failed ? "/login?notice=unavailable" : "/lineup", config.origin),
     );

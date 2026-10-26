@@ -117,7 +117,16 @@ export class SupabaseCoachingStore implements CoachingStore {
     const validated = domainBundleSchema.parse(bundle);
     if (validated.organizationId !== organizationId)
       throw new PersistenceError(400, "Organization mismatch");
-    serializeDomain(validated);
+    try {
+      serializeDomain(validated);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "Domain JSON exceeds 10 MiB"
+      )
+        throw new PersistenceError(413, "Coaching data exceeds 10 MiB");
+      throw error;
+    }
     const { data, error } = await this.writer().rpc("save_coaching_bundle", {
       p_organization_id: organizationId,
       p_actor: actor,

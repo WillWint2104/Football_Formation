@@ -7,7 +7,26 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { PGlite, type Transaction } from "@electric-sql/pglite";
 import { domainBundleSchema } from "../../lib/domain/validation";
-import { fixture } from "../domain/fixture";
+import { fixture as baseFixture } from "../domain/fixture";
+
+/** Populate every protected domain table, including document metadata, before isolation checks. */
+function fixture() {
+  const data = baseFixture();
+  data.documents.push({
+    schemaVersion: "1.0",
+    organizationId: data.organizationId,
+    id: "doc-protocol",
+    revision: 1,
+    filename: "protocol.pdf",
+    mimeType: "application/pdf",
+    byteLength: 1000,
+    storageKey: "club-demo/protocol.pdf",
+    state: "ready",
+    source: { kind: "upload" },
+  });
+  data.sessions[0].documents.push({ id: "doc-protocol", revision: 1 });
+  return data;
+}
 
 const migrationPath =
   "supabase/migrations/202610260001_coaching_persistence.sql";
@@ -125,6 +144,12 @@ test("production SQL: persistence, RLS isolation and immutable revisions", async
           "organization_snapshots",
         ]) {
           const column = table === "organizations" ? "id" : "organization_id";
+          const visible = await asRole(db, "authenticated", alice, (tx) =>
+            tx.query(
+              `select * from public.${table} where ${column}='club-demo'`,
+            ),
+          );
+          assert.ok(visible.rows.length > 0, `positive read control: ${table}`);
           const hidden = await asRole(db, "authenticated", bob, (tx) =>
             tx.query(
               `select * from public.${table} where ${column}='club-demo'`,
@@ -335,7 +360,7 @@ test("saved coaching data survives closing and reopening a filesystem-backed Pos
     ]);
     assert.deepEqual(
       domainBundleSchema.parse(JSON.parse(loaded.stdout)),
-      fixture(),
+      baseFixture(),
     );
   } finally {
     assert.equal(dirname(resolve(directory)), resolve(tmpdir()));
