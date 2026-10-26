@@ -35,7 +35,7 @@ introduced. Existing modal/panel primitives and light surfaces are preserved.
 
 | Global workspace | Route now | State |
 | --- | --- | --- |
-| Calendar | `/team-schedule` | Existing placeholder, explicitly Planned |
+| Calendar | `/calendar` (`/team-schedule` redirects) | Interactive calendar; sample/saved modes documented in `interactive-calendar.md` |
 | Sessions | No route exposed | Planned, noninteractive navigation entry |
 | Exercise Library | No route exposed | Planned, noninteractive navigation entry |
 | Tactics | `/lineup` | Working lineup builder |

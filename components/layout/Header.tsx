@@ -10,7 +10,7 @@ export function Header() {
   const tactics = pathname === "/lineup";
   const workspace = tactics
     ? "Tactics"
-    : pathname === "/team-schedule"
+    : ["/calendar", "/team-schedule"].includes(pathname)
       ? "Calendar"
       : ["/roster", "/player-profiles"].includes(pathname)
         ? "Squad"
