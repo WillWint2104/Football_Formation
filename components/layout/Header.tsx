@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MobileNavigation } from "./Sidebar";
 
+/** Shows route context and available tactics tools without advertising planned tools as links. */
 export function Header() {
   const pathname = usePathname();
   const tactics = pathname === "/lineup";

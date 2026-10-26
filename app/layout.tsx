@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     "Football Formation coaching workspace and tactical lineup builder",
 };
 
+/** Shares the application shell while keeping page content a keyboard skip target. */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,7 +49,7 @@ export default function RootLayout({
           <main
             id="main-content"
             tabIndex={-1}
-            className="mx-auto w-full max-w-screen-2xl flex-1 p-4 outline-none md:p-6 xl:p-8"
+            className="mx-auto w-full max-w-screen-2xl flex-1 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-shell-accent md:p-6 xl:p-8"
           >
             {children}
           </main>

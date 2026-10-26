@@ -51,6 +51,7 @@ const navigation: {
   { label: "Settings", href: null, icon: Settings, planned: true },
 ];
 
+/** Reuses one route/availability map for the desktop sidebar and mobile drawer. */
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
@@ -102,6 +103,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Provides persistent desktop branding and global navigation, separate from pitch tools. */
 export function Sidebar() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-shell-edge bg-shell lg:flex">
@@ -127,6 +129,7 @@ export function Sidebar() {
   );
 }
 
+/** Uses the shared Sheet primitive for modal focus management and closes on navigation. */
 export function MobileNavigation() {
   const [open, setOpen] = useState(false);
   return (
