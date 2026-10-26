@@ -60,6 +60,7 @@
 .calendar-event-title { display: flex; align-items: flex-start; gap: 5px; }
 .calendar-event-title svg { flex-shrink: 0; color: var(--type-color); margin-top: 1px; }
 .calendar-event-title strong { overflow-wrap: anywhere; font-weight: 600; }
+.calendar-month .calendar-event-title strong { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-height: 2.8em; }
 .calendar-event-time { color: var(--color-shell-muted); font-variant-numeric: tabular-nums; }
 .calendar-event-status { font-size: 10px; text-transform: uppercase; color: var(--type-color); }
 .calendar-workspace .calendar-event-selected { outline: 2px solid var(--color-shell-accent); outline-offset: -1px; }

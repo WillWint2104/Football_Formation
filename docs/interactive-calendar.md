@@ -8,8 +8,12 @@ destination. Session and exercise libraries remain planned.
 
 - Month, Monday-first week and chronological day lanes show independent bookings.
   Multiple sessions on the same date retain separate IDs, types and previews.
-  Week/day lanes include overnight continuations. Each card explicitly uses its
-  booking's IANA zone; month placement uses the booking's stored local start date.
+  Month cards contain only a flat type icon and the activity/focus title, capped
+  at two lines. Full names remain available through accessible labels, native
+  title tooltips and the selected session preview. Times, staff, duration and
+  status stay in the preview and week/day views. Month placement uses the
+  booking's stored local start date. Week/day cards explicitly use the booking's
+  IANA zone and include overnight continuations.
 - Team/type filters, period navigation, date selection and contextual previews
   resolve only the newest booking revision and its exact pinned session revision.
 - Add session creates an independent **draft** with a type, team, optional lead
@@ -59,6 +63,13 @@ switching, route aliases, modal focus/Escape, independent draft creation,
 rescheduling, overlap acknowledgement, DST gaps/overlaps and save/reload/conflict/
 401/503 paths. Saved-mode browser tests use an HTTP contract stand-in. They do
 **not** establish hosted Supabase authentication or durable cloud storage.
+
+## Deferred calendar enhancements
+
+Keep chronological week/day cards for this PR. A separately scoped follow-up
+should introduce time-proportional placement, parallel activity lanes and clearer
+duration visualisation. Revisit preview expansion/collapse at 1366×768 as schedules
+become denser. Neither enhancement is implemented or required for this refinement.
 
 ## Staging checklist — separate approval required
 

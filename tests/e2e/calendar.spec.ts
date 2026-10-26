@@ -21,12 +21,16 @@ test("independent month cards open the correct preview; month/week/day, filters 
   await possession.click();
   await expect(page.getByRole("complementary", { name: "Session preview" }).getByRole("heading", { name: "Rondos & Positional Play" })).toBeVisible();
   await expect(page.getByText("5v2 Rondo")).toBeVisible();
+  await expect(page.locator(".calendar-month .calendar-event-time, .calendar-month .calendar-event-status")).toHaveCount(0);
+  await expect(possession).toHaveText("Rondos & Positional Play");
+  await expect(possession.locator("svg")).toHaveCount(1);
   await page.screenshot({ path: info.outputPath("calendar-month.png"), fullPage: true });
   await page.getByRole("button", { name: "GK handling & distribution, 2026-11-03, Goalkeeper", exact: true }).click();
   await expect(page.getByRole("complementary", { name: "Session preview" }).getByRole("heading", { name: "GK handling & distribution" })).toBeVisible();
   await expect(page.getByText("5v2 Rondo")).toHaveCount(0);
   await page.getByRole("button", { name: "Week", exact: true }).click();
   await expect(page.locator(".calendar-week .calendar-day")).toHaveCount(7);
+  await expect(page.getByRole("button", { name: /GK handling & distribution, 2026/ })).toContainText("11:30 – 12:15");
   await page.screenshot({ path: info.outputPath("calendar-week.png"), fullPage: true });
   await page.getByRole("button", { name: "Day", exact: true }).click();
   await expect(page.locator(".calendar-view-day .calendar-day")).toHaveCount(1);
@@ -81,6 +85,7 @@ test("rescheduling warns on overlaps and appends only the selected booking; Esca
   await dialog.getByLabel("Schedule despite these warnings").check();
   await dialog.getByRole("button", { name: "Apply sample change" }).click();
   await expect(dialog).toHaveCount(0);
+  await page.getByRole("button", { name: "Day", exact: true }).click();
   await expect(page.getByRole("button", { name: /GK handling & distribution, 2026/ })).toContainText("11:30 – 12:15");
   await expect(page.getByRole("button", { name: /Rondos & Positional Play, 2026/ })).toContainText("11:00 – 12:00");
 });
@@ -162,7 +167,34 @@ test("authenticated-contract scheduling saves, reloads pinned history and never 
   expect(mock.writes()).toBe(1);
   expect(mock.bundle().events.filter((e) => e.id === "sample-4")).toHaveLength(2);
   await page.reload(); await expect(page.getByRole("status")).toContainText("snapshot v4"); await november(page);
+  await page.getByRole("button", { name: "Day", exact: true }).click();
   await expect(page.getByRole("button", { name: /Rondos & Positional Play, 2026/ })).toContainText("14:00 – 15:20");
+});
+
+test("month cards hide metadata for every status and bound long titles while preserving full accessible names", async ({ page }) => {
+  const bundle = sampleCalendar();
+  const longTitle = "Tactical focus: creating support angles and progressing through pressure with coordinated rotations. ".repeat(3).trim();
+  bundle.events[0].title = longTitle;
+  bundle.events[0].status = "confirmed";
+  bundle.events[1].status = "cancelled";
+  await page.route("**/api/organizations", (route) => route.fulfill({ json: { organizations: [{ id: bundle.organizationId, name: "Illustrative test organisation", version: 1 }] } }));
+  await page.route("**/api/organizations/*/snapshot", (route) => route.fulfill({ json: { version: 1, bundle } }));
+  await page.goto("/calendar");
+  await expect(page.getByRole("status")).toContainText("snapshot v1"); await november(page);
+  for (const event of bundle.events) {
+    const card = page.locator(".calendar-month .calendar-event").filter({ hasText: event.title });
+    await expect(card).toHaveText(event.title);
+    await expect(card.locator(":scope > *")).toHaveCount(1);
+    await expect(card).toHaveAttribute("title", event.title);
+  }
+  const longCard = page.getByRole("button", { name: `${longTitle}, 2026-11-02, Conditioning`, exact: true });
+  const title = longCard.locator("strong");
+  expect(await title.evaluate((element) => element.getBoundingClientRect().height <= Number.parseFloat(getComputedStyle(element).lineHeight) * 2 + 1)).toBe(true);
+  await longCard.click();
+  await expect(page.getByRole("complementary", { name: "Session preview" }).getByRole("heading", { name: longTitle, exact: true })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Session preview" })).toContainText("confirmed");
+  await page.getByRole("button", { name: "Week", exact: true }).click();
+  await expect(page.getByRole("button", { name: `${longTitle}, 2026-11-02, Conditioning`, exact: true })).toContainText("10:00 – 11:00");
 });
 
 test("two new saved sessions retain their own types, coaches and pins after reopening an initially empty calendar", async ({ page }) => {
