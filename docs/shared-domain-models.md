@@ -30,7 +30,10 @@ database policies must enforce authenticated organization membership and access.
 ## Sessions, exercises and templates
 
 Kinds are conditioning, possession, goalkeeper, technical, tactical, recovery,
-combined and other. Activities preserve their order and have stable IDs; warm-up,
+testing, combined and other. Testing/assessment uses the same ordered activities,
+instructions, areas, equipment, diagrams, staff and document references as every
+other session. No results tracking or testing calculations are introduced.
+Activities preserve their order and have stable IDs; warm-up,
 exercise, cool-down and briefing roles are optional entries rather than compulsory
 sections. Unknown durations, equipment quantities, player counts and areas remain
 `null`; they are never inferred as zero. A date-only calendar draft is valid.
@@ -54,6 +57,12 @@ Instants use second-precision UTC ISO strings (`...Z`) with an explicit IANA zon
 Confirmed bookings require start and end; end must follow start. Overnight events
 are supported. Start must fall on `localDate` in the stated zone. Cancelled records
 retain their identity and may retain times.
+
+Testing events may pin an exact testing-session revision. Draft testing events can
+retain `session: null` until the programme is prepared; cancelled placeholders may
+also remain unlinked. Confirmed testing events require a linked testing session.
+Every supplied reference, including on a draft or cancelled event, must resolve to
+the exact revision, have session kind `testing`, and agree on team and organization.
 
 No naive local-time string is accepted as an instant. A future scheduling UI must
 resolve local times to UTC, reject DST gaps and ask which offset to use during DST

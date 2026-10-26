@@ -39,11 +39,26 @@ export const calendarEventSchema = z
     }),
     z.strictObject({
       ...eventShape,
-      kind: z.enum(["fixture", "meeting", "testing", "task", "other"]),
+      kind: z.literal("testing"),
+      session: revisionRefSchema.nullable(),
+    }),
+    z.strictObject({
+      ...eventShape,
+      kind: z.enum(["fixture", "meeting", "task", "other"]),
       session: z.null(),
     }),
   ])
   .superRefine((event, ctx) => {
+    if (
+      event.kind === "testing" &&
+      event.status === "confirmed" &&
+      !event.session
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["session"],
+        message: "Confirmed testing events require a testing session revision",
+      });
     if (event.status === "confirmed" && (!event.startsAt || !event.endsAt))
       ctx.addIssue({
         code: "custom",

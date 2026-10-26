@@ -152,7 +152,10 @@ export const domainBundleSchema = z
     });
     bundle.events.forEach((event, i) => {
       teamExists(event.teamId, ["events", i, "teamId"]);
-      if (event.kind === "training") {
+      if (
+        (event.kind === "training" || event.kind === "testing") &&
+        event.session
+      ) {
         const session = resolve(sessions, event.session, [
           "events",
           i,
@@ -162,6 +165,15 @@ export const domainBundleSchema = z
           issue(
             ["events", i, "teamId"],
             "Booking and session must belong to the same team",
+          );
+        if (
+          session &&
+          event.kind === "testing" &&
+          session.content.kind !== "testing"
+        )
+          issue(
+            ["events", i, "session"],
+            "Testing events must reference a testing session revision",
           );
       }
     });

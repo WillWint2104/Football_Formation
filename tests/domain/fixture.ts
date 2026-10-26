@@ -4,6 +4,76 @@ import {
 } from "../../lib/domain/session";
 import type { DomainBundle } from "../../lib/domain/validation";
 
+/** Synthetic assessment programme reusing the ordinary activity/document contracts. */
+export function testingFixture(): DomainBundle {
+  const data = fixture();
+  const session = data.sessions[0];
+  session.sourceTemplate = null;
+  session.content.kind = "testing";
+  session.content.title = "Preseason assessments";
+  const first = session.content.activities[0];
+  first.sourceExercise = null;
+  first.id = "assessment-acceleration";
+  first.durationMinutes = 15;
+  first.content.title = "Acceleration assessment";
+  first.content.instructions = [
+    "Explain the start protocol",
+    "Complete the timed runs",
+  ];
+  first.content.area = { origin: { x: 0, y: 0 }, length: 40, width: 10 };
+  first.content.equipment = [{ name: "Timing gates", quantity: 2 }];
+  const second = structuredClone(first);
+  second.id = "assessment-change-direction";
+  second.durationMinutes = 20;
+  second.content.title = "Change-of-direction assessment";
+  second.content.instructions = [
+    "Demonstrate the turn",
+    "Complete both directions",
+  ];
+  session.content.activities.push(second);
+  data.events[0] = {
+    ...data.events[0],
+    kind: "testing",
+    title: session.content.title,
+  };
+  data.documents.push(
+    {
+      schemaVersion: "1.0",
+      organizationId: data.organizationId,
+      id: "assessment-protocol",
+      revision: 1,
+      filename: "protocol.pdf",
+      mimeType: "application/pdf",
+      byteLength: 1000,
+      storageKey: "club-demo/protocol.pdf",
+      state: "ready",
+      source: { kind: "upload" },
+    },
+    {
+      schemaVersion: "1.0",
+      organizationId: data.organizationId,
+      id: "assessment-guide",
+      revision: 1,
+      filename: "guide.pdf",
+      mimeType: "application/pdf",
+      byteLength: 1500,
+      storageKey: "club-demo/assessment-guide.pdf",
+      state: "ready",
+      source: {
+        kind: "generated-guide",
+        session: { id: session.id, revision: session.revision },
+        scenes: [{ id: "scene-rondo", revision: 1 }],
+        rendererVersion: "future-1",
+      },
+    },
+  );
+  session.documents = [
+    { id: "assessment-protocol", revision: 1 },
+    { id: "assessment-guide", revision: 1 },
+  ];
+  return data;
+}
+
 /** Synthetic fixture covering a reusable small-sided drill and two independent bookings. */
 export function fixture(): DomainBundle {
   const record = { schemaVersion: "1.0" as const, organizationId: "club-demo" };

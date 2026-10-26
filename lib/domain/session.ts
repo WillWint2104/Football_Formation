@@ -17,6 +17,7 @@ export const sessionKindSchema = z.enum([
   "technical",
   "tactical",
   "recovery",
+  "testing",
   "combined",
   "other",
 ]);
