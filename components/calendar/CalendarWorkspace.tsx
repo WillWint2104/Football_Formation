@@ -24,7 +24,7 @@ export function CalendarWorkspace({ initialDate, initialEvent, initialPlan }: { 
   const [selected, setSelected] = useState<string | null>(initialEvent ?? "sample-4");
   const [team, setTeam] = useState("");
   const [type, setType] = useState("");
-  const [editing, setEditing] = useState<{ event?: CalendarEvent } | null>(initialPlan ? {} : null);
+  const [editing, setEditing] = useState<{ event?: CalendarEvent; plan?: string } | null>(initialPlan ? { plan: initialPlan } : null);
   const dateControl = useRef<HTMLInputElement>(null);
   const bundle = snapshot.bundle;
   const events = latestEvents(bundle);
@@ -133,7 +133,7 @@ export function CalendarWorkspace({ initialDate, initialEvent, initialPlan }: { 
     </section>
     <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => setSelected(null)}
       disabled={loading || busy || blocked} onSchedule={() => setEditing({ event: current })} /></div>
-    {editing && !loading && <ScheduleDialog bundle={bundle} date={date} event={editing.event} demo={!saved} busy={busy} blocked={blocked} initialPlan={initialPlan}
+    {editing && !loading && <ScheduleDialog bundle={bundle} date={date} event={editing.event} demo={!saved} busy={busy} blocked={blocked} initialPlan={editing.plan}
       returnFocus={dateControl} onClose={() => setEditing(null)} onSave={publish} />}
   </div>;
 }
