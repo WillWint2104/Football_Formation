@@ -22,6 +22,17 @@ A football (soccer) team management app for coaches and analysts. Two core featu
 
 ## Design system
 
+### Approved shared-shell alignment (PR 00A)
+
+The owner-approved shell now uses the V008 Direction A navy/gold identity and
+Football Formation branding. Shell tokens are separate from the original tactical
+field/position tokens below: preserve those pitch semantics until the tactical
+editor integration. Shared primary buttons use shell gold/navy; do not restore
+legacy ELITE TACTICAL branding. Desktop sidebar is 240 px; below 1024 px use the
+shared mobile navigation drawer. See `docs/shared-application-shell.md` for route
+availability and deferred work. The older palette description below applies to
+the retained tactical surface, not the new surrounding application shell.
+
 The app uses the "Apex Pitch Evolution" design language: violet primary, cyan accents, near-black tactical surfaces, light gray architectural backgrounds. Modern athletic-corporate. All design tokens (colors, font families, font sizes, spacing, radii, shadows) live in the `@theme` block of `app/globals.css` — Tailwind v4 reads tokens from CSS, not from a JS config file (there is no `tailwind.config.ts`). Use Tailwind classes like `bg-primary`, `text-secondary`, `bg-surface-container` instead of hardcoded hex values. **Never hardcode colors.**
 
 ### Typography

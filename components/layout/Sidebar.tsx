@@ -1,99 +1,164 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Calendar,
-  IdCard,
-  LayoutDashboard,
-  LayoutGrid,
-  LifeBuoy,
+  CalendarDays,
+  ClipboardList,
+  Library,
+  Menu,
   Settings,
+  Shield,
   Users,
-  Zap,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-interface NavItem {
+const navigation: {
   label: string;
-  href: string;
+  href: string | null;
   icon: LucideIcon;
+  planned?: boolean;
+  aliases?: string[];
+}[] = [
+  {
+    label: "Calendar",
+    href: "/team-schedule",
+    icon: CalendarDays,
+    planned: true,
+  },
+  { label: "Sessions", href: null, icon: ClipboardList, planned: true },
+  { label: "Exercise Library", href: null, icon: Library, planned: true },
+  { label: "Tactics", href: "/lineup", icon: Workflow },
+  {
+    label: "Squad",
+    href: "/roster",
+    aliases: ["/player-profiles"],
+    icon: Users,
+    planned: true,
+  },
+  { label: "Settings", href: null, icon: Settings, planned: true },
+];
+
+function Navigation({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Main navigation" className="flex flex-col gap-2 p-4">
+      {navigation.map(({ label, href, icon: Icon, planned, aliases }) => {
+        const active =
+          href !== null &&
+          [href, ...(aliases ?? [])].some(
+            (route) => pathname === route || pathname.startsWith(`${route}/`),
+          );
+        const content = (
+          <>
+            <Icon className="size-5 shrink-0" aria-hidden="true" />
+            <span className="flex-1">{label}</span>
+            {planned && (
+              <span className="font-mono text-[10px] uppercase tracking-wide text-shell-muted">
+                Planned
+              </span>
+            )}
+          </>
+        );
+        const className = cn(
+          "flex min-h-12 items-center gap-3 rounded px-3 py-3 text-body-md",
+          active ? "bg-shell-active text-shell-accent" : "text-shell-text",
+          href &&
+            "transition-colors hover:bg-shell-panel focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-shell-accent",
+        );
+        return href ? (
+          <Link
+            key={label}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={className}
+            onClick={onNavigate}
+          >
+            {content}
+          </Link>
+        ) : (
+          <span
+            key={label}
+            aria-disabled="true"
+            className={cn(className, "opacity-70")}
+          >
+            {content}
+          </span>
+        );
+      })}
+    </nav>
+  );
 }
 
-const primaryNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Roster", href: "/roster", icon: Users },
-  { label: "Lineup Builder", href: "/lineup", icon: LayoutGrid },
-  { label: "Player Profiles", href: "/player-profiles", icon: IdCard },
-  { label: "Team Schedule", href: "/team-schedule", icon: Calendar },
-];
-
-const bottomNav: NavItem[] = [
-  { label: "Settings", href: "/settings", icon: Settings },
-  { label: "Support", href: "/support", icon: LifeBuoy },
-];
-
 export function Sidebar() {
-  const pathname = usePathname();
-
-  function isActive(href: string) {
-    return pathname === href || pathname.startsWith(`${href}/`);
-  }
-
-  function renderNavItem(item: NavItem) {
-    const Icon = item.icon;
-    const active = isActive(item.href);
-    return (
-      <Link
-        key={item.href}
-        href={item.href}
-        aria-current={active ? "page" : undefined}
-        className={cn(
-          "flex items-center gap-3 rounded px-3 py-3 text-body-md transition-colors",
-          active
-            ? "bg-secondary-container text-on-secondary-container font-semibold"
-            : "text-on-tertiary-container hover:bg-tertiary-container hover:text-on-tertiary",
-        )}
-      >
-        <Icon className="size-4 shrink-0" aria-hidden="true" />
-        <span>{item.label}</span>
-      </Link>
-    );
-  }
-
   return (
-    <aside className="w-sidebar shrink-0 bg-tertiary text-on-tertiary flex flex-col">
-      <div className="px-6 pt-6 pb-4">
-        <div className="font-display text-headline-md text-on-tertiary">
-          ELITE TACTICAL
-        </div>
-        <div className="font-mono text-label-caps uppercase text-on-tertiary-container mt-1">
-          Premier League Ops
+    <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-shell-edge bg-shell lg:flex">
+      <div className="flex items-center gap-3 border-b border-shell-edge px-6 py-6">
+        <Shield
+          className="size-9 shrink-0 text-shell-accent"
+          aria-hidden="true"
+        />
+        <div className="font-display text-headline-sm leading-tight text-shell-text">
+          FOOTBALL
+          <br />
+          FORMATION
         </div>
       </div>
-
-      <nav className="px-3 flex flex-col gap-1" aria-label="Primary">
-        {primaryNav.map(renderNavItem)}
-      </nav>
-
-      <div className="mt-auto flex flex-col gap-2 px-3 pb-4">
-        <div className="px-3 pt-2 pb-3">
-          <button
-            type="button"
-            className="w-full bg-primary text-on-primary rounded-lg py-3 px-4 font-display text-headline-sm hover:bg-primary-container transition-colors inline-flex items-center justify-center gap-2"
-          >
-            <Zap className="size-4" aria-hidden="true" />
-            Quick Strategy
-          </button>
-        </div>
-        <nav
-          className="flex flex-col gap-1 pt-3 border-t border-outline-variant/20"
-          aria-label="Secondary"
-        >
-          {bottomNav.map(renderNavItem)}
-        </nav>
-      </div>
+      <p className="px-6 pt-6 font-mono text-label-caps uppercase tracking-widest text-shell-muted">
+        Coaching workspace
+      </p>
+      <Navigation />
+      <p className="mt-auto px-6 pb-6 text-body-md text-shell-muted">
+        Plan. Prepare. Coach.
+      </p>
     </aside>
+  );
+}
+
+export function MobileNavigation() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="lg:hidden">
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Open navigation"
+              className="text-shell-text hover:bg-shell-panel hover:text-shell-text"
+            />
+          }
+        >
+          <Menu aria-hidden="true" />
+        </SheetTrigger>
+        <SheetContent
+          side="left"
+          className="overflow-y-auto border-shell-edge bg-shell text-shell-text"
+        >
+          <SheetHeader>
+            <SheetTitle className="pr-8 text-shell-text">
+              Football Formation
+            </SheetTitle>
+            <SheetDescription className="text-shell-muted">
+              Coaching workspace navigation. Planned features are labelled.
+            </SheetDescription>
+          </SheetHeader>
+          <Navigation onNavigate={() => setOpen(false)} />
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }

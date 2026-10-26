@@ -11,7 +11,13 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { Maximize2, PlayCircle, RotateCcw, SlidersHorizontal, Users } from "lucide-react";
+import {
+  Maximize2,
+  PlayCircle,
+  RotateCcw,
+  SlidersHorizontal,
+  Users,
+} from "lucide-react";
 import type { Formation, Player } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -204,16 +210,22 @@ export function LineupBoard({ formation }: LineupBoardProps) {
       onDragCancel={handleDragCancel}
     >
       <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-surface-container-lowest rounded-lg border border-outline-variant p-3">
+        <div className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-lowest p-3 md:grid-cols-[1fr_auto_1fr]">
           <div className="justify-self-start">
             <h2 className="font-display text-headline-sm text-on-surface">
               Tactical Canvas
             </h2>
           </div>
-          <div className="justify-self-center flex items-center gap-2">
+          <div className="col-span-2 row-start-2 flex flex-wrap items-center gap-2 md:col-span-1 md:col-start-2 md:row-start-1 md:justify-self-center">
             <Button variant="default" size="sm" onClick={handlePresent}>
               <PlayCircle />
               <span>Present</span>
+              <span
+                aria-hidden="true"
+                className="text-[10px] uppercase opacity-80"
+              >
+                Planned
+              </span>
             </Button>
             <div
               role="tablist"
@@ -246,7 +258,7 @@ export function LineupBoard({ formation }: LineupBoardProps) {
               </Button>
             </div>
           </div>
-          <div className="justify-self-end">
+          <div className="col-start-2 row-start-1 justify-self-end md:col-start-3">
             <Button
               variant="ghost"
               size="icon-sm"
@@ -283,11 +295,7 @@ export function LineupBoard({ formation }: LineupBoardProps) {
           </Button>
         </div>
         {activePanel === "squad" ? (
-          <div
-            id="squad-panel"
-            role="tabpanel"
-            aria-labelledby="squad-tab"
-          >
+          <div id="squad-panel" role="tabpanel" aria-labelledby="squad-tab">
             <AvailableSquadBar
               players={squad}
               placedIds={placedIds}
@@ -296,11 +304,7 @@ export function LineupBoard({ formation }: LineupBoardProps) {
             />
           </div>
         ) : (
-          <div
-            id="setup-panel"
-            role="tabpanel"
-            aria-labelledby="setup-tab"
-          >
+          <div id="setup-panel" role="tabpanel" aria-labelledby="setup-tab">
             <SetupPanel slotsFilled={slotsFilled} totalSlots={totalSlots} />
           </div>
         )}
