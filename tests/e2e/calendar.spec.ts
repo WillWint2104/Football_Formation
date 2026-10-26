@@ -106,8 +106,13 @@ test("DST gaps cannot be saved and repeated hours require explicit occurrence se
 });
 
 /** A contract-level HTTP stand-in, not evidence of hosted Supabase authentication or durability. */
-async function savedApi(page: Page, rejectSave?: number) {
+async function savedApi(page: Page, rejectSave?: number, empty = false) {
   let bundle: DomainBundle = sampleCalendar(); let version = 3; let writes = 0;
+  bundle.organizationId = "saved-test-club";
+  for (const records of [bundle.teams, bundle.coaches, bundle.events, bundle.sessions]) {
+    for (const record of records) record.organizationId = bundle.organizationId;
+  }
+  if (empty) { bundle.events = []; bundle.sessions = []; }
   await page.route("**/api/organizations", (route) => route.fulfill({ json: { organizations: [{ id: bundle.organizationId, name: "Mock organisation", version }] } }));
   await page.route("**/api/organizations/*/snapshot", async (route) => {
     if (route.request().method() === "POST") {
@@ -115,6 +120,7 @@ async function savedApi(page: Page, rejectSave?: number) {
       if (rejectSave) { await route.fulfill({ status: rejectSave, json: { error: "PRIVATE DETAIL" } }); return; }
       const input = route.request().postDataJSON();
       expect(input.expectedVersion).toBe(version); expect(input.actor).toBeUndefined();
+      expect(input.bundle.organizationId).toBe("saved-test-club");
       bundle = input.bundle; version++; await route.fulfill({ json: { version } });
     } else await route.fulfill({ json: { version, bundle } });
   });
@@ -137,6 +143,37 @@ test("authenticated-contract scheduling saves, reloads pinned history and never 
   expect(mock.bundle().events.filter((e) => e.id === "sample-4")).toHaveLength(2);
   await page.reload(); await expect(page.getByRole("status")).toContainText("snapshot v4"); await november(page);
   await expect(page.getByRole("button", { name: /Rondos & Positional Play, 2026/ })).toContainText("14:00 – 15:20");
+});
+
+test("two new saved sessions retain their own types, coaches and pins after reopening an initially empty calendar", async ({ page }) => {
+  const mock = await savedApi(page, undefined, true);
+  await page.goto("/calendar");
+  await expect(page.getByRole("status")).toContainText("snapshot v3");
+  await november(page);
+  await expect(page.locator(".calendar-event")).toHaveCount(0);
+  for (const [title, kind, coach, start, end] of [
+    ["Saved conditioning", "conditioning", "coach-carter", "10:00", "11:00"],
+    ["Saved goalkeeper", "goalkeeper", "coach-lopez", "11:30", "12:15"],
+  ]) {
+    await page.getByRole("button", { name: "Add session", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Session title", { exact: true }).fill(title);
+    await dialog.getByLabel("Session type", { exact: true }).selectOption(kind);
+    await dialog.getByLabel("Lead coach").selectOption(coach);
+    await dialog.getByLabel("Start time").fill(start);
+    await dialog.getByLabel("End time").fill(end);
+    await dialog.getByRole("button", { name: "Save booking", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+  }
+  expect(mock.writes()).toBe(2);
+  expect(mock.bundle().events).toHaveLength(2);
+  expect(mock.bundle().sessions).toHaveLength(2);
+  expect(new Set(mock.bundle().events.map((event) => event.session?.id)).size).toBe(2);
+  expect(mock.bundle().sessions.map((session) => session.content.kind)).toEqual(["conditioning", "goalkeeper"]);
+  expect(mock.bundle().sessions.map((session) => session.coaches[0].coachId)).toEqual(["coach-carter", "coach-lopez"]);
+  await page.reload(); await expect(page.getByRole("status")).toContainText("snapshot v5"); await november(page);
+  await expect(page.locator(".calendar-event")).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /Saved goalkeeper, 2026/ })).toBeVisible();
 });
 
 for (const status of [409, 503, 401]) {
