@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { CalendarApiError, loadCalendar, loadOrganizations, saveCalendar, type CalendarSnapshot, type Organization } from "@/lib/calendar/client";
 import { sampleCalendar } from "@/lib/calendar/sample";
-import { addDays, calendarDates, eventSession, latestEvents, localParts, sessionLabels } from "@/lib/calendar/schedule";
+import { addDays, calendarDates, eventSession, isCalendarDate, latestEvents, localParts, sessionLabels } from "@/lib/calendar/schedule";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 import type { DomainBundle } from "@/lib/domain/validation";
 import { ScheduleDialog } from "./ScheduleDialog";
@@ -31,6 +31,7 @@ export function CalendarWorkspace() {
   const [blocked, setBlocked] = useState(false);
   const [editing, setEditing] = useState<{ event?: CalendarEvent } | null>(null);
   const generation = useRef(0);
+  const dateControl = useRef<HTMLInputElement>(null);
   const bundle = saved?.bundle ?? sample;
   const events = latestEvents(bundle);
   const current = events.find((e) => e.id === selected);
@@ -101,8 +102,13 @@ export function CalendarWorkspace() {
   function move(direction: number) {
     if (view === "month") {
       const next = new Date(`${date.slice(0, 7)}-01T12:00:00Z`);
-      next.setUTCMonth(next.getUTCMonth() + direction); setDate(next.toISOString().slice(0, 10));
-    } else setDate(addDays(date, direction * (view === "week" ? 7 : 1)));
+      next.setUTCMonth(next.getUTCMonth() + direction);
+      const value = next.toISOString().split("T")[0];
+      if (isCalendarDate(value)) setDate(value);
+    } else {
+      const value = addDays(date, direction * (view === "week" ? 7 : 1));
+      if (isCalendarDate(value)) setDate(value);
+    }
   }
 
   return <div className="calendar-workspace" aria-busy={loading || busy}>
@@ -131,7 +137,7 @@ export function CalendarWorkspace() {
         {bundle.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
         <label>Session type<select aria-label="Session type" value={type} onChange={(e) => setType(e.target.value)}><option value="">All types</option>
           {Object.entries(sessionLabels).map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}</select></label>
-        <label>Selected date<input type="date" value={date} onChange={(e) => { if (e.target.value) { setDate(e.target.value); setSelected(null); } }} /></label>
+        <label>Selected date<input ref={dateControl} type="date" value={date} onChange={(e) => { if (isCalendarDate(e.target.value)) { setDate(e.target.value); setSelected(null); } }} /></label>
       </div>
       <div className="calendar-legend">{(["conditioning", "possession", "goalkeeper", "tactical", "testing"] as const).map((kind) =>
         <span key={kind} className={`calendar-type-${kind}`}><SessionTypeIcon kind={kind} />{sessionLabels[kind]}</span>)}</div>
@@ -171,6 +177,6 @@ export function CalendarWorkspace() {
     <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => setSelected(null)}
       disabled={loading || busy || blocked} onSchedule={() => setEditing({ event: current })} /></div>
     {editing && <ScheduleDialog bundle={bundle} date={date} event={editing.event} demo={!saved} busy={busy} blocked={blocked}
-      onClose={() => setEditing(null)} onSave={publish} />}
+      returnFocus={dateControl} onClose={() => setEditing(null)} onSave={publish} />}
   </div>;
 }

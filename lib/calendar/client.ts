@@ -21,7 +21,7 @@ export class CalendarApiError extends Error {
 
 /** All calendar persistence uses the existing same-origin authenticated HTTP boundary. */
 async function request(path: string, init?: RequestInit): Promise<unknown> {
-  const response = await fetch(path, { ...init, credentials: "same-origin", cache: "no-store" });
+  const response = await fetch(path, { ...init, credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(30_000) });
   if (!response.ok) throw new CalendarApiError(response.status);
   return response.json() as Promise<unknown>;
 }

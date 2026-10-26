@@ -38,3 +38,20 @@ test("invalid or nonincrementing acknowledgements and cross-organisation saves f
   mock.mock.mockImplementation(async () => Response.json({ version: 1, bundle: { ...bundle, events: [{ bogus: true }] } }));
   await assert.rejects(loadCalendar(bundle.organizationId));
 });
+
+test("stalled reads and uncertain saves have a 30-second abort boundary without automatic retries", async (t) => {
+  let requests = 0;
+  t.mock.method(AbortSignal, "timeout", (milliseconds: number) => {
+    assert.equal(milliseconds, 30_000);
+    return AbortSignal.abort(new DOMException("Timed out", "TimeoutError"));
+  });
+  t.mock.method(globalThis, "fetch", async (_path: string, init: RequestInit) => {
+    requests++;
+    init.signal!.throwIfAborted();
+    return Response.json({});
+  });
+  await assert.rejects(loadOrganizations(), { name: "TimeoutError" });
+  const bundle = sampleCalendar();
+  await assert.rejects(saveCalendar({ version: 3, bundle }, bundle), { name: "TimeoutError" });
+  assert.equal(requests, 2);
+});

@@ -38,7 +38,7 @@ Saves POST `{ expectedVersion, bundle }` through PR 02's existing authenticated
 boundary; actor identity and privileged credentials remain server-side. The UI
 changes saved records only after a valid incremented-version acknowledgement.
 
-Every failed save requires an explicit reload before further writes. This covers
+Requests time out after 30 seconds. Every failed save requires an explicit reload before further writes. This covers
 409 conflicts and uncertain network failures where the server might have committed
 despite losing the response. There are no automatic paid or persistence retries.
 401/404 responses also remove the loaded private snapshot from the UI. A reload
@@ -48,9 +48,10 @@ or organisation switch clears the old snapshot before fetching another one.
 
 `npm test` includes calendar date/DST, immutable scheduling, overlap and HTTP
 adapter checks alongside the existing domain and actual PostgreSQL/PGlite tests.
-`npm run test:e2e` runs committed Playwright browser interactions at 1920×1080 and
-1366×768 against a production build. Install its browser with
-`npx playwright install chromium`; CI also installs Linux system dependencies.
+For local browser checks, run `npm run build` first, install Chromium with
+`npx playwright install chromium`, then run `npm run test:e2e`. The committed
+Playwright interactions run at 1920×1080 and 1366×768 against that production build.
+CI also installs Linux system dependencies.
 Local Windows runs can use `PLAYWRIGHT_CHANNEL=msedge`. No mobile test scope is added.
 
 Browser tests cover sample selection, independent previews, filtering, view

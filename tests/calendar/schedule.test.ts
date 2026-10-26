@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calendarDates, eventSession, latestEvents, localParts, scheduleChange, schedulingConflicts, wallTimeCandidates, type ScheduleInput } from "../../lib/calendar/schedule";
+import { calendarDates, eventSession, isCalendarDate, latestEvents, localParts, scheduleChange, schedulingConflicts, wallTimeCandidates, type ScheduleInput } from "../../lib/calendar/schedule";
 import { sampleCalendar } from "../../lib/calendar/sample";
 import { domainBundleSchema } from "../../lib/domain/validation";
 
@@ -15,6 +15,11 @@ function input(overrides: Partial<ScheduleInput> = {}): ScheduleInput {
 }
 
 test("month, week and day remain Monday-first across year, leap-year and DST boundaries", () => {
+  assert.equal(isCalendarDate("20261-11-03"), false);
+  assert.equal(isCalendarDate("2026-11-31"), false);
+  assert.equal(isCalendarDate("2026-11-03"), true);
+  assert.ok(calendarDates("9999-12-31", "month").every(isCalendarDate));
+  assert.ok(calendarDates("9999-12-31", "week").every(isCalendarDate));
   assert.equal(calendarDates("2026-11-03", "month")[0], "2026-10-26");
   assert.equal(calendarDates("2026-11-03", "month").at(-1), "2026-12-06");
   assert.deepEqual(calendarDates("2026-01-01", "week"), ["2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04"]);

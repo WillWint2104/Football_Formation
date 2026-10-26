@@ -105,6 +105,26 @@ test("DST gaps cannot be saved and repeated hours require explicit occurrence se
   await expect(dialog).toHaveCount(0);
 });
 
+test("extended date years cannot crash the calendar and a removed scheduling trigger restores focus to the date control", async ({ page }) => {
+  await sample(page);
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.getByLabel("Selected date").fill("20261-11-03");
+  await expect(page.getByRole("heading", { name: "November 2026" })).toBeVisible();
+  await page.getByRole("button", { name: "Day", exact: true }).click();
+  await page.locator('[data-date="2026-11-03"]').getByRole("button", { name: "Add session", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Session title", { exact: true }).fill("Different day training");
+  await dialog.getByLabel("Start date").fill("2026-11-04");
+  await dialog.getByLabel("End date").fill("2026-11-04");
+  await dialog.getByLabel("Start time").fill("15:00");
+  await dialog.getByLabel("End time").fill("16:00");
+  await dialog.getByRole("button", { name: "Apply sample change" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByLabel("Selected date")).toBeFocused();
+  expect(errors).toEqual([]);
+});
+
 /** A contract-level HTTP stand-in, not evidence of hosted Supabase authentication or durability. */
 async function savedApi(page: Page, rejectSave?: number, empty = false) {
   let bundle: DomainBundle = sampleCalendar(); let version = 3; let writes = 0;

@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 import type { SessionKind } from "@/lib/domain/session";
 import type { DomainBundle } from "@/lib/domain/validation";
 import { eventSession, localParts, scheduleChange, schedulingConflicts, sessionLabels, wallTimeCandidates } from "@/lib/calendar/schedule";
 
 /** Focus-contained scheduling form with explicit DST choices and overlap acknowledgement. */
-export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, onClose, onSave }: {
+export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, returnFocus, onClose, onSave }: {
   bundle: DomainBundle; date: string; event?: CalendarEvent; demo: boolean; busy: boolean; blocked: boolean;
   onClose: () => void; onSave: (next: DomainBundle, event: CalendarEvent) => Promise<void>;
+  returnFocus: RefObject<HTMLInputElement | null>;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
@@ -24,13 +25,15 @@ export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, onClo
   useEffect(() => {
     const element = dialog.current;
     const previous = document.activeElement;
+    const fallback = returnFocus.current;
     element?.showModal();
     (form.current?.elements.namedItem("title") as HTMLInputElement | null)?.focus();
     return () => {
       element?.close();
-      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+      if (previous instanceof HTMLElement && previous.isConnected && !previous.matches(":disabled")) previous.focus();
+      else fallback?.focus();
     };
-  }, []);
+  }, [returnFocus]);
   return <dialog ref={dialog} className="calendar-dialog" aria-labelledby="schedule-title"
     onCancel={(e) => { e.preventDefault(); if (!busy) onClose(); }}>
     <form ref={form} onChange={() => { setWarnings([]); setAmbiguities({ start: [], end: [] }); setError(""); }}

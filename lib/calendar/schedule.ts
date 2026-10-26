@@ -10,6 +10,11 @@ export const sessionLabels: Record<SessionKind, string> = {
   testing: "Testing", combined: "Combined", other: "Other",
 };
 
+/** Native date inputs can emit extended years that our four-digit domain contracts cannot represent. */
+export function isCalendarDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && z.iso.date().safeParse(value).success;
+}
+
 /** Read the current revision of each logical record without displaying its history twice. */
 export function latestEvents(bundle: DomainBundle): CalendarEvent[] {
   const records = new Map<string, CalendarEvent>();
@@ -30,7 +35,7 @@ export function eventSession(bundle: DomainBundle, event: CalendarEvent): Sessio
 export function addDays(date: string, days: number): string {
   const value = new Date(`${date}T12:00:00Z`);
   value.setUTCDate(value.getUTCDate() + days);
-  return value.toISOString().slice(0, 10);
+  return value.toISOString().split("T")[0];
 }
 
 /** Produce a Monday-first week or a complete month, including adjacent dates. */
@@ -42,7 +47,7 @@ export function calendarDates(date: string, view: "month" | "week" | "day"): str
   const last = new Date(`${anchor}T12:00:00Z`);
   last.setUTCMonth(last.getUTCMonth() + 1, 0);
   const count = view === "week" ? 7 : Math.ceil((weekday + last.getUTCDate()) / 7) * 7;
-  return Array.from({ length: count }, (_, i) => addDays(start, i));
+  return Array.from({ length: count }, (_, i) => addDays(start, i)).filter(isCalendarDate);
 }
 
 /** Format a saved instant in its explicit IANA zone, never the workstation's default zone. */
