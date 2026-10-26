@@ -177,6 +177,11 @@ test("month cards hide metadata for every status and bound long titles while pre
   bundle.events[0].title = longTitle;
   bundle.events[0].status = "confirmed";
   bundle.events[1].status = "cancelled";
+  const overnight = bundle.events.at(-1)!;
+  overnight.title = "Overnight testing";
+  overnight.localDate = "2026-11-03";
+  overnight.startsAt = "2026-11-03T12:00:00Z";
+  overnight.endsAt = "2026-11-04T15:00:00Z";
   await page.route("**/api/organizations", (route) => route.fulfill({ json: { organizations: [{ id: bundle.organizationId, name: "Illustrative test organisation", version: 1 }] } }));
   await page.route("**/api/organizations/*/snapshot", (route) => route.fulfill({ json: { version: 1, bundle } }));
   await page.goto("/calendar");
@@ -195,6 +200,9 @@ test("month cards hide metadata for every status and bound long titles while pre
   await expect(page.getByRole("complementary", { name: "Session preview" })).toContainText("confirmed");
   await page.getByRole("button", { name: "Week", exact: true }).click();
   await expect(page.getByRole("button", { name: `${longTitle}, 2026-11-02, Conditioning`, exact: true })).toContainText("10:00 – 11:00");
+  await page.getByLabel("Selected date").fill("2026-11-04");
+  await page.getByRole("button", { name: "Day", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Overnight testing, 2026-11-03, Testing", exact: true })).toContainText("Continued booking · 2026-11-03 23:00 – 2026-11-05 02:00");
 });
 
 test("two new saved sessions retain their own types, coaches and pins after reopening an initially empty calendar", async ({ page }) => {

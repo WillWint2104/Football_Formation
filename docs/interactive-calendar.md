@@ -13,7 +13,8 @@ destination. Session and exercise libraries remain planned.
   title tooltips and the selected session preview. Times, staff, duration and
   status stay in the preview and week/day views. Month placement uses the
   booking's stored local start date. Week/day cards explicitly use the booking's
-  IANA zone and include overnight continuations.
+  IANA zone and include overnight continuations. Overnight booking ranges include
+  both dates, so a continuation cannot be mistaken for a start on the displayed day.
 - Team/type filters, period navigation, date selection and contextual previews
   resolve only the newest booking revision and its exact pinned session revision.
 - Add session creates an independent **draft** with a type, team, optional lead

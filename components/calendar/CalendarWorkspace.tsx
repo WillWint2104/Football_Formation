@@ -154,13 +154,16 @@ export function CalendarWorkspace() {
             {daily.map((event) => {
               const session = eventSession(bundle, event);
               const kind = session?.content.kind ?? "other";
+              const start = event.startsAt ? localParts(event.startsAt, event.timeZone) : null;
+              const end = event.endsAt ? localParts(event.endsAt, event.timeZone) : null;
+              const overnight = start && end && start.date !== end.date;
               return <button key={event.id} className={`calendar-event calendar-type-${kind} ${selected === event.id ? "calendar-event-selected" : ""}`}
                 aria-label={`${event.title}, ${event.localDate}, ${sessionLabels[kind]}`} aria-pressed={selected === event.id}
                 title={view === "month" ? event.title : undefined}
                 onClick={() => { setSelected(event.id); setDate(day); }}>
                 <span className="calendar-event-title"><SessionTypeIcon kind={kind} /><strong>{event.title}</strong></span>
-                {view !== "month" && <><span className="calendar-event-time">{event.localDate < day ? "Continued · " : ""}{event.startsAt ? localParts(event.startsAt, event.timeZone).time : "Time TBC"}
-                  {event.endsAt && ` – ${localParts(event.endsAt, event.timeZone).time}`}</span>
+                {view !== "month" && <><span className="calendar-event-time">{event.localDate < day ? "Continued booking · " : ""}{start ? `${overnight ? `${start.date} ` : ""}${start.time}` : "Time TBC"}
+                  {end && ` – ${overnight ? `${end.date} ` : ""}${end.time}`}</span>
                   <span>{event.timeZone}</span><span>{bundle.teams.find((t) => t.id === event.teamId)?.name} · {event.areaLabel ?? "Area TBC"}</span>
                   <span>{session?.coaches.map((c) => bundle.coaches.find((coach) => coach.id === c.coachId)?.displayName).join(", ") || "Staff unassigned"}</span>
                   <span className="calendar-event-status">{event.status}</span></>}
