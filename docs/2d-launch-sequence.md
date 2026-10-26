@@ -4,8 +4,10 @@ PR 00 (dependency security and CI) was approved and merged as GitHub PR #5.
 PR 00A (shared application shell) was approved and merged as GitHub PR #6.
 PR 01 (shared domain models and validation) was approved and merged as GitHub PR #7.
 PR 02 (authenticated persistence) was approved and merged as GitHub PR #8.
-PR 03 (interactive calendar) is authorised for implementation and review,
+PR 03 (interactive calendar) was approved and merged as GitHub PR #9.
+PR 04 (sessions, coaches and templates) is authorised for implementation and review,
 but not merging or manual deployment. Hosted Supabase activation requires separate approval.
+See `session-library.md` for exact revision and reuse behaviour.
 Each later PR needs its own approval. No manual deployment,
 paid service or hosted backend provisioning is authorised by the roadmap.
 

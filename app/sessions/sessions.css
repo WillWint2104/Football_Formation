@@ -1,0 +1,55 @@
+.coaching-workspace { font-size: 13px; }
+.coaching-workspace .calendar-page-heading h1 { font-size: 28px; }
+.coaching-library-layout { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 20px; align-items: start; }
+.coaching-catalog, .coaching-detail, .coaching-directory { border: 1px solid var(--color-shell-edge); border-radius: 4px; background: var(--color-shell); padding: 20px; min-width: 0; }
+.coaching-workspace label { display: flex; flex-direction: column; gap: 6px; color: var(--color-shell-muted); font-size: 12px; }
+.coaching-workspace :is(input,textarea,select) { width: 100%; background: var(--color-shell-panel); color: var(--color-shell-text); border: 1px solid var(--color-shell-edge); border-radius: 4px; padding: 8px; font: inherit; }
+.coaching-workspace textarea { resize: vertical; min-height: 64px; }
+.coaching-workspace input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-shell-accent); }
+.coaching-workspace a { color: var(--color-shell-accent); }
+.coaching-catalog > label { margin-bottom: 12px; }
+.coaching-catalog-items { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; max-height: 68dvh; overflow-y: auto; padding: 2px; }
+.coaching-record { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--color-shell-edge); border-left: 3px solid var(--type-color, var(--color-shell-accent)); background: var(--color-shell-panel); padding: 12px; border-radius: 4px; overflow-wrap: anywhere; }
+.coaching-record[aria-current="page"] { outline: 1px solid var(--color-shell-accent); }
+.coaching-record > span { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--type-color, var(--color-shell-muted)); }
+.coaching-record strong { color: var(--color-shell-text); font-size: 13px; }
+.coaching-record small { color: var(--color-shell-muted); font-size: 10px; }
+.coaching-editor { display: flex; flex-direction: column; gap: 16px; }
+.coaching-editor fieldset { border: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.coaching-editor fieldset:disabled { opacity: .7; }
+.coaching-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.coaching-section-heading h2 { font-size: 19px; }
+.coaching-section-heading p { margin-top: 4px; font-size: 11px; }
+.coaching-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.coaching-four-fields { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.coaching-totals { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: var(--color-shell-panel); border: 1px solid var(--color-shell-edge); border-radius: 4px; }
+.coaching-totals strong { color: var(--color-shell-accent); }
+.coaching-totals :is(span,small) { color: var(--color-shell-muted); font-size: 11px; }
+.coaching-field-section { padding: 12px 0; border-top: 1px solid var(--color-shell-edge); }
+.coaching-coach-assignments { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.coaching-coach-assignments > div { display: flex; gap: 8px; align-items: center; }
+.coaching-coach-assignments select { width: 112px; }
+.coaching-workspace .coaching-checkbox { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.coaching-sequence { border-top: 1px solid var(--color-shell-edge); padding-top: 20px; }
+.coaching-inline-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin: 12px 0; }
+.coaching-inline-controls label { flex: 1; min-width: 120px; }
+.coaching-activity-layout { display: grid; grid-template-columns: 176px minmax(0,1fr); gap: 16px; }
+.coaching-activity-list { display: flex; flex-direction: column; gap: 8px; }
+.coaching-workspace .coaching-activity-list button { width: 100%; display: flex; align-items: stretch; flex-direction: column; text-align: left; padding: 12px; font-size: 12px; }
+.coaching-activity-list button[aria-pressed="true"] { border-color: var(--color-shell-accent); }
+.coaching-activity-list span { color: var(--color-shell-accent); font: 11px var(--font-mono),monospace; }
+.coaching-activity-list strong { overflow-wrap: anywhere; }
+.coaching-activity-list small { color: var(--color-shell-muted); font-size: 10px; }
+.coaching-fields { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+.coaching-fields label > span { font-size: 10px; }
+.coaching-equipment-row { display: grid; grid-template-columns: minmax(0,1fr) 88px auto; gap: 8px; align-items: end; margin-top: 12px; }
+.coaching-notice { border-left: 3px solid var(--color-shell-accent); padding: 12px; background: var(--color-shell-panel); font-size: 12px; line-height: 1.6; }
+.coaching-save-bar { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0; border-top: 1px solid var(--color-shell-edge); }
+.coaching-fine { font-size: 11px; }
+.coaching-empty { padding: 24px 12px; color: var(--color-shell-muted); line-height: 1.6; }
+.coaching-history { margin-top: 16px; border-top: 1px solid var(--color-shell-edge); padding-top: 12px; }
+.coaching-history summary { cursor: pointer; color: var(--color-shell-accent); }
+.coaching-history a { display: block; padding: 8px; }
+.coaching-directory table { width: 100%; border-collapse: collapse; }
+.coaching-directory th,.coaching-directory td { text-align: left; border-bottom: 1px solid var(--color-shell-edge); padding: 12px 8px; }
+@media (min-width:1024px) and (max-width:1500px) { .coaching-library-layout { grid-template-columns: 220px minmax(0,1fr); gap: 16px; } .coaching-catalog,.coaching-detail { padding: 16px; } .coaching-activity-layout { grid-template-columns: 144px minmax(0,1fr); gap: 12px; } .coaching-four-fields { grid-template-columns: 1fr 1fr; } }

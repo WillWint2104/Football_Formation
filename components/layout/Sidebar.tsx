@@ -38,8 +38,10 @@ const navigation: {
     aliases: ["/team-schedule"],
     icon: CalendarDays,
   },
-  { label: "Sessions", href: null, icon: ClipboardList, planned: true },
-  { label: "Exercise Library", href: null, icon: Library, planned: true },
+  { label: "Sessions", href: "/sessions", icon: ClipboardList },
+  { label: "Templates", href: "/templates", icon: ClipboardList },
+  { label: "Exercise Library", href: "/exercises", icon: Library },
+  { label: "Coaches", href: "/coaches", icon: Users },
   { label: "Tactics", href: "/lineup", icon: Workflow },
   {
     label: "Squad",

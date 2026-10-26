@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { CoachingProvider } from "@/components/coaching/CoachingProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -51,7 +52,7 @@ export default function RootLayout({
             tabIndex={-1}
             className="mx-auto w-full max-w-screen-2xl flex-1 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-shell-accent md:p-6 xl:p-8"
           >
-            {children}
+            <CoachingProvider>{children}</CoachingProvider>
           </main>
         </div>
       </body>

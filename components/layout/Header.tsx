@@ -4,6 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MobileNavigation } from "./Sidebar";
 
+const workspaceLabels: Record<string, string> = {
+  "/sessions": "Sessions", "/templates": "Session templates",
+  "/exercises": "Exercise library", "/coaches": "Coach directory",
+};
+
 /** Shows route context and available tactics tools without advertising planned tools as links. */
 export function Header() {
   const pathname = usePathname();
@@ -12,6 +17,8 @@ export function Header() {
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
       ? "Calendar"
+      : ["/sessions", "/templates", "/exercises", "/coaches"].includes(pathname)
+        ? workspaceLabels[pathname]
       : ["/roster", "/player-profiles"].includes(pathname)
         ? "Squad"
         : "Coaching workspace";

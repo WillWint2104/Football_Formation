@@ -1,4 +1,5 @@
 import { CalendarDays, Clock, MapPin, Users, X } from "lucide-react";
+import Link from "next/link";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 import type { DomainBundle } from "@/lib/domain/validation";
 import { eventSession, localParts, sessionLabels } from "@/lib/calendar/schedule";
@@ -37,10 +38,11 @@ export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disab
       {session?.content.activities.length ? <ol className="calendar-activities">{session.content.activities.map((activity, i) => <li key={activity.id}>
         <span>{String(i + 1).padStart(2, "0")}</span><div>{activity.content.title}<small>{activity.role.replaceAll("-", " ")}</small></div>
         <strong>{activity.durationMinutes ?? "TBC"}{activity.durationMinutes !== null && "m"}</strong></li>)}</ol>
-        : <p className="calendar-muted">No activities yet. Advanced session editing is planned separately.</p>}
+        : <p className="calendar-muted">No activities yet. Open the session editor to add structured coaching activities.</p>}
     </section>
     {session && <p className="calendar-muted calendar-footnote">Pinned session revision {session.revision} · {session.documents.length} document references.
       Diagram previews, full guides and PDF attachments follow in later milestones.</p>}
+    {session && <Link className="coaching-session-link" href={`/sessions?event=${encodeURIComponent(event.id)}&revision=${event.revision}`}>Open session editor</Link>}
     <button className="calendar-primary calendar-wide" onClick={onSchedule} disabled={disabled || event.status === "cancelled"}>Reschedule booking</button>
   </aside>;
 }

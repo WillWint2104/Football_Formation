@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
-import { CalendarApiError, loadCalendar, loadOrganizations, saveCalendar, type CalendarSnapshot, type Organization } from "@/lib/calendar/client";
-import { sampleCalendar } from "@/lib/calendar/sample";
+import { CalendarApiError } from "@/lib/calendar/client";
+import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { addDays, calendarDates, eventSession, isCalendarDate, latestEvents, localParts, sessionLabels } from "@/lib/calendar/schedule";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 import type { DomainBundle } from "@/lib/domain/validation";
@@ -15,24 +15,18 @@ import { SessionTypeIcon } from "./SessionTypeIcon";
 type View = "month" | "week" | "day";
 
 /** Desktop planning surface; sample state and authenticated saved snapshots remain separate. */
-export function CalendarWorkspace() {
-  const [sample, setSample] = useState(sampleCalendar);
-  const [saved, setSaved] = useState<CalendarSnapshot | null>(null);
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [organization, setOrganization] = useState("");
-  const [date, setDate] = useState("2026-11-03");
+export function CalendarWorkspace({ initialDate, initialEvent, initialPlan }: { initialDate?: string; initialEvent?: string; initialPlan?: string }) {
+  const { snapshot, mode, loading, busy, blocked, message, organizations, organization, reload: reloadWorkspace, commit } = useCoaching();
+  const saved = mode === "saved" ? snapshot : null;
+  const [chosenDate, setDate] = useState<string | null>(initialDate ?? null);
+  const date = chosenDate ?? (mode === "saved" ? localParts(new Date().toISOString(), "Australia/Sydney").date : "2026-11-03");
   const [view, setView] = useState<View>("month");
-  const [selected, setSelected] = useState<string | null>("sample-4");
+  const [selected, setSelected] = useState<string | null>(initialEvent ?? "sample-4");
   const [team, setTeam] = useState("");
   const [type, setType] = useState("");
-  const [message, setMessage] = useState("Checking saved calendar availability…");
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [blocked, setBlocked] = useState(false);
-  const [editing, setEditing] = useState<{ event?: CalendarEvent } | null>(null);
-  const generation = useRef(0);
+  const [editing, setEditing] = useState<{ event?: CalendarEvent; plan?: string } | null>(initialPlan ? { plan: initialPlan } : null);
   const dateControl = useRef<HTMLInputElement>(null);
-  const bundle = saved?.bundle ?? sample;
+  const bundle = snapshot.bundle;
   const events = latestEvents(bundle);
   const current = events.find((e) => e.id === selected);
   const dates = calendarDates(date, view);
@@ -40,62 +34,21 @@ export function CalendarWorkspace() {
     (!type || (eventSession(bundle, e)?.content.kind ?? "other") === type));
   const title = new Intl.DateTimeFormat("en-AU", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
 
-  useEffect(() => {
-    let active = true;
-    const token = ++generation.current;
-    void (async () => {
-      try {
-        const choices = await loadOrganizations();
-        if (!active || token !== generation.current) return;
-        setOrganizations(choices);
-        if (!choices.length) { setMessage("No organisation membership is available. Showing illustrative sample data."); return; }
-        const first = choices[0];
-        setOrganization(first.id);
-        const loaded = await loadCalendar(first.id);
-        if (!active || token !== generation.current) return;
-        setSaved(loaded); setSelected(null); setDate(localParts(new Date().toISOString(), "Australia/Sydney").date);
-        setMessage(`Loaded saved organisation snapshot v${loaded.version}.`);
-      } catch (error) {
-        if (active && token === generation.current) setMessage(error instanceof CalendarApiError ? error.message : "Saved records could not be validated. Showing sample data.");
-      } finally { if (active && token === generation.current) setLoading(false); }
-    })();
-    return () => { active = false; };
-  }, []);
-
-  /** Reload explicitly after a conflict; failed saves never become local success states. */
+  /** Reload through the shared workspace and clear page-specific editing state. */
   async function reload(id: string) {
-    const token = ++generation.current;
-    setLoading(true); setSaved(null); setSelected(null); setEditing(null); setBlocked(false); setTeam(""); setType("");
-    setOrganization(id);
-    try {
-      const loaded = await loadCalendar(id);
-      if (token !== generation.current) return;
-      setSaved(loaded); setMessage(`Loaded saved organisation snapshot v${loaded.version}.`);
-    } catch (error) {
-      if (token === generation.current) setMessage(error instanceof CalendarApiError ? error.message : "Saved records could not be validated.");
-    } finally { if (token === generation.current) setLoading(false); }
+    setSelected(null); setEditing(null); setTeam(""); setType("");
+    await reloadWorkspace(id);
   }
 
-  /** Apply sample edits in memory or await a durable API acknowledgement before updating saved records. */
+  /** Advance this booking only after the shared snapshot commit is acknowledged. */
   async function publish(next: DomainBundle, event: CalendarEvent) {
-    setBusy(true);
     try {
-      if (saved) {
-        const result = await saveCalendar(saved, next);
-        setSaved(result); setMessage(`Saved organisation snapshot v${result.version}.`);
-      } else {
-        setSample(next); setMessage("Sample change applied in memory only. Reloading discards it.");
-      }
+      await commit(snapshot, next);
       setDate(event.localDate); setSelected(event.id); setEditing(null);
     } catch (error) {
-      // A lost response can hide a committed write. Require reload for every failed save, never retry automatically.
-      setBlocked(true);
-      setMessage(error instanceof CalendarApiError ? error.message : "Save could not be confirmed. Reload before making further changes.");
-      if (error instanceof CalendarApiError && [401, 404].includes(error.status)) {
-        setSaved(null); setSelected(null); setEditing(null);
-      }
+      if (error instanceof CalendarApiError && [401, 404].includes(error.status)) { setEditing(null); setSelected(null); }
       throw error;
-    } finally { setBusy(false); }
+    }
   }
 
   /** Move a displayed period without month-end overflow (for example, January 31 into March). */
@@ -180,7 +133,7 @@ export function CalendarWorkspace() {
     </section>
     <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => setSelected(null)}
       disabled={loading || busy || blocked} onSchedule={() => setEditing({ event: current })} /></div>
-    {editing && <ScheduleDialog bundle={bundle} date={date} event={editing.event} demo={!saved} busy={busy} blocked={blocked}
+    {editing && !loading && <ScheduleDialog bundle={bundle} date={date} event={editing.event} demo={!saved} busy={busy} blocked={blocked} initialPlan={editing.plan}
       returnFocus={dateControl} onClose={() => setEditing(null)} onSave={publish} />}
   </div>;
 }
