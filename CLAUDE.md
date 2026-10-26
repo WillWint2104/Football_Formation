@@ -95,9 +95,11 @@ Owner-approved implementation direction: desktop-first (1920 × 1080 and
 1366 × 768, larger/fullscreen displays). Preserve existing responsive behavior,
 but defer additional tablet/mobile optimization and testing. PR #6 shared shell
 is merged. PR 01 shared models/schema validation is merged as GitHub PR #7.
-PR 02 authenticated persistence is authorized for implementation and review only;
-do not merge, deploy or provision hosted resources without owner approval.
-Calendar UI, PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+PR 02 authenticated persistence is merged as GitHub PR #8; hosted activation is unverified.
+PR 03 interactive calendar is authorized for implementation and review only;
+do not merge, deploy manually or provision hosted resources without owner approval.
+PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+See `docs/interactive-calendar.md` for sample/saved-mode boundaries and the staging gate.
 See `docs/shared-domain-models.md` and `docs/2d-launch-sequence.md`.
 
 The coaching backend uses server-only Supabase clients. User-scoped reads use RLS;

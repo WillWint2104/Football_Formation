@@ -34,9 +34,9 @@ const navigation: {
 }[] = [
   {
     label: "Calendar",
-    href: "/team-schedule",
+    href: "/calendar",
+    aliases: ["/team-schedule"],
     icon: CalendarDays,
-    planned: true,
   },
   { label: "Sessions", href: null, icon: ClipboardList, planned: true },
   { label: "Exercise Library", href: null, icon: Library, planned: true },

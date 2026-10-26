@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --conditions=react-server --test tests/domain/*.test.ts tests/persistence/*.test.ts"
+    "test": "tsx --conditions=react-server --test tests/domain/*.test.ts tests/persistence/*.test.ts tests/calendar/*.test.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.11",
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -3,8 +3,10 @@
 PR 00 (dependency security and CI) was approved and merged as GitHub PR #5.
 PR 00A (shared application shell) was approved and merged as GitHub PR #6.
 PR 01 (shared domain models and validation) was approved and merged as GitHub PR #7.
-PR 02 (authenticated persistence) is authorised for implementation and review,
-but not merging or deployment. Each later PR needs its own approval. No manual deployment,
+PR 02 (authenticated persistence) was approved and merged as GitHub PR #8.
+PR 03 (interactive calendar) is authorised for implementation and review,
+but not merging or manual deployment. Hosted Supabase activation requires separate approval.
+Each later PR needs its own approval. No manual deployment,
 paid service or hosted backend provisioning is authorised by the roadmap.
 
 | Milestone | PRs | Deliverable |

@@ -25,6 +25,13 @@
   --color-shell-muted: #b4c3d4;
   --color-shell-accent: #d7b46a;
   --color-shell-active: #26394b;
+  /* Calendar type accents supplement icons and written labels; separate from pitch semantics. */
+  --color-calendar-conditioning: #edc979;
+  --color-calendar-possession: #7cd6e3;
+  --color-calendar-goalkeeper: #adbbff;
+  --color-calendar-tactical: #d4b1ef;
+  --color-calendar-recovery: #a8d3b4;
+  --color-calendar-testing: #f1adba;
   /* Custom font sizes (size + line-height + weight + optional tracking) */
   --text-display-lg: 48px;
   --text-display-lg--line-height: 56px;
