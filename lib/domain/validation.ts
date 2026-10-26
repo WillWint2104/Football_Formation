@@ -201,7 +201,10 @@ export const MAX_DOMAIN_JSON_BYTES = 10 * 1024 * 1024;
 
 /** Validate an untrusted JSON snapshot before any future persistence/import operation. */
 export function parseDomainJson(json: string): DomainBundle {
-  if (new TextEncoder().encode(json).byteLength > MAX_DOMAIN_JSON_BYTES)
+  if (
+    json.length > MAX_DOMAIN_JSON_BYTES ||
+    new TextEncoder().encode(json).byteLength > MAX_DOMAIN_JSON_BYTES
+  )
     throw new Error("Domain JSON exceeds 10 MiB");
   return domainBundleSchema.parse(JSON.parse(json) as unknown);
 }

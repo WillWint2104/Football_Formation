@@ -305,6 +305,11 @@ test("JSON boundary rejects oversized payloads before parsing", () => {
     () => parseDomainJson(" ".repeat(10 * 1024 * 1024 + 1)),
     /exceeds 10 MiB/,
   );
+  // Character count alone is insufficient for a smaller multibyte string.
+  assert.throws(
+    () => parseDomainJson("€".repeat(4 * 1024 * 1024)),
+    /exceeds 10 MiB/,
+  );
 });
 
 test("static scenes support time zero and duplicate nested identities fail validation", () => {
