@@ -2,6 +2,7 @@ import { getPlayers } from "@/lib/data";
 import { FORMATIONS } from "@/lib/formations";
 import LineupBoard from "@/components/lineup/LineupBoardClient";
 
+/** Mounts the existing percentage-based lineup inside the shared application shell. */
 export default async function LineupPage() {
   // Pre-load the roster from data/players.json via the data seam. The result
   // is intentionally unused for now — the squad bar starts empty and is built
@@ -14,7 +15,7 @@ export default async function LineupPage() {
   const formation = FORMATIONS.find((f) => f.id === "442") ?? FORMATIONS[0];
 
   return (
-    <div className="mx-auto max-w-6xl flex flex-col gap-6 px-4 md:px-10">
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div>
         <h1 className="font-display text-headline-md text-on-surface">
           Lineup Builder

@@ -1,53 +1,58 @@
-import { BarChart3, Bell, Search } from "lucide-react";
+"use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { MobileNavigation } from "./Sidebar";
+
+/** Shows route context and available tactics tools without advertising planned tools as links. */
 export function Header() {
+  const pathname = usePathname();
+  const tactics = pathname === "/lineup";
+  const workspace = tactics
+    ? "Tactics"
+    : pathname === "/team-schedule"
+      ? "Calendar"
+      : ["/roster", "/player-profiles"].includes(pathname)
+        ? "Squad"
+        : "Coaching workspace";
   return (
-    <header className="h-header shrink-0 flex items-center gap-6 px-6 border-b border-outline-variant bg-surface-container-lowest">
-      <h1 className="font-display text-headline-md text-on-surface whitespace-nowrap">
-        Command &amp; Control
-      </h1>
-
-      <div className="flex-1 max-w-xl relative">
-        <Search
-          className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
-          aria-hidden="true"
-        />
-        <label className="sr-only" htmlFor="global-search">
-          Search
-        </label>
-        <input
-          id="global-search"
-          type="search"
-          placeholder="Search players, matches…"
-          className="w-full bg-surface-container border border-outline-variant rounded-lg pl-9 pr-3 py-2 text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-secondary"
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="p-2 rounded hover:bg-surface-container-high transition-colors"
-        >
-          <Bell className="size-5 text-on-surface-variant" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          aria-label="Analytics"
-          className="p-2 rounded hover:bg-surface-container-high transition-colors"
-        >
-          <BarChart3
-            className="size-5 text-on-surface-variant"
-            aria-hidden="true"
-          />
-        </button>
-        <div
-          aria-label="User avatar"
-          className="ml-2 size-9 rounded-full bg-primary text-on-primary font-mono text-body-md inline-flex items-center justify-center"
-        >
-          WW
+    <header className="border-b border-shell-edge bg-shell text-shell-text">
+      <div className="flex min-h-header items-center gap-3 px-4 md:px-8">
+        <MobileNavigation />
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-shell-muted">
+            Football Formation
+          </p>
+          <p className="font-display text-headline-md">{workspace}</p>
         </div>
+        <span className="ml-auto hidden rounded border border-shell-edge px-3 py-1 font-mono text-label-caps text-shell-muted sm:inline">
+          2D coaching platform
+        </span>
       </div>
+      {tactics && (
+        <nav
+          aria-label="Tactics workspaces"
+          className="flex flex-wrap items-center gap-1 px-4 md:px-8"
+        >
+          <Link
+            href="/lineup"
+            aria-current="page"
+            className="border-b-2 border-shell-accent px-3 py-3 text-body-md font-semibold text-shell-accent focus-visible:outline-2 focus-visible:outline-shell-accent"
+          >
+            Lineups
+          </Link>
+          {["2D Editor", "2D Presentation"].map((label) => (
+            <span
+              key={label}
+              aria-disabled="true"
+              className="flex items-center gap-2 px-3 py-3 text-body-md text-shell-muted"
+            >
+              {label}
+              <span className="font-mono text-[10px] uppercase">Planned</span>
+            </span>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }

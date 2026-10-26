@@ -17,6 +17,14 @@
 }
 
 @theme {
+  /* Direction A shell; tactical field and position colours stay separate. */
+  --color-shell: #101e30;
+  --color-shell-panel: #192c42;
+  --color-shell-edge: #3b5068;
+  --color-shell-text: #edf3fa;
+  --color-shell-muted: #b4c3d4;
+  --color-shell-accent: #d7b46a;
+  --color-shell-active: #26394b;
   /* Custom font sizes (size + line-height + weight + optional tracking) */
   --text-display-lg: 48px;
   --text-display-lg--line-height: 56px;
@@ -134,7 +142,7 @@
   --color-destructive-foreground: var(--color-on-error);
 
   /* Spacing tokens used by layout chrome */
-  --spacing-sidebar: 280px;
+  --spacing-sidebar: 240px;
   --spacing-header: 72px;
 
   /* Border radius */
@@ -155,4 +163,11 @@
   body {
     @apply bg-background text-on-background font-sans;
   }
+}
+
+/* Project-owned shell control variant. Keep vendor UI primitives and tactical
+ * entity tokens unchanged; body scope includes portalled dialogs and drawers. */
+.application-shell [data-slot="button"] {
+  --color-primary: var(--color-shell-accent);
+  --color-primary-foreground: var(--color-shell);
 }

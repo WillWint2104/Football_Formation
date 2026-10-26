@@ -20,10 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lineup App",
-  description: "Football team management and tactical lineup builder",
+  title: "Football Formation",
+  description:
+    "Football Formation coaching workspace and tactical lineup builder",
 };
 
+/** Shares the application shell while keeping page content a keyboard skip target. */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,11 +36,23 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${hanken.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex bg-background text-on-background font-sans">
+      <body className="application-shell min-h-screen flex bg-background text-on-background font-sans">
+        <a
+          href="#main-content"
+          className="fixed top-2 left-2 z-50 -translate-y-20 rounded bg-primary px-4 py-2 text-on-primary focus:translate-y-0"
+        >
+          Skip to content
+        </a>
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <Header />
-          <main className="flex-1 overflow-auto p-4 md:p-10">{children}</main>
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-screen-2xl flex-1 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-shell-accent md:p-6 xl:p-8"
+          >
+            {children}
+          </main>
         </div>
       </body>
     </html>

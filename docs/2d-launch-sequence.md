@@ -1,12 +1,13 @@
 # 2D-first implementation sequence
 
-Only PR 00 (dependency security and CI) is currently authorised for implementation.
-Each later PR needs its own approval. No merge, deployment, paid service or hosted
-backend provisioning is authorised by the roadmap.
+PR 00 (dependency security and CI) was approved and merged as GitHub PR #5.
+PR 00A (shared application shell) is authorised for implementation and review,
+but not merging. Each later PR needs its own approval. No manual deployment,
+paid service or hosted backend provisioning is authorised by the roadmap.
 
 | Milestone | PRs | Deliverable |
 | --- | --- | --- |
-| A — Working coaching planner | 00–05 | Security/CI, shared models, authentication/persistence, calendar, independent sessions, coaches, templates and private PDF attachments |
+| A — Working coaching planner | 00, 00A, 01–05 | Security/CI, shared shell, shared models, authentication/persistence, calendar, independent sessions, coaches, templates and private PDF attachments |
 | B — Diagrams and coaching documents | 06–07, 09 | Shared static 2D renderer, adaptive framing, saved diagram editing and illustrated multi-page PDFs |
 | C — Animation and launch readiness | 08, 10–11 | Staged animations, fullscreen presentation, integration and release verification |
 
