@@ -35,7 +35,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${hanken.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex bg-background text-on-background font-sans">
+      <body className="application-shell min-h-screen flex bg-background text-on-background font-sans">
         <a
           href="#main-content"
           className="fixed top-2 left-2 z-50 -translate-y-20 rounded bg-primary px-4 py-2 text-on-primary focus:translate-y-0"

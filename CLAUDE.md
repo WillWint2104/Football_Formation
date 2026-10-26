@@ -47,7 +47,7 @@ Use Tailwind classes: `font-display`, `font-sans`, `font-mono`.
 
 - 4px baseline grid. Use Tailwind's default scale (`p-2` = 8px, `p-4` = 16px, `p-6` = 24px).
 - Default rounding is 4px (`rounded`). Player avatars are always `rounded-full`. Larger containers use `rounded-lg` (8px).
-- Sidebar width: fixed 280px on desktop.
+- Sidebar width: fixed 240px on desktop.
 - Page margin: 40px desktop, 16px mobile.
 
 ### Component patterns

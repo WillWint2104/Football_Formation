@@ -220,10 +220,7 @@ export function LineupBoard({ formation }: LineupBoardProps) {
             <Button variant="default" size="sm" onClick={handlePresent}>
               <PlayCircle />
               <span>Present</span>
-              <span
-                aria-hidden="true"
-                className="text-[10px] uppercase opacity-80"
-              >
+              <span className="text-[10px] uppercase opacity-80">
                 Planned
               </span>
             </Button>

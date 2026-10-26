@@ -164,3 +164,10 @@
     @apply bg-background text-on-background font-sans;
   }
 }
+
+/* Project-owned shell control variant. Keep vendor UI primitives and tactical
+ * entity tokens unchanged; body scope includes portalled dialogs and drawers. */
+.application-shell [data-slot="button"] {
+  --color-primary: var(--color-shell-accent);
+  --color-primary-foreground: var(--color-shell);
+}

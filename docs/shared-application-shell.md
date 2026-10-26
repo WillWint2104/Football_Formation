@@ -8,8 +8,11 @@ it does not implement the planned coaching workspaces or rewrite the lineup.
 V008 Direction A supplies the shell palette: navy `shell`, panel and edge layers,
 light text, muted labels and a gold accent. These values live in the existing
 Tailwind v4 theme, not in individual components. Primary shared buttons use the
-gold accent with navy text; their action handlers and primitive behaviour remain
-unchanged. Hanken Grotesk, Inter and the existing monospace labels are retained.
+gold accent with navy text through a project-owned `.application-shell` control
+variant in globals.css. It scopes primary tokens to the primitive's public
+`data-slot="button"` boundary, including portalled controls. Vendor primitives,
+action handlers and tactical entity tokens remain unchanged. Hanken Grotesk,
+Inter and the existing monospace labels are retained.
 
 The tactical authoring surface stays light. Existing pitch imagery, cyan field
 guides, position colours and selection glow remain untouched. The original
