@@ -97,9 +97,11 @@ but defer additional tablet/mobile optimization and testing. PR #6 shared shell
 is merged. PR 01 shared models/schema validation is merged as GitHub PR #7.
 PR 02 authenticated persistence is merged as GitHub PR #8; hosted activation is unverified.
 PR 03 interactive calendar is merged as GitHub PR #9.
-PR 04 session library, coaches and templates is authorized for implementation and review only;
+PR 04 session library, coaches and templates is merged as GitHub PR #10.
+PR 05 coaching guides/private documents is authorized for implementation and review only;
 do not merge, deploy manually or provision hosted resources without owner approval.
-PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+Illustrated PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+See `docs/coaching-guides-private-documents.md` for exact guides, private storage and staging.
 See `docs/interactive-calendar.md` for sample/saved-mode boundaries and the staging gate.
 See `docs/session-library.md` for authoring, independent reuse and shared snapshot behaviour.
 See `docs/shared-domain-models.md` and `docs/2d-launch-sequence.md`.

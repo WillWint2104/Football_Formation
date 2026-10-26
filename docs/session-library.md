@@ -40,7 +40,8 @@ read-only. Missing or malformed explicit revisions are never silently replaced.
 Existing diagram references and uploaded-document metadata remain pinned.
 Generated guide metadata stays attached to its original historical snapshot and
 is not silently relabelled as a guide for a newly edited session. There is no file
-upload, guide/PDF export or diagram authoring in this PR.
+upload, guide/PDF export or diagram authoring in PR 04. PR 05 adds exact web guides
+and private PDF attachments; illustrated PDF generation and diagrams remain later.
 
 ## Coach directory
 

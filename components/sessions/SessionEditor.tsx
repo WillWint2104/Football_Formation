@@ -9,6 +9,7 @@ import { activityTotals, reviseSession, reviseTemplate } from "@/lib/coaching/se
 import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { useUnsavedChanges } from "@/components/coaching/useUnsavedChanges";
 import { SessionContentFields } from "./SessionContentFields";
+import { guideHref } from "@/lib/documents/contracts";
 
 /** Edit a local draft and publish one immutable version, advancing only the selected booking. */
 export function SessionEditor({ source, event, historical, isNew, navigating, onSaved, onTemplate }: {
@@ -31,6 +32,7 @@ export function SessionEditor({ source, event, historical, isNew, navigating, on
   }}>
     <div className="coaching-section-heading"><div><p className="calendar-eyebrow">{isNew ? "New independent session" : `Session revision ${source.revision}`}</p><h2>{source.content.title}</h2></div>
       {event && <Link href={`/calendar?date=${event.localDate}&event=${encodeURIComponent(event.id)}`}>Back to booking</Link>}</div>
+    {!isNew && <Link href={guideHref({ session: source.id, revision: source.revision, ...(event ? { event: event.id, bookingRevision: event.revision } : {}) })}>Open saved coaching guide →</Link>}
     {!event && !isNew && !historical && !dirty && <Link href={`/calendar?plan=${encodeURIComponent(source.id)}`}>Schedule this saved session →</Link>}
     {historical && <p className="coaching-notice">Historical snapshot · read only. Open the current booking/session to make a new edit.</p>}
     <p className="calendar-muted">{dirty ? "Unsaved changes" : "No unsaved changes"} · {mode === "sample" ? "Sample only; not durable storage" : `Organisation snapshot v${base.version}`}</p>

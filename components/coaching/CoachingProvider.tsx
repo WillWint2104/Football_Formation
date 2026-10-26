@@ -12,13 +12,14 @@ type Workspace = {
   dirty: boolean; markDirty: (dirty: boolean) => void;
   reload: (organization?: string) => Promise<void>;
   commit: (base: CalendarSnapshot, bundle: DomainBundle) => Promise<void>;
+  externalSave: (base: CalendarSnapshot, operation: () => Promise<void>) => Promise<void>;
 };
 const Context = createContext<Workspace | null>(null);
 
 /** Keep one validated graph across coaching routes; sample memory is never a persistence substitute. */
 export function CoachingProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const active = ["/calendar", "/sessions", "/templates", "/exercises", "/coaches"].some((p) => pathname === p);
+  const active = ["/calendar", "/sessions", "/templates", "/exercises", "/coaches", "/guides"].some((p) => pathname === p);
   const [snapshot, setSnapshot] = useState<CalendarSnapshot>(() => ({ version: 0, bundle: coachingSample() }));
   const [mode, setMode] = useState<"sample" | "saved">("sample");
   const [scope, setScope] = useState(0);
@@ -106,7 +107,24 @@ export function CoachingProvider({ children }: { children: ReactNode }) {
       throw error;
     } finally { lock.current = false; setBusy(false); }
   }
-  return <Context.Provider value={{ snapshot, mode, scope, loading, busy, blocked, message, organizations, organization, dirty, markDirty, reload, commit }}>{children}</Context.Provider>;
+  /** Serialize server-side attachment saves with ordinary edits, then read back the validated graph. */
+  async function externalSave(base: CalendarSnapshot, operation: () => Promise<void>) {
+    if (mode !== "saved" || loading || blocked || lock.current || base !== current.current) throw new Error("Reload saved records before uploading");
+    lock.current = true; setBusy(true);
+    try {
+      await operation();
+      const loaded = await loadCalendar(base.bundle.organizationId);
+      if (loaded.version <= base.version) throw new Error("Attachment readback did not advance; reload saved records");
+      replace(loaded); setMessage(`Loaded saved organisation snapshot v${loaded.version}.`);
+    } catch (error) {
+      setBlocked(true); setMessage("Attachment save could not be confirmed. Reload saved records before retrying.");
+      if (error instanceof CalendarApiError && [401, 404].includes(error.status)) {
+        replace({ version: 0, bundle: coachingSample() }); setMode("sample"); setScope((s) => s + 1);
+      }
+      throw error;
+    } finally { lock.current = false; setBusy(false); }
+  }
+  return <Context.Provider value={{ snapshot, mode, scope, loading, busy, blocked, message, organizations, organization, dirty, markDirty, reload, commit, externalSave }}>{children}</Context.Provider>;
 }
 
 /** Consume the shared authenticated/sample workspace without exposing server credentials. */
