@@ -232,6 +232,7 @@ test("missing and historical revisions are never silently edited as the current 
   await page.getByLabel("Session objective").fill("New exact revision");
   await page.getByRole("button", { name: "Save session", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v5");
+  await expect(page).toHaveURL(/event=sample-4&revision=2/);
   await page.getByText("Saved revision history", { exact: true }).click();
   await page.getByRole("link", { name: "Booking v1 · session v1", exact: true }).click();
   await expect(page.getByLabel("Session objective")).toBeDisabled();
