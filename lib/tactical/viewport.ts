@@ -56,6 +56,16 @@ export function fitViewport(input: unknown, options: { width: number; height: nu
   else if (options.fit === "exercise" && options.exerciseArea) target = areaBounds(options.exerciseArea);
   else if (options.fit === "exercise" || options.fit === "all") target = contentBounds(scene, options.exerciseArea);
   else throw new RangeError("Unsupported fit mode");
+  // A football context fits the actual goal depth too, rather than assuming pixel padding is sufficient at every zoom.
+  if (scene.context?.kind === "pitch" && ["context", "exercise", "pitch"].includes(options.fit)) {
+    for (const right of [false, true]) {
+      const anchor = { x: right ? scene.field.length : 0, y: scene.field.width / 2 };
+      if (anchor.x < target.minX || anchor.x > target.maxX || anchor.y < target.minY || anchor.y > target.maxY) continue;
+      for (const point of equipmentFootprint({ id: "framing-goal", kind: "equipment", equipment: "goal", position: anchor, headingDegrees: right ? 180 : 0 })) {
+        target.minX = Math.min(target.minX, point.x); target.maxX = Math.max(target.maxX, point.x); target.minY = Math.min(target.minY, point.y); target.maxY = Math.max(target.maxY, point.y);
+      }
+    }
+  }
   const padding = options.padding ?? Math.min(42, Math.min(width, height) / 4);
   if (!Number.isFinite(padding) || padding < 8 || padding > Math.min(width, height) / 3) throw new RangeError("Invalid viewport padding");
   const zoom = options.camera?.zoom ?? 1;

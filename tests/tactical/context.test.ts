@@ -4,12 +4,27 @@ import { tacticalSceneSchema } from "../../lib/domain/tactical-scene";
 import { tacticalExamples } from "../../lib/tactical/examples";
 import { editorExamples, translateScene } from "../../lib/tactical/editor-examples";
 import { contextArea, deliveryLocation } from "../../lib/tactical/context";
-import { fitViewport, worldToScreen, screenToWorld, screenRectangle } from "../../lib/tactical/viewport";
+import { fitViewport, worldToScreen, screenToWorld, screenRectangle, equipmentFootprint } from "../../lib/tactical/viewport";
 import { drawScene, serializeDrawing } from "../../lib/tactical/drawing";
 
 test("legacy records remain byte-equivalent without default-injected context or colors", () => {
   for (const e of tacticalExamples) assert.equal(JSON.stringify(tacticalSceneSchema.parse(e.scene)), JSON.stringify(e.scene));
   assert.equal(tacticalExamples[0].scene.context, undefined);
+});
+test("context fitting includes physical goal depth at every camera quarter turn and desktop size", () => {
+  for (const { scene } of editorExamples.filter((e) => e.scene.context?.kind === "pitch")) {
+    const area = contextArea(scene);
+    for (const [width, height] of [[1324, 614], [796, 304]]) for (const rotation of [0, 90, 180, 270] as const) {
+      const view = fitViewport(scene, { width, height, fit: "context", rotation, padding: 24 });
+      for (const right of [false, true]) {
+        const anchor = { x: right ? scene.field.length : 0, y: scene.field.width / 2 };
+        if (anchor.x < area.origin.x || anchor.x > area.origin.x + area.length || anchor.y < area.origin.y || anchor.y > area.origin.y + area.width) continue;
+        for (const world of equipmentFootprint({ id: "goal", kind: "equipment", equipment: "goal", position: anchor, headingDegrees: right ? 180 : 0 })) {
+          const point = worldToScreen(world, view); assert.ok(point.x >= 24 - 1e-7 && point.x <= width - 24 + 1e-7 && point.y >= 24 - 1e-7 && point.y <= height - 24 + 1e-7);
+        }
+      }
+    }
+  }
 });
 test("nine context fixtures use the unchanged versioned scene envelope and correct neutral modes", () => {
   assert.equal(editorExamples.length, 9);
