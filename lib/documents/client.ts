@@ -2,6 +2,30 @@ import { z } from "zod";
 import { CalendarApiError, type CalendarSnapshot } from "../calendar/client";
 import { idSchema, revisionRefSchema } from "../domain/common";
 import { documentEndpoint, MAX_PDF_BYTES, pdfFilenameSchema, type GuideReference } from "./contracts";
+import { exportAcknowledgement, exportEndpoint } from "./export-contracts";
+
+/** Preserve status identity so revoked access clears private drafts through the shared provider. */
+export class GuideExportApiError extends CalendarApiError {
+  constructor(status: number) {
+    super(status);
+    this.message = status === 409 ? "Saved information changed. Reload before exporting."
+      : status === 413 ? "This guide exceeds the export size or complexity limit. Split it into smaller saved sessions."
+      : status === 400 ? "The exact guide could not be exported. Check its saved reference, diagram framing and supported text characters."
+      : status === 401 ? "Sign in again, then reload saved records." : status === 404 ? "This saved guide is unavailable."
+      : "Export could not be confirmed. Reload before trying again.";
+  }
+}
+
+/** Export one exact saved guide; a failed or uncertain POST is never retried automatically. */
+export async function generateGuidePdf(base: CalendarSnapshot, reference: GuideReference) {
+  const headers: Record<string, string> = { "x-expected-version": String(base.version) };
+  if (reference.event) { headers["x-booking-id"] = reference.event; headers["x-booking-revision"] = String(reference.bookingRevision); }
+  const response = await fetch(exportEndpoint(base.bundle.organizationId, reference), { method: "POST", headers, credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(60_000) });
+  if (!response.ok) throw new GuideExportApiError(response.status);
+  const result = exportAcknowledgement.parse(await response.json());
+  if (result.version !== base.version + 1) throw new Error("Unexpected export acknowledgement. Reload before trying again.");
+  return result;
+}
 
 const acknowledgement = z.strictObject({ version: z.number().int().positive(), session: revisionRefSchema, event: revisionRefSchema.nullable() });
 

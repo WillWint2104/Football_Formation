@@ -29,9 +29,11 @@ export async function handleDocument(request: Request, route: DocumentRoute, ori
     if (!session) throw new PersistenceError(404, "Session revision unavailable");
     if (request.method === "GET") {
       const id = idSchema.parse(route.documentId), docRevision = revisionSchema.parse(integer(route.documentRevision ?? null));
-      if (!session.documents.some((d) => d.id === id && d.revision === docRevision)) throw new PersistenceError(404, "Document unavailable");
       const doc = saved.bundle.documents.find((d) => d.id === id && d.revision === docRevision);
-      if (!doc || doc.state !== "ready" || doc.source.kind !== "upload" || doc.mimeType !== "application/pdf") throw new PersistenceError(404, "Document unavailable");
+      if (!doc || doc.state !== "ready" || doc.mimeType !== "application/pdf") throw new PersistenceError(404, "Document unavailable");
+      const allowed = doc.source.kind === "upload" ? session.documents.some((d) => d.id === id && d.revision === docRevision)
+        : doc.source.session.id === sessionId && doc.source.session.revision === revision;
+      if (!allowed) throw new PersistenceError(404, "Document unavailable");
       const files = documents(); const record = await files.get(organization, id, docRevision);
       if (record.organization_id !== organization || record.id !== id || record.revision !== docRevision || doc.storageKey !== `attachment-${id}` || doc.filename !== record.filename || doc.byteLength !== record.byte_length)
         throw new PersistenceError(404, "Document unavailable");

@@ -48,6 +48,7 @@ test("calendar opens its pinned session; coaching edits, activity order and null
   expect(session.content.activities[1].content.playerCount).toBe(10);
   expect(session.content.activities[1].durationMinutes).toBeNull();
   expect(session.coaches.find((c) => c.coachId === "coach-lopez")?.role).toBe("specialist");
+  await expect(page).toHaveURL(new RegExp(`event=${booking.id}&revision=${booking.revision}`));
   await page.reload(); await loaded(page);
   await expect(editor.getByLabel("Session objective")).toHaveValue("Progress through pressure with clear support angles.");
   await editor.getByRole("link", { name: "Back to booking" }).click();
