@@ -10,10 +10,11 @@ test("export client sends exact saved pins and optimistic version without conten
     calls++; assert.match(String(input), new RegExp(`/sessions/${reference.session}/1/exports$`));
     assert.equal(init?.method, "POST"); assert.equal(init?.credentials, "same-origin"); assert.equal(init?.body, undefined);
     const headers = new Headers(init?.headers); assert.equal(headers.get("x-expected-version"), "7"); assert.equal(headers.get("x-booking-id"), reference.event); assert.equal(headers.get("x-booking-revision"), "1");
+    assert.equal(headers.get("x-guide-template"), "extended-pack"); assert.equal(headers.get("x-guide-cover"), "true");
     assert.equal(headers.get("authorization"), null); assert.ok(init?.signal);
     return Response.json({ version: 8, document: { id: "new-export", revision: 1, filename: "session.pdf" } });
   });
-  assert.equal((await generateGuidePdf({ bundle, version: 7 }, reference)).document.id, "new-export"); assert.equal(calls, 1);
+  assert.equal((await generateGuidePdf({ bundle, version: 7 }, reference, { template: "extended-pack", cover: true })).document.id, "new-export"); assert.equal(calls, 1);
 });
 
 test("export errors retain revoked-access status for the shared provider and never retry uncertain writes", async (context) => {

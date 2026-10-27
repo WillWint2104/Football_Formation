@@ -4,6 +4,7 @@ import { z } from "zod";
 import { documentSchema } from "../domain/document";
 import { idSchema, revisionSchema } from "../domain/common";
 import { guideReferenceSchema } from "../documents/contracts";
+import { documentOptionsSchema } from "../documents/design-contracts";
 import { decodeSavedSnapshot, versionSchema } from "./repositories/coaching";
 import { errorResponse } from "./persistence-http";
 import { PersistenceError } from "./errors";
@@ -29,7 +30,10 @@ export async function handleGuideExport(request: Request, route: DocumentRoute, 
     const reference = guideReferenceSchema.parse({ session: sessionId, revision, ...(event ? { event, bookingRevision: integer(booking) } : {}) });
     const { actor, store, documents } = await authenticate(), saved = decodeSavedSnapshot(await store.load(organization), organization);
     if (saved.version !== expected) throw new PersistenceError(409, "Saved information changed; reload before exporting");
-    const generated = await createGuidePdf(saved.bundle, reference);
+    const cover = request.headers.get("x-guide-cover");
+    if (cover !== null && !["true", "false"].includes(cover)) throw new PersistenceError(400, "Invalid document cover option");
+    const options = documentOptionsSchema.parse({ template: request.headers.get("x-guide-template") ?? "auto", cover: cover === "true" });
+    const generated = await createGuidePdf(saved.bundle, reference, options);
     await validatePdf(generated.filename, generated.bytes);
     const id = randomUUID(), scenePins = [...new Map(generated.manifest.diagrams.map((diagram) => [`${diagram.scene.id}:${diagram.scene.revision}`, diagram.scene])).values()];
     const document = documentSchema.parse({ schemaVersion: "1.0", organizationId: organization, id, revision: 1, filename: generated.filename,

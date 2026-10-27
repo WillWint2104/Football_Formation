@@ -2,7 +2,7 @@ import { z } from "zod";
 import { idSchema, revisionSchema } from "../domain/common";
 import { documentEndpoint, pdfFilenameSchema, type GuideReference } from "./contracts";
 
-export const GUIDE_EXPORT_VERSION = "guide-pdf/1.0.0";
+export const GUIDE_EXPORT_VERSION = "guide-pdf/1.1.0";
 export const exportAcknowledgement = z.strictObject({ version: z.number().int().positive(),
   document: z.strictObject({ id: idSchema, revision: revisionSchema, filename: pdfFilenameSchema }) });
 

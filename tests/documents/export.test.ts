@@ -10,6 +10,8 @@ import { domainBundleSchema } from "../../lib/domain/validation";
 import type { ObjectRecord, DocumentStore } from "../../lib/server/repositories/documents";
 import type { CoachingStore } from "../../lib/server/repositories/coaching";
 import { exportCases, exportFixture } from "./export-fixtures";
+import { syntheticDocumentBrand } from "./brand-fixtures";
+import { exportBookingLabel } from "../../lib/documents/design-contracts";
 
 for (const entry of exportCases) test(`illustrated PDF: exact ${entry.id} guide produces passive A4 pages with source provenance`, async () => {
   const { bundle, reference } = exportFixture(entry.id), before = structuredClone(bundle), generated = await createGuidePdf(bundle, reference);
@@ -19,9 +21,47 @@ for (const entry of exportCases) test(`illustrated PDF: exact ${entry.id} guide 
   assert.ok(pdf.getPages().every((page) => Math.abs(page.getWidth() - 595.28) < .1 && Math.abs(page.getHeight() - 841.89) < .1));
   assert.ok(generated.pageCount >= (entry.id === "long-session" ? 3 : 1)); assert.ok(generated.bytes.length < 3 * 1024 * 1024);
   if (entry.id === "long-session") assert.ok(generated.pageCount <= 12, "short coaching notes must not create a separate mostly-empty page per activity");
+  if (entry.id === "possession") assert.equal(generated.pageCount, 1, "a short illustrated practice must not get a separate overview page");
   if (entry.id === "no-diagrams") assert.equal(manifest.diagrams.length, 0);
   if (entry.id === "historical") assert.equal(manifest.diagrams[0].seconds, 5);
   assert.deepEqual(bundle, before);
+});
+
+test("shared document templates retain source pins, bounded synthetic marks and explicit cover selection", async () => {
+  const { bundle, reference } = exportFixture("possession"), brand = await syntheticDocumentBrand(bundle.organizationId), before = structuredClone(bundle);
+  const sheet = await createGuidePdf(bundle, reference, { template: "single-activity" }, brand);
+  const cover = await createGuidePdf(bundle, reference, { template: "extended-pack", cover: true }, brand);
+  assert.equal(sheet.manifest.design.template, "single-activity"); assert.equal(sheet.pageCount, 1);
+  assert.equal(cover.manifest.design.cover, true); assert.ok(cover.pageCount > sheet.pageCount);
+  assert.deepEqual(sheet.manifest.diagrams, cover.manifest.diagrams); assert.deepEqual(bundle, before);
+  assert.equal((await PDFDocument.load(sheet.bytes)).getAuthor(), "SYNTHETIC REVIEW FC");
+  assert.ok(!JSON.stringify(sheet.manifest).includes('"bytes"')); assert.match(JSON.stringify(sheet.manifest), /crestSHA256/);
+  await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, organizationId: "other-club" }), /branding unavailable/);
+  await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, primaryColour: "#ffffff" }), /contrast/);
+  await assert.rejects(createGuidePdf(bundle, reference, { template: "single-activity", cover: true }), /dedicated cover/);
+  const multi = exportFixture("session-guide");
+  await assert.rejects(createGuidePdf(multi.bundle, multi.reference, { template: "single-activity" }), /at most one/);
+});
+
+test("club marks cannot fetch URLs or embed SVG, animated, oversized or mismatched raster payloads", async () => {
+  const { bundle, reference } = exportFixture("possession"), brand = await syntheticDocumentBrand(bundle.organizationId);
+  await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, crest: { ...brand.crest!, bytes: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"/>') } }), /single-frame/);
+  await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, crest: { ...brand.crest!, format: "jpeg" } }), /single-frame/);
+  await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, crest: { ...brand.crest!, bytes: new Uint8Array(256 * 1024 + 1) } }), /256 KiB/);
+  await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, url: "https://other.example/crest.png" } as typeof brand), /Unrecognized key/);
+});
+
+test("new export filenames distinguish original booking dates and revisions while legacy provenance stays unverified", async () => {
+  const { bundle, reference } = exportFixture("possession"), first = await createGuidePdf(bundle, reference);
+  assert.match(exportBookingLabel(first.filename), /Original booking 2026-11-03.*revision 1/);
+  const old = structuredClone(bundle.events.find((e) => e.id === reference.event)!);
+  if (old.kind !== "training" && old.kind !== "testing") throw new Error("Expected session booking");
+  old.revision = 2; old.venue = "New training venue"; bundle.events.push(old);
+  const later = await createGuidePdf(bundle, { ...reference, bookingRevision: 2 });
+  assert.match(exportBookingLabel(later.filename), /revision 2/); assert.notEqual(later.filename, first.filename);
+  assert.deepEqual(first.manifest.booking, { id: reference.event, revision: 1 });
+  assert.match(exportBookingLabel("football-session-old-r1.pdf"), /unverified/);
+  assert.match(exportBookingLabel((await createGuidePdf(bundle, { session: reference.session, revision: 1 })).filename), /no booking/);
 });
 
 /** In-memory journal contracts exercise the real generator/handlers; no hosted service is represented. */
@@ -66,6 +106,8 @@ test("export auth, origin, organization, exact pins and stale version failures c
     assert.equal((await handleGuideExport(f.request(headers), route, "https://football.example", f.authenticate)).status, status);
   const body = new Request("https://football.example/export", { method: "POST", headers: { Origin: "https://football.example" }, body: "forged content" });
   assert.equal((await handleGuideExport(body, f.route, "https://football.example", f.authenticate)).status, 400);
+  for (const headers of [{ "x-guide-template": "remote-template" }, { "x-guide-cover": "yes" }, { "x-guide-template": "single-activity", "x-guide-cover": "true" }] as Record<string, string>[])
+    assert.equal((await handleGuideExport(f.request(headers), f.route, "https://football.example", f.authenticate)).status, 400);
   assert.deepEqual(f.counts(), { writes: 0, puts: 0, registrations: 0 });
 });
 

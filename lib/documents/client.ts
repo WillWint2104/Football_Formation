@@ -3,6 +3,7 @@ import { CalendarApiError, type CalendarSnapshot } from "../calendar/client";
 import { idSchema, revisionRefSchema } from "../domain/common";
 import { documentEndpoint, MAX_PDF_BYTES, pdfFilenameSchema, type GuideReference } from "./contracts";
 import { exportAcknowledgement, exportEndpoint } from "./export-contracts";
+import { documentOptionsSchema, type DocumentOptions } from "./design-contracts";
 
 /** Preserve status identity so revoked access clears private drafts through the shared provider. */
 export class GuideExportApiError extends CalendarApiError {
@@ -17,8 +18,9 @@ export class GuideExportApiError extends CalendarApiError {
 }
 
 /** Export one exact saved guide; a failed or uncertain POST is never retried automatically. */
-export async function generateGuidePdf(base: CalendarSnapshot, reference: GuideReference) {
-  const headers: Record<string, string> = { "x-expected-version": String(base.version) };
+export async function generateGuidePdf(base: CalendarSnapshot, reference: GuideReference, options: DocumentOptions = {}) {
+  const design = documentOptionsSchema.parse(options);
+  const headers: Record<string, string> = { "x-expected-version": String(base.version), "x-guide-template": design.template, "x-guide-cover": String(design.cover) };
   if (reference.event) { headers["x-booking-id"] = reference.event; headers["x-booking-revision"] = String(reference.bookingRevision); }
   const response = await fetch(exportEndpoint(base.bundle.organizationId, reference), { method: "POST", headers, credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(60_000) });
   if (!response.ok) throw new GuideExportApiError(response.status);

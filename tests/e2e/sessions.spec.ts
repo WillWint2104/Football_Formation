@@ -118,6 +118,7 @@ test("reusable exercises, testing sessions and optional warm-up/cool-down roles 
   await page.getByRole("button", { name: "Save session", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v6");
   const session = mock.bundle().sessions.at(-1)!;
+  await expect(page).toHaveURL(new RegExp(`/sessions\\?session=${session.id}$`));
   expect(session.content.kind).toBe("testing");
   expect(session.content.activities[0].sourceExercise).toEqual({ id: exercise.id, revision: 1 });
   expect(session.content.activities[0].content.equipment[0].quantity).toBeNull();

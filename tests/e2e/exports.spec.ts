@@ -31,6 +31,8 @@ async function storage(page: Page, failure = false) {
     ({ bundle, version, records, blobs } = reply); await route.fulfill({ status: reply.status, headers: reply.headers, body: Buffer.from(reply.body, "base64") });
   });
   return { reference: initial.reference, original: structuredClone(bundle), bundle: () => bundle, posts: () => posts,
+    reschedule: () => { const booking = structuredClone(bundle.events.find((event) => event.id === initial.reference.event)!); booking.revision = 2; booking.localDate = "2026-11-04";
+      if (booking.startsAt) booking.startsAt = new Date(Date.parse(booking.startsAt) + 86_400_000).toISOString().replace(".000Z", "Z"); if (booking.endsAt) booking.endsAt = new Date(Date.parse(booking.endsAt) + 86_400_000).toISOString().replace(".000Z", "Z"); bundle.events.push(booking); version++; },
     later: () => { const session = bundle.sessions.find((s) => s.id === initial.reference.session)!; bundle.sessions.push({ ...structuredClone(session), revision: 2, content: { ...structuredClone(session.content), title: "Later changed coaching plan" } });
       const booking = bundle.events.find((e) => e.id === initial.reference.event)!; if (booking.kind === "training" || booking.kind === "testing") bundle.events.push({ ...structuredClone(booking), revision: 2, session: { id: session.id, revision: 2 } }); version++; } };
 }
@@ -43,16 +45,29 @@ test("generate a real private illustrated PDF, reopen it and download the histor
   await page.goto(guideHref(mock.reference)); await loaded(page);
   await page.getByRole("button", { name: "Generate illustrated PDF", exact: true }).click();
   const downloadButton = page.getByRole("button", { name: "Download illustrated PDF 1", exact: true }); await expect(downloadButton).toBeEnabled();
+  await expect(page.getByText(/Original booking 2026-11-03 · booking revision 1/)).toBeVisible();
   expect(mock.posts()).toBe(1); expect(mock.bundle().sessions).toEqual(mock.original.sessions); expect(mock.bundle().events).toEqual(mock.original.events);
   expect(mock.bundle().templates).toEqual(mock.original.templates); expect(mock.bundle().scenes).toEqual(mock.original.scenes);
   await page.getByRole("heading", { name: "Illustrated coaching PDF", exact: true }).scrollIntoViewIfNeeded(); await page.screenshot({ path: info.outputPath("illustrated-export.png"), fullPage: false });
   mock.later(); await page.reload(); await loaded(page); await expect(page.getByText(/Historical snapshot or session viewed/)).toBeVisible();
   const [download] = await Promise.all([page.waitForEvent("download"), downloadButton.click()]);
   const bytes = await readFile((await download.path())!), pdf = await PDFDocument.load(bytes);
-  expect(pdf.getTitle()).toBe("Rondos & Positional Play"); expect(JSON.parse(pdf.getSubject()!).session.revision).toBe(1);
+  expect(pdf.getTitle()).toBe("Rondos & Positional Play"); expect(JSON.parse(pdf.getSubject()!).session.revision).toBe(1); expect(pdf.getPageCount()).toBe(1);
   expect(mock.posts()).toBe(1); expect(errors).toEqual([]);
-  await page.getByRole("button", { name: "Generate illustrated PDF", exact: true }).click(); await expect(page.getByRole("button", { name: "Download illustrated PDF 2", exact: true })).toBeEnabled();
+  await page.getByLabel("Document layout").selectOption("extended-pack"); await page.getByLabel("Include dedicated cover").check();
+  await page.getByRole("button", { name: "Generate illustrated PDF", exact: true }).click(); const second = page.getByRole("button", { name: "Download illustrated PDF 2", exact: true }); await expect(second).toBeEnabled();
+  const [packDownload] = await Promise.all([page.waitForEvent("download"), second.click()]);
+  const pack = await PDFDocument.load(await readFile((await packDownload.path())!)); expect(JSON.parse(pack.getSubject()!).design).toMatchObject({ template: "extended-pack", cover: true }); expect(pack.getPageCount()).toBe(2);
   expect(mock.posts()).toBe(2);
+});
+
+test("rescheduling preserves and labels each export's original booking revision", async ({ page }) => {
+  const mock = await storage(page); await page.goto(guideHref(mock.reference)); await loaded(page);
+  await page.getByRole("button", { name: "Generate illustrated PDF", exact: true }).click(); await expect(page.getByRole("button", { name: "Download illustrated PDF 1", exact: true })).toBeEnabled();
+  mock.reschedule(); await page.goto(guideHref({ ...mock.reference, bookingRevision: 2 })); await loaded(page);
+  await expect(page.getByText(/Original booking 2026-11-03 · booking revision 1/)).toBeVisible();
+  await page.getByRole("button", { name: "Generate illustrated PDF", exact: true }).click(); await expect(page.getByRole("button", { name: "Download illustrated PDF 2", exact: true })).toBeEnabled();
+  await expect(page.getByText(/Original booking 2026-11-04 · booking revision 2/)).toBeVisible(); expect(mock.posts()).toBe(2);
 });
 
 test("an uncertain export blocks repeat writes until explicit reload and never claims success", async ({ page }) => {
