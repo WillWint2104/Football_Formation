@@ -28,17 +28,23 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   const live = useRef({ scene, fit, camera, rotation, focus });
   useEffect(() => { live.current = { scene, fit, camera, rotation, focus }; }, [scene, fit, camera, rotation, focus]);
   useEffect(() => { onDirty(JSON.stringify(scene) !== JSON.stringify(initial)); }, [scene, initial, onDirty]);
+  /** Validate and commit one undoable edit; rejected geometry leaves the last valid scene intact. */
   const edit = (next: TacticalScene, before?: TacticalScene) => {
     try { const valid = prepareScene(next); setHistory((h) => recordEdit(h, valid, before)); setMessage("Diagram updated · geometry retained in metres."); }
     catch { setMessage("Change rejected. Check dimensions, required text, player number (1–99), facing (0–359°) and coordinate limits."); }
   };
+  /** Clone the draft before a property mutation so history and source revisions stay immutable. */
   const mutate = (operation: (draft: TacticalScene) => void) => { const draft = structuredClone(scene); operation(draft); edit(draft); };
+  /** Catch bounded geometry-operation failures and report them without breaking the editor. */
   const operate = (operation: () => TacticalScene) => { try { edit(operation()); } catch { setMessage("Change rejected: object spacing or movement exceeds the supported world limits."); } };
+  /** Reset only the view camera when choosing a fit target. */
   const frame = (value: FitMode) => { setFit(value); setCamera(undefined); };
+  /** Resolve the live measured SVG projection for pointer picking and keyboard camera commands. */
   function projection() {
     const el = surface.current?.querySelector(".scene-diagram"), rect = el?.getBoundingClientRect();
     return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: 24, fit: live.current.fit, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus }) : null;
   }
+  /** Keep the world point beneath the pointer stationary while clamping view-only zoom. */
   function zoom(factor: number, anchor?: Point) {
     const view = projection(); if (!view) return;
     const point = anchor ?? { x: view.width / 2, y: view.height / 2 }, before = screenToWorld(point, view), zoom = Math.max(.1, Math.min(8, (live.current.camera?.zoom ?? 1) * factor));
@@ -49,6 +55,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   }
   useEffect(() => {
     const node = surface.current; if (!node) return;
+    /** Prevent page scrolling only over the canvas and forward wheel intent to pointer-anchored zoom. */
     const wheel = (event: WheelEvent) => { event.preventDefault(); const rect = node.getBoundingClientRect(); zoom(Math.exp(-event.deltaY * .0015), { x: event.clientX - rect.left, y: event.clientY - rect.top }); };
     node.addEventListener("wheel", wheel, { passive: false });
     return () => node.removeEventListener("wheel", wheel);
@@ -62,12 +69,15 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   }, [expanded]);
   useEffect(() => {
     const element = surface.current; if (!element) return;
+    /** Reserve visible viewport space for the canvas without resizing it in response to page scrolling. */
     const measure = () => setCanvasHeight(Math.max(280, window.innerHeight - (element.getBoundingClientRect().top + (expanded ? (root.current?.scrollTop ?? 0) : window.scrollY)) - 76));
     const observer = new ResizeObserver(measure); observer.observe(element.parentElement!); measure();
     window.addEventListener("resize", measure); document.addEventListener("toggle", measure, true);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); document.removeEventListener("toggle", measure, true); };
   }, [expanded]);
+  /** Apply metre-grid or nearby-object snapping at a fixed screen-space tolerance. */
   function snapped(at: Point, view: Projection, ids = selected) { return snapPoint(at, scene, ids, snap ? grid : null, objects, 10 / view.scale); }
+  /** Insert the current object or a first-stage overlay, using practical sizes for click insertion. */
   function addAt(at: Point, chosen = tool, to?: Point) {
     try {
       let next: TacticalScene;
@@ -82,7 +92,9 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       edit(next);
     } catch { setMessage("Object could not be added within scene limits."); }
   }
+  /** Convert a captured pointer into local SVG pixels before inverse world projection. */
   function point(event: PointerEvent<HTMLDivElement>) { const rect = event.currentTarget.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; }
+  /** Begin selection, group movement, panning or static-overlay creation from one pointer anchor. */
   function down(event: PointerEvent<HTMLDivElement>, view: Projection) {
     if (event.button !== 0) return;
     event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); root.current?.focus();
@@ -98,6 +110,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       else gesture.current = { start, view, before: scene, ids: [], kind: "draw", from: snapped(from, view), tool, moved: false };
     }
   }
+  /** Preview a gesture from its immutable starting scene to avoid accumulating rounding drift. */
   function move(event: PointerEvent<HTMLDivElement>) {
     const g = gesture.current; if (!g) return;
     const screen = point(event), to = screenToWorld(screen, g.view), dx = to.x - g.from.x, dy = to.y - g.from.y;
@@ -111,12 +124,18 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       try { const next = moveObjects(g.before, g.ids, target.x - anchor.x, target.y - anchor.y); setHistory((h) => ({ ...h, present: next })); } catch { setMessage("Movement exceeds scene limits."); }
     }
   }
+  /** Commit one history entry per drag; clicks and snap-collapsed drags use nonzero defaults. */
   function up(event: PointerEvent<HTMLDivElement>) {
     const g = gesture.current; gesture.current = null; if (!g) return;
     if (g.kind === "move" && g.moved) setHistory((h) => recordEdit(h, h.present, g.before));
-    if (g.kind === "draw") addAt(g.from, g.tool, snapped(screenToWorld(point(event), g.view), g.view, []));
+    if (g.kind === "draw") {
+      const to = snapped(screenToWorld(point(event), g.view), g.view, []);
+      addAt(g.from, g.tool, g.moved && Math.hypot(to.x - g.from.x, to.y - g.from.y) > .000001 ? to : undefined);
+    }
   }
+  /** Restore an interrupted drag without publishing a history entry or saved revision. */
   function cancel() { const g = gesture.current; gesture.current = null; if (g?.kind === "move") setHistory((h) => ({ ...h, present: g.before })); }
+  /** Provide object-editing shortcuts outside form inputs and contain focus in expanded-board mode. */
   function keyboard(event: KeyboardEvent<HTMLDivElement>) {
     if (expanded && event.key === "Escape") { cancel(); setExpanded(false); return; }
     if (expanded && event.key === "Tab") {

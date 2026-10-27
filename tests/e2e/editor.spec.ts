@@ -5,6 +5,7 @@ import { domainBundleSchema } from "../../lib/domain/validation";
 import { diagramHref, type DiagramTarget } from "../../lib/tactical/persistence";
 import { guideHref } from "../../lib/documents/contracts";
 import { contextArea } from "../../lib/tactical/context";
+import { tacticalPalette } from "../../lib/tactical/palette";
 
 const target: DiagramTarget = { kind: "session", id: "sample-3", revision: 1, activity: "activity-1", event: "sample-4", booking: 1, diagram: null };
 /** Strict request-level stand-in; real hosted Auth/RLS verification remains a separate release gate. */
@@ -21,8 +22,11 @@ async function storage(page: Page, status?: number) {
   });
   return { bundle: () => bundle, writes: () => writes };
 }
+/** Wait for the validated organisation graph rather than a hydration timing assumption. */
 async function loaded(page: Page) { await expect(page.locator(".calendar-connection [role=status]")).toContainText("Loaded saved organisation snapshot"); }
+/** Explicitly apply an illustrative setup through the same authoring UI available to coaches. */
 async function apply(page: Page, id: string) { await page.getByLabel("Example setup", { exact: true }).selectOption(id); await page.getByRole("button", { name: "Apply setup", exact: true }).click(); }
+/** Inspect rendered world anchors by identity; SVG paint order is not scene-array order. */
 async function coordinates(page: Page) { return page.locator(".editor-surface [data-entity-id]").evaluateAll((nodes) => nodes.map((n) => [n.getAttribute("data-entity-id"), n.getAttribute("data-world-x"), n.getAttribute("data-world-y")])); }
 
 for (const example of editorExamples) test(`editor context: ${example.title} at a real desktop viewport`, async ({ page }, info) => {
@@ -122,4 +126,31 @@ test("conflict blocks uncertain writes without retry; malformed and missing exac
   await expect(page.getByRole("button", { name: "Reload before saving", exact: true })).toBeVisible(); await expect(page.getByRole("button", { name: "Save diagram", exact: true })).toBeDisabled(); expect(mock.writes()).toBe(1);
   page.on("dialog", (d) => d.accept()); await page.goto(diagramHref({ ...target, revision: 99 })); await expect(page.getByRole("heading", { name: "Requested diagram is unavailable" })).toBeVisible();
   await page.goto("/tactical-editor?kind=session&revision=nope"); await expect(page.getByRole("heading", { name: "Invalid diagram reference" })).toBeVisible();
+});
+
+test("team edits retain palette inheritance unless the coach changes the custom colour", async ({ page }) => {
+  const mock = await storage(page); await page.goto(diagramHref(target)); await loaded(page);
+  await page.getByRole("button", { name: "● Player", exact: true }).click(); await page.getByRole("button", { name: "Insert at centre" }).click();
+  await page.getByRole("combobox", { name: "Team", exact: true }).selectOption("b"); await page.getByRole("button", { name: "Apply object properties" }).click();
+  await expect(page.getByLabel("Marker colour")).toHaveValue(tacticalPalette.b); await expect(page.locator(`.editor-surface circle[fill="${tacticalPalette.b}"]`)).toHaveCount(1);
+  await page.getByRole("button", { name: "Save diagram", exact: true }).click(); await expect(page).toHaveURL(/revision=2/);
+  expect(mock.bundle().scenes[0].entities[0]).not.toHaveProperty("color");
+  await page.locator(".editor-surface [data-entity-id]").first().click();
+  await page.getByLabel("Marker colour").fill("#008877"); await page.getByRole("button", { name: "Apply object properties" }).click();
+  await page.getByRole("combobox", { name: "Team", exact: true }).selectOption("a"); await page.getByRole("button", { name: "Apply object properties" }).click();
+  await expect(page.getByLabel("Marker colour")).toHaveValue("#008877");
+});
+
+test("canvas clicks and snap-collapsed short drags create visible routes and usable default zones", async ({ page }) => {
+  await storage(page); await page.goto(diagramHref(target)); await loaded(page);
+  const surface = page.locator(".editor-surface"), bounds = (await surface.boundingBox())!, centre = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  for (const name of ["→ Pass", "⇢ Run", "⇢ Press", "↝ Rotation"]) {
+    await page.getByRole("button", { name, exact: true }).click(); await page.mouse.click(centre.x, centre.y);
+    expect(Number(await page.getByLabel("End X (m)", { exact: true }).inputValue()) - Number(await page.getByLabel("Start X (m)", { exact: true }).inputValue())).toBe(5);
+  }
+  await expect(surface.locator("g[data-annotation-id]")).toHaveCount(4);
+  await page.mouse.move(centre.x, centre.y); await page.mouse.down(); await page.mouse.move(centre.x + 3, centre.y + 1, { steps: 3 }); await page.mouse.up();
+  expect(Number(await page.getByLabel("End X (m)", { exact: true }).inputValue()) - Number(await page.getByLabel("Start X (m)", { exact: true }).inputValue())).toBe(5);
+  await page.getByRole("button", { name: "▧ Zone", exact: true }).click(); await page.mouse.click(centre.x, centre.y);
+  await expect(page.getByLabel("Length (m)", { exact: true })).toHaveValue("10"); await expect(page.getByLabel("Width (m)", { exact: true })).toHaveValue("8");
 });

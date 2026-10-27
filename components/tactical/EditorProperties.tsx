@@ -16,12 +16,17 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame }: Pro
   const annotation = track?.kind === "annotation" ? track.annotation : undefined;
   const context = scene.context ?? { kind: "pitch" as const, region: "full" as const, attack: "positive-x" as const };
   const area = contextArea(scene), dataKey = JSON.stringify({ field: scene.field, context });
+  /** Read numeric form values; the scene validator remains authoritative for world limits. */
   const numeric = (data: FormData, key: string) => Number(data.get(key));
   return <>{error && <p role="alert">{error}</p>}
     {entity && <section key={JSON.stringify(entity)}><p className="calendar-eyebrow">Selected {entity.kind}</p><h2>{entity.kind === "player" ? `#${entity.number} · Team ${entity.team.toUpperCase()}` : entity.kind === "equipment" ? entity.equipment : "Ball"}</h2>
       <form onSubmit={(event) => { event.preventDefault(); try { const data = new FormData(event.currentTarget); let next = moveObjects(scene, selected, numeric(data, "x") - entity.position.x, numeric(data, "y") - entity.position.y); next = structuredClone(next);
         const item = next.entities.find((e) => e.id === entity.id)!; item.headingDegrees = numeric(data, "heading");
-        if (item.kind === "player") { item.number = numeric(data, "number"); item.team = data.get("team") as typeof item.team; item.positionLabel = String(data.get("label") ?? "").trim() || null; item.color = String(data.get("color")); }
+        if (item.kind === "player" && entity.kind === "player") {
+          item.number = numeric(data, "number"); item.team = data.get("team") as typeof item.team; item.positionLabel = String(data.get("label") ?? "").trim() || null;
+          const shown = (entity.color ?? tacticalPalette[entity.team === "neutral" ? "neutral" : entity.team]).toLowerCase(), chosen = String(data.get("color")).toLowerCase();
+          if (chosen !== shown) item.color = chosen;
+        }
         edit(next); setError(""); } catch { setError("Object change rejected: anchors and every associated movement keyframe must remain within ±10,000 m."); }
       }}><div className="editor-row"><label>X (m)<input name="x" aria-label="Object X" type="number" step="any" defaultValue={entity.position.x} required /></label><label>Y (m)<input name="y" aria-label="Object Y" type="number" step="any" defaultValue={entity.position.y} required /></label></div>
         <label>Facing (degrees)<input name="heading" type="number" min="0" max="359.99" step="any" defaultValue={entity.headingDegrees} required /></label>
