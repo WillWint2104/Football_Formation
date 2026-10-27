@@ -13,7 +13,7 @@ const workspaceLabels: Record<string, string> = {
 /** Shows route context and available tactics tools without advertising planned tools as links. */
 export function Header() {
   const pathname = usePathname();
-  const tactics = ["/lineup", "/tactical-renderer"].includes(pathname);
+  const tactics = ["/lineup", "/tactical-renderer", "/tactical-editor"].includes(pathname);
   const workspace = tactics
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
@@ -25,7 +25,7 @@ export function Header() {
         : "Coaching workspace";
   return (
     <header className="border-b border-shell-edge bg-shell text-shell-text">
-      <div className="flex min-h-header items-center gap-3 px-4 md:px-8">
+      <div className={`flex ${pathname === "/tactical-editor" ? "min-h-[48px]" : "min-h-header"} items-center gap-3 px-4 md:px-8`}>
         <MobileNavigation />
         <div className="min-w-0">
           <p className="font-mono text-[10px] uppercase tracking-widest text-shell-muted">
@@ -50,7 +50,8 @@ export function Header() {
             Lineups
           </Link>
           <Link href="/tactical-renderer" aria-current={pathname === "/tactical-renderer" ? "page" : undefined} className={`border-b-2 px-3 py-3 text-body-md font-semibold focus-visible:outline-2 focus-visible:outline-shell-accent ${pathname === "/tactical-renderer" ? "border-shell-accent text-shell-accent" : "border-transparent text-shell-text"}`}>Renderer preview</Link>
-          {["2D Editor", "2D Presentation"].map((label) => (
+          <Link href="/tactical-editor" aria-current={pathname === "/tactical-editor" ? "page" : undefined} className={`border-b-2 px-3 py-3 text-body-md font-semibold focus-visible:outline-2 focus-visible:outline-shell-accent ${pathname === "/tactical-editor" ? "border-shell-accent text-shell-accent" : "border-transparent text-shell-text"}`}>2D Editor</Link>
+          {["2D Presentation"].map((label) => (
             <span
               key={label}
               aria-disabled="true"

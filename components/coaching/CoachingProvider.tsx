@@ -19,7 +19,7 @@ const Context = createContext<Workspace | null>(null);
 /** Keep one validated graph across coaching routes; sample memory is never a persistence substitute. */
 export function CoachingProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const active = ["/calendar", "/sessions", "/templates", "/exercises", "/coaches", "/guides"].some((p) => pathname === p);
+  const active = ["/calendar", "/sessions", "/templates", "/exercises", "/coaches", "/guides", "/tactical-editor"].some((p) => pathname === p);
   const [snapshot, setSnapshot] = useState<CalendarSnapshot>(() => ({ version: 0, bundle: coachingSample() }));
   const [mode, setMode] = useState<"sample" | "saved">("sample");
   const [scope, setScope] = useState(0);

@@ -1,5 +1,6 @@
 "use client";
 
+import { DiagramLinks } from "@/components/tactical/DiagramLinks";
 import { useState } from "react";
 import { z } from "zod";
 import type { Exercise, SessionTemplate } from "@/lib/domain/session";
@@ -25,6 +26,7 @@ export function LibraryEditor({ source, kind, isNew, historical, navigating, onS
     <p className="calendar-muted">{historical ? "Historical revision · read only" : dirty ? "Unsaved changes" : "No unsaved changes"}. Existing sessions and activity snapshots are never updated by editing their source.</p>
     <fieldset disabled={historical || busy || loading || blocked || navigating}>{kind === "session" ? <SessionContentFields content={(draft as SessionTemplate).content} exercises={base.bundle.exercises}
       onChange={(content) => setDraft({ ...draft, content } as SessionTemplate)} /> : <ExerciseFields content={(draft as Exercise).content} onChange={(content) => setDraft({ ...draft, content } as Exercise)} />}</fieldset>
+    {!isNew && (kind === "exercise" ? <DiagramLinks content={(source as Exercise).content} disabled={dirty || historical || busy || blocked || navigating} target={{ kind: "exercise", id: source.id, revision: source.revision }} /> : (source as SessionTemplate).content.activities.map((activity) => <DiagramLinks key={activity.id} content={activity.content} disabled={dirty || historical || busy || blocked || navigating} target={{ kind: "template", id: source.id, revision: source.revision, activity: activity.id }} />))}
     {error && <p role="alert" className="coaching-notice">{error}</p>}
     <div className="coaching-save-bar"><button className="calendar-primary" disabled={historical || busy || loading || blocked || navigating || !dirty}>Save {kind === "session" ? "template" : "exercise"}</button>
       <button type="button" disabled={historical || busy || navigating || !dirty} onClick={() => setDraft(structuredClone(source))}>Revert draft</button></div>
