@@ -7,6 +7,7 @@ import { MobileNavigation } from "./Sidebar";
 const workspaceLabels: Record<string, string> = {
   "/sessions": "Sessions", "/templates": "Session templates",
   "/exercises": "Exercise library", "/coaches": "Coach directory",
+  "/guides": "Coaching guide",
 };
 
 /** Shows route context and available tactics tools without advertising planned tools as links. */
@@ -17,7 +18,7 @@ export function Header() {
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
       ? "Calendar"
-      : ["/sessions", "/templates", "/exercises", "/coaches"].includes(pathname)
+      : ["/sessions", "/templates", "/exercises", "/coaches", "/guides"].includes(pathname)
         ? workspaceLabels[pathname]
       : ["/roster", "/player-profiles"].includes(pathname)
         ? "Squad"

@@ -24,7 +24,7 @@ export async function userClient(config: BackendConfig) {
   });
 }
 
-/** Privileged client stays server-only and is used exclusively for the restricted write RPC. */
+/** Privileged client stays server-only for restricted writes and authorized private-document operations. */
 export function writerClient(config: BackendConfig) {
   return createClient(config.url, config.serviceRoleKey, {
     auth: {

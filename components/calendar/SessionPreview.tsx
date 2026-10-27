@@ -4,6 +4,7 @@ import type { CalendarEvent } from "@/lib/domain/calendar";
 import type { DomainBundle } from "@/lib/domain/validation";
 import { eventSession, localParts, sessionLabels } from "@/lib/calendar/schedule";
 import { SessionTypeIcon } from "./SessionTypeIcon";
+import { guideHref } from "@/lib/documents/contracts";
 
 /** Preview one independent booking and its exact pinned content, without inventing missing diagrams. */
 export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disabled }: {
@@ -41,8 +42,9 @@ export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disab
         : <p className="calendar-muted">No activities yet. Open the session editor to add structured coaching activities.</p>}
     </section>
     {session && <p className="calendar-muted calendar-footnote">Pinned session revision {session.revision} · {session.documents.length} document references.
-      Diagram previews, full guides and PDF attachments follow in later milestones.</p>}
+      Saved guides and private attachments use this exact session revision. Diagram rendering follows later.</p>}
     {session && <Link className="coaching-session-link" href={`/sessions?event=${encodeURIComponent(event.id)}&revision=${event.revision}`}>Open session editor</Link>}
+    {session && <Link className="coaching-session-link" href={guideHref({ session: session.id, revision: session.revision, event: event.id, bookingRevision: event.revision })}>Open coaching guide</Link>}
     <button className="calendar-primary calendar-wide" onClick={onSchedule} disabled={disabled || event.status === "cancelled"}>Reschedule booking</button>
   </aside>;
 }
