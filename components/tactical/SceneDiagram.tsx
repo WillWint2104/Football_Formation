@@ -4,6 +4,7 @@ import { createElement, useEffect, useId, useRef, useState } from "react";
 import { drawScene, type DrawingOptions, type SvgNode, type SceneDrawing } from "@/lib/tactical/drawing";
 import type { TacticalScene } from "@/lib/domain/tactical-scene";
 
+/** Adapt the controlled drawing primitives to React SVG elements without interpreting label text as markup. */
 function renderNode(n: SvgNode, key: number): React.ReactNode { return createElement(n.tag, { ...n.attrs, key }, n.text ?? n.children?.map(renderNode)); }
 
 /** Read-only adapter. ResizeObserver changes projection only; scene IDs, revisions and metre positions remain untouched. */

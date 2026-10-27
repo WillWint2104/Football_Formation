@@ -95,8 +95,11 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
   return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: evaluated.entities.length - visible.length, outsideField: evaluated.entities.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: evaluated.entities.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
 }
 
+/** Interpolate equipment-footprint edges without changing their metre anchors. */
 function lerp(a: Point, b: Point, t: number): Point { return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; }
+/** Bound visible text while the enclosing SVG title retains its complete accessible value. */
 function shorten(value: string, limit: number) { return value.length > limit ? `${value.slice(0, limit - 1)}…` : value; }
+/** Draw the authored polyline and its final nonzero-segment arrowhead using movement-specific styling. */
 function arrow(points: Point[], movement: "pass" | "run" | "rotation" | "press" | "dribble"): SvgNode[] {
   const colour = c[movement], dash = { pass: "", run: "9 5", rotation: "8 4 2 4", press: "4 4", dribble: "2 4" }[movement];
   const end = points.at(-1)!, previous = points.findLast((q) => Math.hypot(q.x - end.x, q.y - end.y) > 0.01);
@@ -104,6 +107,7 @@ function arrow(points: Point[], movement: "pass" | "run" | "rotation" | "press" 
   const angle = Math.atan2(end.y - previous.y, end.x - previous.x);
   return [node("polyline", { points: points.map((q) => `${q.x},${q.y}`).join(" "), fill: "none", stroke: colour, strokeWidth: 2, strokeDasharray: dash, strokeLinejoin: "round" }), node("polygon", { points: [end, { x: end.x - 9 * Math.cos(angle - 0.45), y: end.y - 9 * Math.sin(angle - 0.45) }, { x: end.x - 9 * Math.cos(angle + 0.45), y: end.y - 9 * Math.sin(angle + 0.45) }].map((q) => `${q.x},${q.y}`).join(" "), fill: colour })];
 }
+/** Project metric centre, penalty and goal-area markings with fixed readable screen strokes. */
 function footballMarkings(scene: TacticalScene, view: Projection): SvgNode[] {
   const { length: l, width: w } = scene.field, p = (x: number, y: number) => worldToScreen({ x, y }, view), style = { fill: "none", stroke: c.line, strokeWidth: 1.3, opacity: 0.85 };
   const center = p(l / 2, w / 2), result = [line(p(l / 2, 0), p(l / 2, w), style), node("circle", { cx: center.x, cy: center.y, r: 9.15 * view.scale, ...style }), node("circle", { cx: center.x, cy: center.y, r: 2, fill: c.line })];
