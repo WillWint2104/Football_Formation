@@ -37,6 +37,11 @@ The app uses the "Apex Pitch Evolution" design language: violet primary, cyan ac
 
 ### Typography
 
+Shared static tactical diagrams use the portable resolved tokens in
+`lib/tactical/palette.ts` so browser SVG and standalone SVG share identical
+colours without depending on page CSS. Keep tactical colour literals in that
+single palette; shell controls still use the existing CSS theme tokens.
+
 - **Headlines:** Hanken Grotesk (700/800 weight)
 - **Body:** Inter (400/500)
 - **Data & labels:** JetBrains Mono (for stats, jersey numbers, tabular data, ALL-CAPS labels)
@@ -98,8 +103,10 @@ is merged. PR 01 shared models/schema validation is merged as GitHub PR #7.
 PR 02 authenticated persistence is merged as GitHub PR #8; hosted activation is unverified.
 PR 03 interactive calendar is merged as GitHub PR #9.
 PR 04 session library, coaches and templates is merged as GitHub PR #10.
-PR 05 coaching guides/private documents is authorized for implementation and review only;
+PR 05 coaching guides/private documents is merged as GitHub PR #11 at approved head 551f73d.
+PR 06 shared 2D renderer is authorized for implementation and review only;
 do not merge, deploy manually or provision hosted resources without owner approval.
+See `docs/shared-2d-renderer.md` for shared drawing, framing and evaluation contracts.
 Illustrated PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
 See `docs/coaching-guides-private-documents.md` for exact guides, private storage and staging.
 See `docs/interactive-calendar.md` for sample/saved-mode boundaries and the staging gate.

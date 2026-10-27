@@ -13,7 +13,7 @@ const workspaceLabels: Record<string, string> = {
 /** Shows route context and available tactics tools without advertising planned tools as links. */
 export function Header() {
   const pathname = usePathname();
-  const tactics = pathname === "/lineup";
+  const tactics = ["/lineup", "/tactical-renderer"].includes(pathname);
   const workspace = tactics
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
@@ -44,11 +44,12 @@ export function Header() {
         >
           <Link
             href="/lineup"
-            aria-current="page"
-            className="border-b-2 border-shell-accent px-3 py-3 text-body-md font-semibold text-shell-accent focus-visible:outline-2 focus-visible:outline-shell-accent"
+            aria-current={pathname === "/lineup" ? "page" : undefined}
+            className={`border-b-2 px-3 py-3 text-body-md font-semibold focus-visible:outline-2 focus-visible:outline-shell-accent ${pathname === "/lineup" ? "border-shell-accent text-shell-accent" : "border-transparent text-shell-text"}`}
           >
             Lineups
           </Link>
+          <Link href="/tactical-renderer" aria-current={pathname === "/tactical-renderer" ? "page" : undefined} className={`border-b-2 px-3 py-3 text-body-md font-semibold focus-visible:outline-2 focus-visible:outline-shell-accent ${pathname === "/tactical-renderer" ? "border-shell-accent text-shell-accent" : "border-transparent text-shell-text"}`}>Renderer preview</Link>
           {["2D Editor", "2D Presentation"].map((label) => (
             <span
               key={label}
