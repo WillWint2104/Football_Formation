@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --conditions=react-server --test tests/domain/*.test.ts tests/persistence/*.test.ts tests/calendar/*.test.ts tests/sessions/*.test.ts tests/documents/*.test.ts",
+    "test": "tsx --conditions=react-server --test tests/domain/*.test.ts tests/persistence/*.test.ts tests/calendar/*.test.ts tests/sessions/*.test.ts tests/documents/*.test.ts tests/tactical/*.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

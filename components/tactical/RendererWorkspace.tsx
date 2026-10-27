@@ -1,0 +1,33 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { tacticalExamples } from "@/lib/tactical/examples";
+import { sceneDuration } from "@/lib/tactical/evaluate";
+import type { FitMode } from "@/lib/tactical/viewport";
+import { SceneDiagram } from "./SceneDiagram";
+
+/** Bounded renderer acceptance surface, not an editor or animation-authoring interface. */
+export function RendererWorkspace() {
+  const [exampleId, setExampleId] = useState("rondo"), [fit, setFit] = useState<FitMode>("exercise"), [grid, setGrid] = useState(true), [spacing, setSpacing] = useState(1), [guides, setGuides] = useState(false), [labels, setLabels] = useState(true), [seconds, setSeconds] = useState(0), [paths, setPaths] = useState<"stage" | "active" | "none">("stage"), [fullscreen, setFullscreen] = useState(false), [custom, setCustom] = useState({ x: "20", y: "15", length: "12", width: "12" });
+  const board = useRef<HTMLDivElement>(null), exit = useRef<HTMLButtonElement>(null);
+  const example = tacticalExamples.find((item) => item.id === exampleId)!;
+  useEffect(() => { if (!fullscreen) return; const previous = document.activeElement as HTMLElement | null; exit.current?.focus(); const key = (event: KeyboardEvent) => { if (event.key === "Escape") setFullscreen(false); if (event.key === "Tab") { event.preventDefault(); exit.current?.focus(); } }; document.addEventListener("keydown", key); return () => { document.removeEventListener("keydown", key); previous?.focus(); }; }, [fullscreen]);
+  const customArea = { origin: { x: Number(custom.x), y: Number(custom.y) }, length: Number(custom.length), width: Number(custom.width) };
+  const validCustom = Object.values(custom).every((v) => v.trim() !== "" && Number.isFinite(Number(v))) && customArea.length >= 0.01 && customArea.width >= 0.01 && Math.abs(customArea.origin.x) + customArea.length <= 10000 && Math.abs(customArea.origin.y) + customArea.width <= 10000;
+  return <section className="renderer-workspace">
+    <header className="renderer-heading"><div><p className="renderer-eyebrow">SHARED 2D FOUNDATION · READ-ONLY EXAMPLES</p><h1>Tactical scene renderer</h1><p>One saved scene. Adaptive views. Precise metre coordinates.</p></div><span className="renderer-badge">Illustrative data · never saved</span></header>
+    <div className="renderer-layout"><div className="renderer-main"><div className="renderer-toolbar" aria-label="Framing controls">{([ ["exercise", "Fit Exercise"], ["all", "Fit All"], ["pitch", "Fit Pitch"] ] as const).map(([value, label]) => <button key={value} aria-pressed={fit === value} onClick={() => setFit(value)}>{label}</button>)}<label>Field view<select aria-label="Field view" value={fit} onChange={(e) => setFit(e.target.value as FitMode)}><option value="exercise">Exercise area</option><option value="all">All scene content</option><option value="pitch">Full pitch</option><option value="attacking-half">Attacking half</option><option value="defensive-half">Defensive half</option><option value="custom" disabled={!validCustom}>Custom area</option></select></label><button onClick={() => setFullscreen(true)}>Expand board</button></div>
+      <div ref={board} className={`renderer-board${fullscreen ? " renderer-board-expanded" : ""}`} role={fullscreen ? "dialog" : undefined} aria-modal={fullscreen || undefined} aria-label={fullscreen ? "Expanded tactical board" : undefined}>
+        {fullscreen && <button className="renderer-close" ref={exit} onClick={() => setFullscreen(false)}>Close board · Esc</button>}
+        <SceneDiagram scene={example.scene} title={example.title} options={{ fit, exerciseArea: example.area, customArea: validCustom ? customArea : undefined, gridMetres: grid ? spacing : undefined, guides, labels, seconds, paths }} />
+      </div>
+      <div className="renderer-legend" aria-label="Tactical legend"><span>● Blue / red teams · yellow neutral</span><span>━ Pass</span><span>┄ Run</span><span>┄· Rotation</span><span>┈ Press</span><span>△ Cone</span></div>
+      <div className="renderer-scene-summary"><div><h2>{example.title}</h2><p>{example.description}</p></div><span>{example.scene.entities.filter((e) => e.kind === "player").length} players · {example.scene.stages.length} stages</span></div>
+    </div><aside className="renderer-inspector" aria-label="Renderer options"><h2>Scene & display</h2><label>Exercise<select aria-label="Exercise" value={exampleId} onChange={(e) => { setExampleId(e.target.value); setSeconds(0); setFit("exercise"); }}>{tacticalExamples.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</select></label><p className="renderer-muted">{example.category} · schema 1.0 · revision {example.scene.revision}</p>
+      <h3>Guides</h3><label className="renderer-check"><input type="checkbox" checked={grid} onChange={(e) => setGrid(e.target.checked)} />Metric grid</label><label>Grid spacing<select aria-label="Grid spacing" value={spacing} onChange={(e) => setSpacing(Number(e.target.value))}>{[0.5, 1, 2, 5, 10].map((n) => <option key={n} value={n}>{n} m</option>)}</select></label><label className="renderer-check"><input type="checkbox" checked={guides} onChange={(e) => setGuides(e.target.checked)} />Thirds & channels</label><label className="renderer-check"><input type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} />Position labels</label>
+      <h3>Snapshot evaluation</h3><label>Snapshot time (seconds)<input aria-label="Snapshot time (seconds)" type="number" min="0" max={sceneDuration(example.scene)} step="0.5" value={seconds} onChange={(e) => setSeconds(Math.max(0, Math.min(sceneDuration(example.scene), Number(e.target.value) || 0)))} /></label><label>Movement paths<select aria-label="Movement paths" value={paths} onChange={(e) => setPaths(e.target.value as typeof paths)}><option value="stage">Current stage</option><option value="active">Active movements only</option><option value="none">Hidden</option></select></label>
+      <details><summary>Custom framing in metres</summary><div className="renderer-custom">{([ ["x", "Origin X"], ["y", "Origin Y"], ["length", "Length"], ["width", "Width"] ] as const).map(([key, label]) => <label key={key}>{label}<input type="number" aria-label={label} value={custom[key]} onChange={(e) => setCustom({ ...custom, [key]: e.target.value })} /></label>)}</div><button disabled={!validCustom} onClick={() => setFit("custom")}>Fit custom area</button>{!validCustom && <p role="status">Use finite coordinates and positive dimensions within 10,000 m.</p>}</details>
+      <p className="renderer-muted">Framing and guide visibility change only this view. Scene coordinates and saved revisions are preserved.</p>
+    </aside></div>
+  </section>;
+}

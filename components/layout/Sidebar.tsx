@@ -42,7 +42,7 @@ const navigation: {
   { label: "Templates", href: "/templates", icon: ClipboardList },
   { label: "Exercise Library", href: "/exercises", icon: Library },
   { label: "Coaches", href: "/coaches", icon: Users },
-  { label: "Tactics", href: "/lineup", icon: Workflow },
+  { label: "Tactics", href: "/lineup", aliases: ["/tactical-renderer"], icon: Workflow },
   {
     label: "Squad",
     href: "/roster",
