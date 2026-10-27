@@ -21,8 +21,8 @@ function worker(input: unknown): Promise<Reply> {
 }
 
 /** Only Auth/snapshot/blob services are simulated; POST generation and GET authorization use production handlers. */
-async function storage(page: Page, failure = false) {
-  const initial = exportFixture("possession"); let bundle = initial.bundle, version = 4, posts = 0, records: ObjectRecord[] = [], blobs: Record<string, string> = {};
+async function storage(page: Page, failure = false, sample = "possession") {
+  const initial = exportFixture(sample); let bundle = initial.bundle, version = 4, posts = 0, records: ObjectRecord[] = [], blobs: Record<string, string> = {};
   await page.route("**/api/organizations", (route) => route.fulfill({ json: { organizations: [{ id: bundle.organizationId, name: "Synthetic PDF review club", version }] } }));
   await page.route("**/api/organizations/*/snapshot", (route) => route.fulfill({ json: { version, bundle } }));
   await page.route(/\/api\/organizations\/[^/]+\/sessions\/[^/]+\/\d+\/(exports|documents\/[^/]+\/\d+)$/, async (route) => {
@@ -84,4 +84,13 @@ test("sample guides cannot generate private exports", async ({ page }) => {
   await page.goto(guideHref({ session: "sample-3", revision: 1 }));
   await expect(page.getByRole("button", { name: "Generate illustrated PDF", exact: true })).toBeDisabled();
   await expect(page.getByText("Sign in to a configured organisation to generate and save private coaching PDFs.")).toBeVisible();
+});
+
+test("multi-activity plans explain and disable the unsupported single-sheet layout", async ({ page }) => {
+  const mock = await storage(page, false, "session-guide"); await page.goto(guideHref(mock.reference)); await loaded(page);
+  await expect(page.getByRole("option", { name: "Single Activity Sheet", exact: true })).toHaveJSProperty("disabled", true);
+  await expect(page.getByText("Single Activity Sheet requires at most one activity.", { exact: false })).toBeVisible();
+  const layouts = page.getByLabel("Document layout"); await expect(layouts).toHaveValue("auto");
+  await layouts.focus(); await layouts.press("Home"); await layouts.press("ArrowDown");
+  await expect(layouts).toHaveValue("session-guide"); expect(mock.posts()).toBe(0);
 });

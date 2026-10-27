@@ -89,7 +89,7 @@ async function activitySection(layout: PdfLayout, bundle: DomainBundle, activity
     const previous = layout.page; layout.ensure(height + (caption ? 30 : 10));
     if (layout.page !== previous) {
       layout.text(`${content.title} · continued`, { bold: true, size: 12, gap: 5 }); layout.text(activityFacts(activity), { color: printTheme.muted, gap: 10 });
-      instructionsDrawn = false; notesDrawn = false;
+      if (instructionsDrawn || notesDrawn) layout.text(`${instructionsDrawn ? "Delivery instructions" : ""}${instructionsDrawn && notesDrawn ? " and coaching notes" : notesDrawn ? "Coaching notes" : ""}: see Figure 1.`, { color: printTheme.muted, gap: 10 });
     }
     const top = layout.y;
     const image = await diagramImage(layout.pdf, scene, activity, pin.representativeSeconds, width, height);
@@ -99,7 +99,7 @@ async function activitySection(layout: PdfLayout, bundle: DomainBundle, activity
       if (instructionsSideHeight + notesHeight + 8 <= height) {
         layout.y -= 8;
         for (const [title, values] of nonemptyNotes) { layout.column(title, values, A4.margin + width + tokens.columnGap, sideWidth); layout.y -= 6; }
-        notesDrawn = true;
+        notesDrawn = nonemptyNotes.length > 0;
       }
     }
     if (sideNotes) { for (const [title, values] of nonemptyNotes) { layout.column(title, values, A4.margin + width + tokens.columnGap, sideWidth); layout.y -= 6; } notesDrawn = true; }
