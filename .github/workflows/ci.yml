@@ -37,11 +37,11 @@ jobs:
         run: npm run lint
       - name: TypeScript
         run: npm run typecheck
-      - name: Domain, persistence, calendar, session, document and renderer tests
+      - name: Domain, persistence, calendar, session, document and tactical editor tests
         run: npm test
       - name: Production build (default Turbopack)
         run: npm run build
       - name: Install desktop test browser
         run: npx playwright install --with-deps chromium
-      - name: Desktop calendar, session, guide and renderer interactions
+      - name: Desktop calendar, session, guide, renderer and editor interactions
         run: npm run test:e2e

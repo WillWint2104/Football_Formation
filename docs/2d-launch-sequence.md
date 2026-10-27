@@ -7,8 +7,10 @@ PR 02 (authenticated persistence) was approved and merged as GitHub PR #8.
 PR 03 (interactive calendar) was approved and merged as GitHub PR #9.
 PR 04 (sessions, coaches and templates) was approved and merged as GitHub PR #10.
 PR 05 (coaching guides and private documents) was approved and merged as GitHub PR #11.
-PR 06 (shared 2D tactical renderer) is authorised for implementation and review
-only; do not merge or deploy manually. Hosted Supabase activation requires separate approval.
+PR 06 (shared 2D tactical renderer) is merged as GitHub PR #12 at approved head
+d518b2a, merge 054d79a. PR 07 (context-aware static tactical editor) is authorised
+for implementation and review only; do not merge or deploy manually. Hosted
+Supabase activation requires separate approval. See `context-aware-editor.md`.
 See `shared-2d-renderer.md` for metre projection, adaptive framing and stage evaluation.
 See `coaching-guides-private-documents.md` for document boundaries and staging.
 See `session-library.md` for exact revision and reuse behaviour.

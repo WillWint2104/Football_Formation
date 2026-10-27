@@ -1,10 +1,12 @@
 import { areaSchema, type TacticalScene, type TrainingArea, type TacticalEntity } from "../domain/tactical-scene";
 import { prepareScene, type Point } from "./evaluate";
+import { contextArea } from "./context";
 
 export type Bounds = { minX: number; minY: number; maxX: number; maxY: number };
-export type FitMode = "exercise" | "all" | "pitch" | "attacking-half" | "defensive-half" | "custom";
+export type FitMode = "exercise" | "all" | "pitch" | "context" | "attacking-half" | "defensive-half" | "custom";
+export type Rotation = 0 | 90 | 180 | 270;
 export type Camera = { center: Point; zoom: number };
-export type Projection = { width: number; height: number; scale: number; center: Point; bounds: Bounds; target: Bounds; padding: number };
+export type Projection = { width: number; height: number; scale: number; center: Point; bounds: Bounds; target: Bounds; padding: number; rotation: Rotation };
 
 /** Convert an explicit metre area into unchanged world bounds. */
 export function areaBounds(area: TrainingArea): Bounds {
@@ -43,11 +45,12 @@ export function contentBounds(scene: TacticalScene, exerciseArea?: TrainingArea)
 }
 
 /** Uniform projection respects length/width proportions, explicit framing, pixel gutters and a separate view-only camera. */
-export function fitViewport(input: unknown, options: { width: number; height: number; fit: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; padding?: number; camera?: Camera }): Projection {
+export function fitViewport(input: unknown, options: { width: number; height: number; fit: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; padding?: number; camera?: Camera; rotation?: Rotation; setPieceFocus?: "delivery" | "box" }): Projection {
   const scene = prepareScene(input), { width, height } = options;
   if (![width, height].every((value) => Number.isFinite(value) && value >= 120 && value <= 8192)) throw new RangeError("Viewport dimensions must be between 120 and 8192 pixels");
   let target: Bounds;
-  if (options.fit === "pitch") target = { minX: 0, minY: 0, maxX: scene.field.length, maxY: scene.field.width };
+  if (options.fit === "context" || options.fit === "exercise" && scene.context && !options.exerciseArea) target = areaBounds(contextArea(scene, options.setPieceFocus));
+  else if (options.fit === "pitch") target = { minX: 0, minY: 0, maxX: scene.field.length, maxY: scene.field.width };
   else if (options.fit === "attacking-half" || options.fit === "defensive-half") target = { minX: options.fit === "attacking-half" ? scene.field.length / 2 : 0, minY: 0, maxX: options.fit === "attacking-half" ? scene.field.length : scene.field.length / 2, maxY: scene.field.width };
   else if (options.fit === "custom") { if (!options.customArea) throw new RangeError("Custom framing needs an explicit area"); target = areaBounds(options.customArea); }
   else if (options.fit === "exercise" && options.exerciseArea) target = areaBounds(options.exerciseArea);
@@ -58,14 +61,29 @@ export function fitViewport(input: unknown, options: { width: number; height: nu
   const zoom = options.camera?.zoom ?? 1;
   const center = options.camera?.center ?? { x: (target.minX + target.maxX) / 2, y: (target.minY + target.maxY) / 2 };
   if (!Number.isFinite(zoom) || zoom < 0.1 || zoom > 8 || ![center.x, center.y].every((n) => Number.isFinite(n) && Math.abs(n) <= 20_000)) throw new RangeError("Camera exceeds view limits");
-  const scale = Math.min((width - 2 * padding) / (target.maxX - target.minX), (height - 2 * padding) / (target.maxY - target.minY)) * zoom;
-  return { width, height, scale, center: { ...center }, padding, target: { ...target }, bounds: { minX: center.x - width / (2 * scale), maxX: center.x + width / (2 * scale), minY: center.y - height / (2 * scale), maxY: center.y + height / (2 * scale) } };
+  const rotation = options.rotation ?? 0;
+  if (![0, 90, 180, 270].includes(rotation)) throw new RangeError("Only quarter-turn view rotations are supported");
+  const swapped = rotation === 90 || rotation === 270, dx = target.maxX - target.minX, dy = target.maxY - target.minY;
+  const scale = Math.min((width - 2 * padding) / (swapped ? dy : dx), (height - 2 * padding) / (swapped ? dx : dy)) * zoom;
+  return { width, height, scale, rotation, center: { ...center }, padding, target: { ...target }, bounds: { minX: center.x - (swapped ? height : width) / (2 * scale), maxX: center.x + (swapped ? height : width) / (2 * scale), minY: center.y - (swapped ? width : height) / (2 * scale), maxY: center.y + (swapped ? width : height) / (2 * scale) } };
 }
 
 /** Map metres to SVG pixels; SVG y increases down the width of the field. */
-export function worldToScreen(point: Point, view: Projection): Point { return { x: view.width / 2 + (point.x - view.center.x) * view.scale, y: view.height / 2 + (point.y - view.center.y) * view.scale }; }
+export function worldToScreen(point: Point, view: Projection): Point {
+  const angle = view.rotation * Math.PI / 180, x = point.x - view.center.x, y = point.y - view.center.y;
+  return { x: view.width / 2 + (x * Math.cos(angle) - y * Math.sin(angle)) * view.scale, y: view.height / 2 + (x * Math.sin(angle) + y * Math.cos(angle)) * view.scale };
+}
 /** Exact inverse used by later editors; resizing never rewrites a scene coordinate. */
-export function screenToWorld(point: Point, view: Projection): Point { return { x: view.center.x + (point.x - view.width / 2) / view.scale, y: view.center.y + (point.y - view.height / 2) / view.scale }; }
+export function screenToWorld(point: Point, view: Projection): Point {
+  const angle = view.rotation * Math.PI / 180, x = (point.x - view.width / 2) / view.scale, y = (point.y - view.height / 2) / view.scale;
+  return { x: view.center.x + x * Math.cos(angle) + y * Math.sin(angle), y: view.center.y - x * Math.sin(angle) + y * Math.cos(angle) };
+}
+/** Axis-aligned bounds of a quarter-turned world rectangle, shared by markings and zones. */
+export function screenRectangle(origin: Point, length: number, width: number, view: Projection) {
+  const corners = [{ ...origin }, { x: origin.x + length, y: origin.y }, { x: origin.x + length, y: origin.y + width }, { x: origin.x, y: origin.y + width }].map((p) => worldToScreen(p, view));
+  const x = Math.min(...corners.map((p) => p.x)), y = Math.min(...corners.map((p) => p.y));
+  return { x, y, width: Math.max(...corners.map((p) => p.x)) - x, height: Math.max(...corners.map((p) => p.y)) - y };
+}
 
 /** Produce bounded square metric guides anchored at world zero and clipped to the actual field. */
 export function metricGrid(view: Projection, field: TacticalScene["field"], requested: number) {

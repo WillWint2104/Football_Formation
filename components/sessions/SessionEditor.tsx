@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { DiagramLinks } from "@/components/tactical/DiagramLinks";
 import { useState } from "react";
 import { z } from "zod";
 import type { CalendarEvent } from "@/lib/domain/calendar";
@@ -50,6 +51,7 @@ export function SessionEditor({ source, event, historical, isNew, navigating, on
       })}</div>{!base.bundle.coaches.some((c) => c.teamIds.includes(draft.teamId)) && <p className="calendar-muted">No directory coaches for this team. Add a coach in the directory.</p>}</section>
       <SessionContentFields content={draft.content} exercises={base.bundle.exercises} onChange={(content) => setDraft({ ...draft, content })} />
     </fieldset>
+    {!isNew && source.content.activities.map((activity) => <DiagramLinks key={activity.id} content={activity.content} disabled={dirty || historical || disabled} target={{ kind: "session", id: source.id, revision: source.revision, activity: activity.id, ...(event ? { event: event.id, booking: event.revision } : {}) }} />)}
     {!!source.documents.length && <p className="coaching-notice">Existing document metadata is retained in history. Generated guides stay pinned to their original snapshot. Uploads and exports are a later milestone.</p>}
     {error && <p role="alert" className="coaching-notice">{error}</p>}
     <div className="coaching-save-bar"><button className="calendar-primary" disabled={disabled || !dirty}>{busy ? "Saving…" : "Save session"}</button>

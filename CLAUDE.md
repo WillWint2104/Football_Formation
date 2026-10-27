@@ -104,10 +104,13 @@ PR 02 authenticated persistence is merged as GitHub PR #8; hosted activation is 
 PR 03 interactive calendar is merged as GitHub PR #9.
 PR 04 session library, coaches and templates is merged as GitHub PR #10.
 PR 05 coaching guides/private documents is merged as GitHub PR #11 at approved head 551f73d.
-PR 06 shared 2D renderer is authorized for implementation and review only;
-do not merge, deploy manually or provision hosted resources without owner approval.
+PR 06 shared 2D renderer is merged as GitHub PR #12 at approved head d518b2a,
+merge commit 054d79a. PR 07 context-aware static editor is authorised for
+implementation and review only; do not merge, deploy manually or provision
+hosted resources without owner approval. See `docs/context-aware-editor.md` for
+optional context/colour compatibility, authoring and exact saved-owner pins.
 See `docs/shared-2d-renderer.md` for shared drawing, framing and evaluation contracts.
-Illustrated PDF generation and tactical editor integration follow later. 3D/Meshy stay paused.
+Illustrated PDF generation and advanced animation follow later. 3D/Meshy stay paused.
 See `docs/coaching-guides-private-documents.md` for exact guides, private storage and staging.
 See `docs/interactive-calendar.md` for sample/saved-mode boundaries and the staging gate.
 See `docs/session-library.md` for authoring, independent reuse and shared snapshot behaviour.

@@ -16,6 +16,20 @@ export const areaSchema = z.strictObject({
   length: z.number().positive().finite(),
   width: z.number().positive().finite(),
 });
+/** Optional additive context leaves historical schema-1.0 payloads untouched. */
+export const fieldContextSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ kind: z.literal("neutral"), boundary: z.boolean() }),
+  z.strictObject({
+    kind: z.literal("pitch"),
+    region: z.enum(["full", "attacking-third", "defensive-third", "midfield", "attacking-half", "defensive-half", "set-piece", "custom"]),
+    attack: z.enum(["positive-x", "negative-x"]),
+    area: areaSchema.optional(),
+    setPiece: z.strictObject({
+      type: z.enum(["corner", "wide-free-kick", "edge-free-kick", "direct-free-kick", "indirect-free-kick", "penalty"]),
+      phase: z.enum(["attacking", "defending"]), side: z.enum(["left", "right"]), location: pointSchema.optional(),
+    }).optional(),
+  }),
+]);
 const entityBase = {
   id: idSchema,
   position: pointSchema,
@@ -28,6 +42,7 @@ export const entitySchema = z.discriminatedUnion("kind", [
     team: z.enum(["a", "b", "neutral"]),
     number: z.number().int().min(1).max(99),
     positionLabel: textSchema.nullable(),
+    color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   }),
   z.strictObject({ ...entityBase, kind: z.literal("ball") }),
   z.strictObject({
@@ -134,6 +149,7 @@ export const tacticalSceneSchema = z
     ...recordShape,
     revision: revisionSchema,
     units: z.literal("metres"),
+    context: fieldContextSchema.optional(),
     field: z.strictObject({
       length: z.number().positive().finite(),
       width: z.number().positive().finite(),
@@ -142,6 +158,16 @@ export const tacticalSceneSchema = z
     stages: z.array(stageSchema),
   })
   .superRefine((scene, ctx) => {
+    const context = scene.context;
+    if (context?.kind === "pitch") {
+      if (scene.field.length < 70 || scene.field.width < 45) ctx.addIssue({ code: "custom", path: ["field"], message: "Physical football context needs at least 70 × 45 m; use a neutral area for smaller independent drills" });
+      if (context.region === "custom" && !context.area) ctx.addIssue({ code: "custom", path: ["context", "area"], message: "Custom context requires a physical area" });
+      if (context.region === "set-piece" && !context.setPiece) ctx.addIssue({ code: "custom", path: ["context", "setPiece"], message: "Set-piece context requires delivery details" });
+      const a = context.area;
+      if (a && (a.origin.x < 0 || a.origin.y < 0 || a.origin.x + a.length > scene.field.length || a.origin.y + a.width > scene.field.width)) ctx.addIssue({ code: "custom", path: ["context", "area"], message: "Physical context area must be within its parent pitch" });
+      const p = context.setPiece?.location;
+      if (p && (p.x < 0 || p.y < 0 || p.x > scene.field.length || p.y > scene.field.width)) ctx.addIssue({ code: "custom", path: ["context", "setPiece", "location"], message: "Delivery location must be on the pitch" });
+    }
     if (
       !Number.isFinite(
         scene.stages.reduce((sum, stage) => sum + stage.durationSeconds, 0),
@@ -208,3 +234,4 @@ export type TacticalEntity = z.infer<typeof entitySchema>;
 export type MovementTrack = z.infer<typeof trackSchema>;
 export type AnimationStage = z.infer<typeof stageSchema>;
 export type TrainingArea = z.infer<typeof areaSchema>;
+export type FieldContext = z.infer<typeof fieldContextSchema>;
