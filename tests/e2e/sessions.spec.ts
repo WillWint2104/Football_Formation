@@ -71,6 +71,8 @@ test("template copies create independent editable sessions without modifying the
     await expect(page.getByRole("status")).toHaveText(`Saved organisation snapshot v${expected}.`);
     ids.push(new URL(page.url()).searchParams.get("session")!);
     await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Templates", exact: true }).click();
+    await expect(page).toHaveURL(/\/templates$/);
+    await expect(page.getByRole("heading", { name: "Session templates", exact: true })).toBeVisible();
   }
   expect(new Set(ids).size).toBe(2);
   expect(mock.bundle().templates[0]).toEqual(source);
@@ -79,7 +81,7 @@ test("template copies create independent editable sessions without modifying the
     expect(session.content.title).toBe(`Independent session ${index === 0 ? "A" : "B"}`);
     expect(session.sourceTemplate).toEqual({ id: source.id, revision: 1 });
   }
-  await page.getByLabel("Session objective").fill("Updated reusable source only");
+  await page.getByRole("region", { name: "Reusable content editor" }).getByLabel("Session objective").fill("Updated reusable source only");
   const expected = mock.version() + 1;
   await page.getByRole("button", { name: "Save template", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText(`Saved organisation snapshot v${expected}.`);
