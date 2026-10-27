@@ -104,6 +104,7 @@ test("reusable exercises, testing sessions and optional warm-up/cool-down roles 
   await page.getByRole("button", { name: "Save exercise", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v5");
   const exercise = mock.bundle().exercises.at(-1)!;
+  await expect(page).toHaveURL(new RegExp(`/exercises\\?item=${exercise.id}$`));
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Sessions", exact: true }).click();
   await page.getByRole("button", { name: "New session", exact: true }).click();
   await page.getByLabel("Session title").fill("Preseason testing programme");

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { PDFDocument } from "pdf-lib";
-import { createGuidePdf, PDF_RENDERER_VERSION } from "../../lib/server/guide-pdf";
+import { createGuidePdf, guideDiagramDrawing, PDF_RENDERER_VERSION } from "../../lib/server/guide-pdf";
 import { handleGuideExport } from "../../lib/server/guide-export-http";
 import { handleDocument } from "../../lib/server/document-http";
 import { validatePdf } from "../../lib/server/pdf-validation";
@@ -41,6 +41,15 @@ test("shared document templates retain source pins, bounded synthetic marks and 
   await assert.rejects(createGuidePdf(bundle, reference, { template: "single-activity", cover: true }), /dedicated cover/);
   const multi = exportFixture("session-guide");
   await assert.rejects(createGuidePdf(multi.bundle, multi.reference, { template: "single-activity" }), /at most one/);
+});
+
+test("multiple diagrams resolve each saved context instead of inheriting an unrelated activity framing area", () => {
+  const { bundle, reference } = exportFixture("multiple-diagrams"), activity = bundle.sessions.find((session) => session.id === reference.session)!.content.activities[0];
+  const scene = bundle.scenes.find((candidate) => candidate.id === activity.content.diagrams[1].scene.id)!, before = structuredClone(scene);
+  const differentArea = structuredClone(activity); differentArea.content.area = { origin: { x: 500, y: 500 }, length: 2, width: 2 };
+  const first = guideDiagramDrawing(scene, activity, 0, 515, 226), second = guideDiagramDrawing(scene, differentArea, 0, 515, 226);
+  assert.deepEqual(first.view, second.view); assert.equal(first.clippedEntities, 0); assert.equal(first.view.rotation, 270); assert.deepEqual(scene, before);
+  assert.ok(first.view.target.maxX - first.view.target.minX <= 38, "final-third context must not expand to the full 105 m pitch");
 });
 
 test("club marks cannot fetch URLs or embed SVG, animated, oversized or mismatched raster payloads", async () => {

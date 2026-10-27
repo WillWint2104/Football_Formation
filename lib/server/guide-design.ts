@@ -12,6 +12,8 @@ export const templateLabels = { "single-activity": "Single Activity Sheet", "ses
 /** Decode bounded raster bytes only; never fetch URLs, read client paths or embed SVG/active image payloads. */
 async function brandImage(pdf: PDFDocument, asset: NonNullable<DocumentBrand["crest"]>) {
   try {
+    const pngMagic = [137, 80, 78, 71, 13, 10, 26, 10], jpegMagic = [255, 216, 255];
+    if (!(asset.format === "png" ? pngMagic : jpegMagic).every((value, index) => asset.bytes[index] === value)) throw new Error("Invalid raster signature");
     const input = sharp(asset.bytes, { limitInputPixels: 1_048_576, animated: false }), metadata = await input.metadata();
     if (metadata.format !== asset.format || !metadata.width || !metadata.height || metadata.width > 1024 || metadata.height > 1024 || (metadata.pages ?? 1) !== 1) throw new Error("Unsupported raster");
     const clean = await input.rotate().png().toBuffer();

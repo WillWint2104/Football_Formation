@@ -28,13 +28,18 @@ let fonts: Promise<Buffer[]> | undefined;
 /** Load licensed bundled Inter once; no runtime font or image URL is fetched. */
 function fontBytes() { return fonts ??= Promise.all(["Inter-Regular.ttf", "Inter-Bold.ttf"].map((name) => readFile(path.join(process.cwd(), "assets/pdf-fonts", name)))); }
 
-/** Render the exact saved scene/time with the shared SVG engine; retain native geometry and print resolution. */
-async function diagramImage(pdf: PDFDocument, scene: TacticalScene, activity: SessionActivity, seconds: number, width: number, height: number) {
+/** Frame each explicit scene context independently; legacy scenes can still use their saved activity area. */
+export function guideDiagramDrawing(scene: TacticalScene, activity: SessionActivity, seconds: number, width: number, height: number) {
   const area = contextArea(scene), rotation = scene.context?.kind === "pitch" && area.width > area.length ? 270 : 0;
-  const options: DrawingOptions = { width: Math.round(width * 1.25), height: Math.round(height * 1.25), padding: 24, fit: "exercise", exerciseArea: activity.content.area ?? undefined, rotation, seconds, paths: "stage", labels: true };
+  const options: DrawingOptions = { width: Math.round(width * 1.25), height: Math.round(height * 1.25), padding: 24, fit: "exercise", exerciseArea: scene.context ? area : activity.content.area ?? undefined, rotation, seconds, paths: "stage", labels: true };
   let drawing = drawScene(scene, options); if (drawing.clippedEntities) drawing = drawScene(scene, { ...options, fit: "all" });
   if (drawing.clippedEntities) throw new PersistenceError(400, "Diagram framing could not include every saved object");
-  return pdf.embedPng(await sharp(Buffer.from(serializeDrawing(drawing)), { density: 216, limitInputPixels: 16_000_000 }).png().toBuffer());
+  return drawing;
+}
+
+/** Rasterise only the shared exact drawing; no independent tactical geometry is introduced by print layout. */
+async function diagramImage(pdf: PDFDocument, scene: TacticalScene, activity: SessionActivity, seconds: number, width: number, height: number) {
+  return pdf.embedPng(await sharp(Buffer.from(serializeDrawing(guideDiagramDrawing(scene, activity, seconds, width, height))), { density: 216, limitInputPixels: 16_000_000 }).png().toBuffer());
 }
 
 /** Practical activity facts omit absent optional values while retaining explicitly unknown quantities. */
@@ -99,7 +104,7 @@ async function activitySection(layout: PdfLayout, bundle: DomainBundle, activity
     }
     if (sideNotes) { for (const [title, values] of nonemptyNotes) { layout.column(title, values, A4.margin + width + tokens.columnGap, sideWidth); layout.y -= 6; } notesDrawn = true; }
     layout.y = top - height - 10;
-    if (caption) layout.text(`Figure ${n + 1}${pin.representativeSeconds ? ` · ${pin.representativeSeconds}s snapshot` : ""}`, { size: 7.5, color: printTheme.muted, gap: 10 });
+    if (caption) layout.text(`Figure ${n + 1}${content.diagrams.length > 1 && scene.context ? ` · ${area.length} × ${area.width} m` : ""}${pin.representativeSeconds ? ` · ${pin.representativeSeconds}s snapshot` : ""}`, { size: 7.5, color: printTheme.muted, gap: 10 });
   }
   if (content.instructions.length && !instructionsDrawn) { layout.heading("How to run"); layout.list(content.instructions, true); }
   if (!notesDrawn) layout.notes(notes);
