@@ -27,8 +27,8 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   const [animation, setAnimation] = useState(() => initial.stages.length > 1 || initial.stages.some((s) => s.durationSeconds !== 1 || s.hiddenEntityIds?.length || s.tracks.some((t) => t.kind !== "annotation" || t.visibleFrom > 0 || t.visibleUntil < s.durationSeconds)));
   const [seconds, setSeconds] = useState(0), [stageId, setStageId] = useState(initial.stages[0]?.id ?? ""), [playing, setPlaying] = useState(false), [speed, setSpeed] = useState(1), [ghosts, setGhosts] = useState(true), [paths, setPaths] = useState<"active" | "stage" | "none">("active");
   const duration = sceneDuration(scene), time = animation ? Math.min(seconds, duration) : 0;
-  const stage = scene.stages.find((s) => s.id === stageId) ?? scene.stages[0], range = stageRanges(scene).find((r) => r.stage.id === stage?.id);
-  const localTime = range ? Math.max(0, Math.min(range.stage.durationSeconds, time - range.start)) : 0;
+  const ranges = stageRanges(scene), range = ranges.find((r) => r.stage.id === stageId) ?? ranges.find((r) => time < r.end) ?? ranges.at(-1), stage = range?.stage;
+  const localTime = range ? Math.max(0, Math.min(range.stage.durationSeconds, Math.round((time - range.start) * 1_000_000) / 1_000_000)) : 0;
   const clock = useRef(0);
   const [team, setTeam] = useState<"a" | "b" | "neutral">("a"), [equipment, setEquipment] = useState<TacticalEntityEquipment>("cone");
   const [grid, setGrid] = useState(5), [showGrid, setShowGrid] = useState(true), [guides, setGuides] = useState(false), [snap, setSnap] = useState(true), [objects, setObjects] = useState(false);
@@ -40,7 +40,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   useEffect(() => { onDirty(JSON.stringify(scene) !== JSON.stringify(initial)); }, [scene, initial, onDirty]);
   /** Validate and commit one undoable edit; rejected geometry leaves the last valid scene intact. */
   const edit = (next: TacticalScene, before?: TacticalScene) => {
-    try { const valid = prepareScene(next); setPlaying(false); setHistory((h) => recordEdit(h, valid, before)); setMessage("Diagram updated · geometry retained in metres."); }
+    try { const valid = prepareScene(next); setPlaying(false); syncStageTime(valid); setHistory((h) => recordEdit(h, valid, before)); setMessage("Diagram updated · geometry retained in metres."); }
     catch { setMessage("Change rejected. Check dimensions, required text, player number (1–99), facing (0–359°) and coordinate limits."); }
   };
   /** Clone the draft before a property mutation so history and source revisions stay immutable. */
@@ -49,6 +49,16 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   const operate = (operation: () => TacticalScene) => { try { edit(operation()); } catch (error) { setMessage(error instanceof Error ? error.message : "Change rejected: object spacing or movement exceeds the supported world limits."); } };
   /** Seeking is view-only; pose-boundary editing can retain the deliberately selected stage. */
   function seek(value: number, selectStage = true) { setPlaying(false); const next = Math.max(0, Math.min(duration, value)); clock.current = next; setSeconds(next); if (selectStage) setStageId(evaluateScene(scene, next).stage?.id ?? ""); }
+  /** Keep the same selected stage/local pose through edits and history; a removed stage follows the clamped playhead. */
+  function syncStageTime(next: TacticalScene) {
+    if (!animation) return;
+    const nextRanges = stageRanges(next), same = nextRanges.find((r) => r.stage.id === stage?.id);
+    const value = same ? same.start + Math.min(localTime, same.stage.durationSeconds) : Math.min(time, sceneDuration(next));
+    const current = same ?? nextRanges.find((r) => value < r.end) ?? nextRanges.at(-1);
+    setStageId(current?.stage.id ?? ""); clock.current = value; setSeconds(value);
+  }
+  /** History restores the exact scene and keeps the inspector's selection/time attached to the same stage identity. */
+  function historyStep(direction: "undo" | "redo") { setPlaying(false); const next = travel(history, direction); syncStageTime(next.present); setHistory(next); }
   /** One elapsed-time clock drives the pure evaluator, independent of frame rate or display speed. */
   useEffect(() => {
     if (!playing) return;
@@ -176,7 +186,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
     if (event.key === "Escape") { cancel(); setSelected([]); setTool("select"); return; }
     if (readOnly) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") { event.preventDefault(); setSelected([...scene.entities.filter((e) => !animation || e.kind !== "equipment").map((e) => `entity:${e.id}`), ...((animation ? stage : scene.stages[0])?.tracks.filter((t) => t.kind === "annotation").map((t) => `annotation:${t.id}`) ?? [])]); }
-    if ((event.ctrlKey || event.metaKey) && ["z", "y"].includes(event.key.toLowerCase())) { event.preventDefault(); setPlaying(false); setHistory((h) => travel(h, event.key.toLowerCase() === "y" || event.shiftKey ? "redo" : "undo")); }
+    if ((event.ctrlKey || event.metaKey) && ["z", "y"].includes(event.key.toLowerCase())) { event.preventDefault(); historyStep(event.key.toLowerCase() === "y" || event.shiftKey ? "redo" : "undo"); }
     if (["Delete", "Backspace"].includes(event.key) && selected.length) { event.preventDefault(); operate(() => removeObjects(scene, selected, animation ? stage?.id : undefined)); setSelected([]); }
     const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
     if (direction && selected.length) {
@@ -185,15 +195,16 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       operate(() => moveSelection(scene, selected, (b.x - a.x) * view.scale * step, (b.y - a.y) * view.scale * step, animation ? stage?.id : undefined, localTime));
     }
   }
+  const ghostStarts = animation && ghosts && !playing && stage && selected.length ? stageStart(scene, stage.id) : [];
   const ghostPositions = animation && ghosts && !playing && stage ? selected.filter((id) => id.startsWith("entity:")).flatMap((id) => {
-    const entity = stageStart(scene, stage.id).find((e) => `entity:${e.id}` === id), track = stage.tracks.find((t) => t.kind !== "annotation" && `entity:${t.entityId}` === id);
+    const entity = ghostStarts.find((e) => `entity:${e.id}` === id), track = stage.tracks.find((t) => t.kind !== "annotation" && `entity:${t.entityId}` === id);
     return entity ? [{ id: `${entity.id}-start`, position: entity.position, label: "Start" }, ...(track && track.kind !== "annotation" ? [{ id: `${entity.id}-end`, position: track.keyframes.at(-1)!.position, label: "End" }] : [])] : [];
   }) : [];
   return <div ref={root} className={`tactical-editor${animation ? " editor-animation" : ""}${expanded ? " editor-expanded" : ""}`} tabIndex={0} role={expanded ? "dialog" : "region"} aria-modal={expanded || undefined} aria-label="Tactical diagram editor" onKeyDown={keyboard}>
     <div className="editor-topbar"><div className="editor-mode" aria-label="Authoring mode"><button aria-pressed={!animation} onClick={() => { setPlaying(false); setAnimation(false); setSeconds(0); clock.current = 0; }}>Layout</button><button aria-pressed={animation} onClick={() => { setPlaying(false); setAnimation(true); setTool("select"); if (!scene.stages.length && !readOnly) operate(() => appendStage(scene)); }}>Animation</button></div>
       <label>Example setup<select aria-label="Example setup" value={example} disabled={readOnly} onChange={(e) => setExample(e.target.value)}><optgroup label="Static diagrams">{editorExamples.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</optgroup><optgroup label="Animation examples">{animationExamples.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</optgroup></select></label>
       <button disabled={readOnly} onClick={() => { const e = [...editorExamples, ...animationExamples].find((e) => e.id === example)!; edit({ ...structuredClone(e.scene), id: scene.id, revision: scene.revision, organizationId: scene.organizationId }); setSelected([]); setStageId(e.scene.stages[0]?.id ?? ""); setSeconds(0); clock.current = 0; setAnimation(example.startsWith("animation-")); frame("context"); setRotation(startingRotation(e.scene)); }}>Apply setup</button>
-      <span className="editor-spacer" /><button disabled={readOnly || !history.past.length} onClick={() => { setPlaying(false); setHistory((h) => travel(h, "undo")); }}>↶ Undo</button><button disabled={readOnly || !history.future.length} onClick={() => { setPlaying(false); setHistory((h) => travel(h, "redo")); }}>↷ Redo</button>
+      <span className="editor-spacer" /><button disabled={readOnly || !history.past.length} onClick={() => historyStep("undo")}>↶ Undo</button><button disabled={readOnly || !history.future.length} onClick={() => historyStep("redo")}>↷ Redo</button>
       <button className="calendar-primary" disabled={!canSave} onClick={() => { setPlaying(false); void onSave(scene); }}>{saveLabel}</button></div>
     <div className="editor-layout"><section className="editor-canvas-column" aria-label="Drawing workspace">
       <div className="editor-tools" role="toolbar" aria-label="Drawing tools">{tools.map(([id, label]) => <button key={id} aria-pressed={tool === id} disabled={readOnly && !["select", "pan"].includes(id) || animation && ["player", "ball", "equipment"].includes(id)} onClick={() => setTool(id)}>{label}</button>)}</div>

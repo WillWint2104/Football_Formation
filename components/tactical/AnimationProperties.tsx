@@ -8,7 +8,7 @@ type Props = { scene: TacticalScene; stageId: string; selected: string[]; second
 /** Stage-local property edits are explicit undoable operations on the existing saved scene. */
 export function AnimationProperties({ scene, stageId, selected, seconds, onSeekPose, operate }: Props) {
   const range = stageRanges(scene).find((r) => r.stage.id === stageId); if (!range) return <p>Add a stage to begin animation authoring.</p>;
-  const { stage, start, index } = range, local = Math.max(0, Math.min(stage.durationSeconds, seconds - start));
+  const { stage, start, index } = range, local = Math.max(0, Math.min(stage.durationSeconds, Math.round((seconds - start) * 1_000_000) / 1_000_000));
   const entity = selected.length === 1 ? evaluateScene(scene, seconds).entities.find((e) => `entity:${e.id}` === selected[0]) : undefined;
   const track = stage.tracks.find((t) => t.kind !== "annotation" && t.entityId === entity?.id);
   const annotation = stage.tracks.find((t) => t.kind === "annotation" && selected.includes(`annotation:${t.id}`));

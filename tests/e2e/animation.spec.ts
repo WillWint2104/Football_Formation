@@ -81,3 +81,23 @@ test("save/reopen animated revisions and historical guides preserve old scenes a
   await page.goto(guideHref({ session: target.id, revision: 2, event: target.event, bookingRevision: 2 })); await expect(page.locator(".guide-saved-diagram .scene-diagram")).toHaveAttribute("data-revision", "1");
   expect(mock.bundle().scenes[0]).toEqual(first); expect(mock.bundle().templates).toEqual(before.templates); expect(mock.bundle().exercises).toEqual(before.exercises);
 });
+
+test("fractional stage starts retain keyframe selection and retiming", async ({ page }) => {
+  await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-passing");
+  await page.getByLabel("Stage duration (seconds)").fill("3.3"); await page.getByRole("button", { name: "Apply stage timing", exact: true }).click();
+  await page.getByRole("button", { name: /Select stage 2:/ }).click(); await choose(page, "ball"); await page.getByLabel("Stage pose time").fill("1.2");
+  await page.getByLabel("Pose X", { exact: true }).fill("4"); await page.getByLabel("Pose Y", { exact: true }).fill("5"); await page.getByRole("button", { name: "Record pose keyframe", exact: true }).click();
+  await page.getByRole("button", { name: /^1\.20 s ·/ }).click(); await expect(page.getByLabel("Selected keyframe time")).toHaveValue("1.2");
+  await page.getByLabel("Selected keyframe time").fill("1.4"); await page.getByRole("button", { name: "Move keyframe time", exact: true }).click();
+  await page.getByRole("button", { name: /^1\.40 s ·/ }).click(); await expect(page.getByLabel("Selected keyframe time")).toHaveValue("1.4");
+  expect(Number(await page.locator(".scene-diagram").getAttribute("data-time"))).toBeCloseTo(4.7, 6);
+});
+
+test("stage reorder, deletion and undo keep canvas, selected stage and local pose synchronized", async ({ page }) => {
+  await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-rondo");
+  await page.getByRole("button", { name: /Select stage 2:/ }).click(); await page.getByLabel("Stage pose time").fill("1");
+  await page.getByRole("button", { name: "Move stage later", exact: true }).click(); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "8"); await expect(page.locator(".animation-stages button").last()).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "5"); await expect(page.getByLabel("Stage pose time")).toHaveValue("1");
+  await page.getByRole("button", { name: "Move stage later", exact: true }).click(); await page.getByRole("button", { name: "Delete stage", exact: true }).click();
+  await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "7"); await expect(page.getByLabel("Stage title", { exact: true })).toHaveValue("Switch the angle"); await expect(page.getByLabel("Stage pose time")).toHaveValue("3");
+});

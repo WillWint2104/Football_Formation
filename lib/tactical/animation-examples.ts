@@ -1,7 +1,6 @@
 import type { TacticalScene } from "../domain/tactical-scene";
 import { editorExamples } from "./editor-examples";
 import { appendStage, setPose, updateStage } from "./animation";
-import { addAnnotation } from "./authoring";
 import { prepareScene, type EntityTrack } from "./evaluate";
 
 type Pose = [id: string, x: number, y: number, movement?: EntityTrack["movement"], at?: number];
@@ -15,8 +14,6 @@ function example(id: string, title: string, sourceId: string, steps: { title: st
     source = updateStage(source, stage.id, step.title, step.duration);
     for (const [entity, x, y, movement, at] of step.poses) source = setPose(source, stage.id, entity, at ?? step.duration, { x, y }, movement, allocate);
   }
-  source = addAnnotation(source, { kind: "note", position: { x: source.entities[0].position.x, y: source.entities[0].position.y + 2 }, text: "Scan before the next action" }, allocate, source.stages[0].id);
-  const note = source.stages[0].tracks.at(-1)!; if (note.kind === "annotation") { note.visibleFrom = .5; note.visibleUntil = Math.min(2, source.stages[0].durationSeconds); }
   return { id: `animation-${id}`, title, scene: prepareScene(source) };
 }
 /** Eight synthetic acceptance scenes. They are never uploaded or attached until an explicit owner save. */

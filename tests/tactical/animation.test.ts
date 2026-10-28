@@ -9,6 +9,7 @@ import { editorExamples } from "../../lib/tactical/editor-examples";
 import { saveDiagram, resolveDiagramTarget, type DiagramTarget } from "../../lib/tactical/persistence";
 import { coachingSample } from "../../lib/coaching/sample";
 import { domainBundleSchema } from "../../lib/domain/validation";
+import sharp from "sharp";
 
 for (const example of animationExamples) test(`animation acceptance: ${example.title} is deterministic, connected and immutable at every stage boundary`, () => {
   const scene = example.scene, before = structuredClone(scene); assert.deepEqual(prepareScene(scene), scene);
@@ -29,11 +30,21 @@ for (const example of animationExamples) test(`animation acceptance: ${example.t
   assert.deepEqual(scene, before);
 });
 test("duration editing scales local motion/annotation windows without changing endpoints or later stage durations", () => {
-  const scene = animationExamples[0].scene, stage = scene.stages[0], next = updateStage(scene, stage.id, "Slower reception", 6);
+  const original = animationExamples[0].scene, stage = original.stages[0];
+  const scene = annotationWindow(addAnnotation(original, { kind: "note", position: { x: 5, y: 5 }, text: "Receive" }, () => "retimed-note", stage.id), stage.id, "retimed-note", .5, 2), next = updateStage(scene, stage.id, "Slower reception", 6);
   assert.equal(next.stages[1].durationSeconds, scene.stages[1].durationSeconds);
   assert.deepEqual(evaluateScene(next, 2).entities, evaluateScene(scene, 1).entities);
   assert.deepEqual(evaluateScene(next, 6).entities, evaluateScene(scene, 3).entities);
+  const note = next.stages[0].tracks.find((t) => t.id === "retimed-note")!; assert.equal(note.kind === "annotation" && note.visibleFrom, 1); assert.equal(note.kind === "annotation" && note.visibleUntil, 4);
   assert.throws(() => updateStage(scene, stage.id, "Invalid", NaN)); assert.throws(() => updateStage(scene, stage.id, "Invalid", 0));
+});
+test("numbered player markers stay above notes even when a dense viewport cannot avoid a label collision", async () => {
+  const source = structuredClone(editorExamples[3].scene); source.entities = [{ id: "player", kind: "player", team: "a", number: 1, positionLabel: null, color: "#123abc", position: { x: 6, y: 6 }, headingDegrees: 0 }]; source.stages = [];
+  const scene = addAnnotation(source, { kind: "note", position: { x: 6, y: 6 }, text: "A deliberately crowded annotation" }, () => "note");
+  const drawing = drawScene(scene, { width: 120, height: 120, fit: "context" }), svg = serializeDrawing(drawing);
+  assert.ok(drawing.labelCollisions > 0);
+  const raster = await sharp(Buffer.from(svg)).removeAlpha().raw().toBuffer({ resolveWithObject: true }), offset = (60 * raster.info.width + 70) * raster.info.channels;
+  assert.deepEqual([...raster.data.subarray(offset, offset + 3)], [0x12, 0x3a, 0xbc]);
 });
 test("stage copies have independent IDs and edits/reorder/deletion reconnect without changing source snapshots", () => {
   const scene = animationExamples[1].scene, before = structuredClone(scene); let id = 0;

@@ -55,7 +55,8 @@ export function changeStageOrder(source: TacticalScene, id: string, action: "del
 export function setPose(source: TacticalScene, stageId: string, entityId: string, seconds: number, position: Point, movement?: EntityTrack["movement"], allocate = () => crypto.randomUUID()): TacticalScene {
   const scene = structuredClone(source), stage = stageOf(scene, stageId), entity = scene.entities.find((e) => e.id === entityId);
   if (!entity || entity.kind === "equipment") throw new Error("Animate players and balls; use Layout to position equipment");
-  const time = round(seconds); if (!Number.isFinite(time) || time < 0 || time > stage.durationSeconds) throw new Error("Pose time must be within the selected stage");
+  if (!Number.isFinite(seconds) || seconds < 0 || seconds > stage.durationSeconds) throw new Error("Pose time must be within the selected stage");
+  const time = Math.min(round(seconds), stage.durationSeconds);
   if (time === 0) {
     const index = scene.stages.indexOf(stage);
     if (!index) { entity.position = { ...position }; return connectStages(scene); }

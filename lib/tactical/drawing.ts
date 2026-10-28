@@ -88,6 +88,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     nodes.push(node("g", { "data-ghost-id": ghost.id, pointerEvents: "none", opacity: .55 }, undefined, [node("circle", { cx: at.x, cy: at.y, r: 17, fill: "none", stroke: c.line, strokeWidth: 1.2, strokeDasharray: "3 3" }), text({ x: at.x + 21, y: at.y - 9 }, ghost.label, { fontSize: 10 }), title(ghost.label)]));
   }
   nodes.push(...overlays);
+  const markers: SvgNode[] = [];
   for (const { entity, screen: at } of [...visible].sort((a, b) => Number(a.entity.kind === "player") - Number(b.entity.kind === "player"))) {
     const group: SvgNode[] = [title(entity.kind === "player" ? `Team ${entity.team.toUpperCase()} · #${entity.number}${entity.positionLabel ? ` · ${entity.positionLabel}` : ""} · ${entity.position.x.toFixed(1)}, ${entity.position.y.toFixed(1)} m` : entity.kind === "equipment" ? entity.equipment : "Ball")];
     if (entity.kind === "player") {
@@ -110,10 +111,11 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     else if (entity.equipment === "marker") group.push(node("circle", { cx: at.x, cy: at.y, r: 5, fill: c.equipment, stroke: c.outline, strokeWidth: 1 }));
     else if (entity.equipment === "pole") group.push(node("rect", { x: at.x - 2, y: at.y - 9, width: 4, height: 18, rx: 2, fill: c.equipment, stroke: c.outline }));
     else group.push(node("circle", { cx: at.x, cy: at.y - 7, r: 3.5, fill: c.b }), node("rect", { x: at.x - 5, y: at.y - 3, width: 10, height: 15, rx: 2, fill: c.b, stroke: c.line, strokeWidth: 0.7 }));
-    nodes.push(node("g", { "data-entity-id": entity.id, "data-world-x": entity.position.x, "data-world-y": entity.position.y }, undefined, group));
-    if (options.selectedIds?.includes(`entity:${entity.id}`)) nodes.push(node("circle", { cx: at.x, cy: at.y, r: 20, fill: "none", stroke: c.guide, strokeWidth: 2, pointerEvents: "none" }));
+    markers.push(node("g", { "data-entity-id": entity.id, "data-world-x": entity.position.x, "data-world-y": entity.position.y }, undefined, group));
+    if (options.selectedIds?.includes(`entity:${entity.id}`)) markers.push(node("circle", { cx: at.x, cy: at.y, r: 20, fill: "none", stroke: c.guide, strokeWidth: 2, pointerEvents: "none" }));
   }
-  nodes.push(...labels);
+  // Numbered markers keep paint priority when a very dense viewport cannot place every note without overlap.
+  nodes.push(...labels, ...markers);
   for (const track of evaluated.annotations) if (options.selectedIds?.includes(`annotation:${track.id}`)) {
     const a = track.annotation, points = a.kind === "arrow" ? [a.from, a.to] : a.kind === "note" ? [a.position] : [a.area.origin, { x: a.area.origin.x + a.area.length, y: a.area.origin.y + a.area.width }];
     points.map(p).forEach((q) => nodes.push(node("circle", { cx: q.x, cy: q.y, r: 5, fill: c.guide, stroke: c.ink, strokeWidth: 1, pointerEvents: "none" })));
