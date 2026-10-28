@@ -48,6 +48,7 @@ test("calendar opens its pinned session; coaching edits, activity order and null
   expect(session.content.activities[1].content.playerCount).toBe(10);
   expect(session.content.activities[1].durationMinutes).toBeNull();
   expect(session.coaches.find((c) => c.coachId === "coach-lopez")?.role).toBe("specialist");
+  await expect(page).toHaveURL(new RegExp(`event=${booking.id}&revision=${booking.revision}`));
   await page.reload(); await loaded(page);
   await expect(editor.getByLabel("Session objective")).toHaveValue("Progress through pressure with clear support angles.");
   await editor.getByRole("link", { name: "Back to booking" }).click();
@@ -103,6 +104,7 @@ test("reusable exercises, testing sessions and optional warm-up/cool-down roles 
   await page.getByRole("button", { name: "Save exercise", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v5");
   const exercise = mock.bundle().exercises.at(-1)!;
+  await expect(page).toHaveURL(new RegExp(`/exercises\\?item=${exercise.id}$`));
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Sessions", exact: true }).click();
   await page.getByRole("button", { name: "New session", exact: true }).click();
   await page.getByLabel("Session title").fill("Preseason testing programme");
@@ -117,6 +119,7 @@ test("reusable exercises, testing sessions and optional warm-up/cool-down roles 
   await page.getByRole("button", { name: "Save session", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v6");
   const session = mock.bundle().sessions.at(-1)!;
+  await expect(page).toHaveURL(new RegExp(`/sessions\\?session=${session.id}$`));
   expect(session.content.kind).toBe("testing");
   expect(session.content.activities[0].sourceExercise).toEqual({ id: exercise.id, revision: 1 });
   expect(session.content.activities[0].content.equipment[0].quantity).toBeNull();
@@ -231,6 +234,7 @@ test("missing and historical revisions are never silently edited as the current 
   await page.getByLabel("Session objective").fill("New exact revision");
   await page.getByRole("button", { name: "Save session", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v5");
+  await expect(page).toHaveURL(/event=sample-4&revision=2/);
   await page.getByText("Saved revision history", { exact: true }).click();
   await page.getByRole("link", { name: "Booking v1 · session v1", exact: true }).click();
   await expect(page.getByLabel("Session objective")).toBeDisabled();

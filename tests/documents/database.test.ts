@@ -7,6 +7,7 @@ import { coachingSample } from "../../lib/coaching/sample";
 import { domainBundleSchema } from "../../lib/domain/validation";
 import { PersistenceError } from "../../lib/server/errors";
 import { handleDocument } from "../../lib/server/document-http";
+import { handleGuideExport } from "../../lib/server/guide-export-http";
 import type { CoachingStore } from "../../lib/server/repositories/coaching";
 import type { DocumentStore, ObjectRecord } from "../../lib/server/repositories/documents";
 
@@ -56,9 +57,16 @@ test("production SQL journals immutable private objects and persists exact PDF a
     const route = { ...params, revision: "2", documentId: doc.id, documentRevision: "1" };
     const download = await handleDocument(new Request("https://football.example/download"), route, "https://football.example", async () => ({ actor, store, documents: () => files }));
     assert.equal(download.status, 200); assert.deepEqual(new Uint8Array(await download.arrayBuffer()), bytes);
+    const generated = await handleGuideExport(new Request("https://football.example/export", { method: "POST", headers: { Origin: "https://football.example", "x-expected-version": "2", "x-booking-id": event.id, "x-booking-revision": "1" } }), params, "https://football.example", async () => ({ actor, store, documents: () => files }));
+    assert.equal(generated.status, 200); const exported = await generated.json(); assert.equal(exported.version, 3);
+    const afterExport = await store.load(organization); assert.deepEqual(afterExport.bundle.sessions, reopened.bundle.sessions); assert.deepEqual(afterExport.bundle.events, reopened.bundle.events);
+    const generatedDoc = afterExport.bundle.documents.find((d) => d.id === exported.document.id)!;
+    assert.equal(generatedDoc.source.kind, "generated-guide");
+    const generatedDownload = await handleDocument(new Request("https://football.example/download"), { ...params, documentId: generatedDoc.id, documentRevision: "1" }, "https://football.example", async () => ({ actor, store, documents: () => files }));
+    assert.equal(generatedDownload.status, 200); assert.ok((await generatedDownload.arrayBuffer()).byteLength > 1000);
     readerActor = outsider;
     const denied = await handleDocument(new Request("https://football.example/download"), route, "https://football.example", async () => ({ actor: outsider, store, documents: () => files }));
-    assert.equal(denied.status, 404); assert.equal(objectReads, 1);
+    assert.equal(denied.status, 404); assert.equal(objectReads, 2);
     for (const role of ["anon", "authenticated"]) {
       await assert.rejects(db.transaction(async (tx) => { await tx.exec(`set local role ${role}`); await tx.query("select * from public.private_document_objects"); }), /permission denied/);
       await assert.rejects(db.transaction(async (tx) => { await tx.exec(`set local role ${role}`); await tx.query("select public.register_coaching_document($1,'{}')", [actor]); }), /permission denied/);
