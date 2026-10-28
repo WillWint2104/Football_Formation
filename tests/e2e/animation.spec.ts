@@ -22,7 +22,7 @@ async function loaded(page: Page) { await expect(page.locator(".calendar-connect
 async function apply(page: Page, id: string) { await page.getByLabel("Example setup", { exact: true }).selectOption(id); await page.getByRole("button", { name: "Apply setup", exact: true }).click(); await expect(page.getByRole("region", { name: "Animation timeline" })).toBeVisible(); }
 async function seek(page: Page, seconds: number) { await page.getByLabel("Animation playhead").fill(String(seconds)); await expect(page.locator(".editor-surface .scene-diagram")).toHaveAttribute("data-time", String(seconds)); }
 async function anchor(page: Page, id: string) { const element = page.locator(`.editor-surface [data-entity-id="${id}"]`); return { x: Number(await element.getAttribute("data-world-x")), y: Number(await element.getAttribute("data-world-y")) }; }
-async function choose(page: Page, id: string) { const list = page.locator(".editor-object-list"); if (!(await list.getAttribute("open"))) await list.locator("summary").click(); await list.locator(`button[data-object-id="${id}"]`).click(); }
+async function choose(page: Page, id: string) { const list = page.locator(".editor-object-list"); if (await list.getAttribute("open") === null) await list.locator("summary").click(); await list.locator(`button[data-object-id="${id}"]`).click(); }
 
 for (const example of animationExamples) test(`animation desktop acceptance: ${example.title}`, async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", (error) => errors.push(error.message)); await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, example.id);
@@ -173,5 +173,5 @@ test("End pose retains selected-stage visibility and overlays; timeline seeking 
   await page.getByRole("button", { name: /Select stage 1:/ }).click(); await choose(page, "a1"); const view = await cameraState(page); await page.getByRole("button", { name: "End pose", exact: true }).click();
   await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "3"); await expect(page.locator(".editor-surface svg desc")).toContainText("Receive and open");
   await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(0); await expect(page.locator("[data-ghost-id]")).toHaveCount(0); await expect(page.locator(".editor-surface")).not.toContainText("Next stage only"); expect(await cameraState(page)).toEqual(view);
-  await seek(page, 3); await expect(page.locator(".editor-surface svg desc")).toContainText("Play the third player"); await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(1); await expect(page.locator(".editor-surface")).toContainText("Next stage only");
+  await seek(page, 2.9); await seek(page, 3); await expect(page.locator(".editor-surface svg desc")).toContainText("Play the third player"); await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(1); await expect(page.locator(".editor-surface")).toContainText("Next stage only");
 });
