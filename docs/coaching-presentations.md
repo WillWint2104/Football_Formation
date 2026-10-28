@@ -82,7 +82,8 @@ are no-store. Sources remain in the existing immutable journal, so old pins surv
 later coaching edits. Historical presentation versions open read-only.
 
 Limits: 128 sections, 32 camera views per section, 10,000 characters per text
-field, 2 MiB presentation JSON, renderer coordinate/time bounds, and at most 200
+field, 2 MiB compact presentation JSON enforced by the application (3 MiB
+PostgreSQL formatted-jsonb backstop), renderer coordinate/time bounds, and at most 200
 records per list/history request. Exceeding a read bound fails explicitly rather
 than silently hiding records. No unrestricted slide geometry or HTML is stored.
 Network/409 failures block further writes pending explicit reload; no automatic

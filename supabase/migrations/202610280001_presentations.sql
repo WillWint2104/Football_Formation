@@ -15,7 +15,7 @@ create table public.presentation_revisions (
   check (jsonb_typeof(payload) = 'object' and payload->>'schemaVersion' = '1.0'
     and payload->>'organizationId' = organization_id and payload->>'id' = id
     and payload->>'revision' = revision::text and jsonb_typeof(payload->'blocks') = 'array'
-    and jsonb_array_length(payload->'blocks') <= 128 and octet_length(payload::text) <= 2097152)
+    and jsonb_array_length(payload->'blocks') <= 128 and octet_length(payload::text) <= 3145728)
 );
 create trigger presentation_history_immutable before update or delete on public.presentation_revisions
   for each row execute function private.immutable_revision();
@@ -45,7 +45,7 @@ begin
     or p_payload->>'schemaVersion' is distinct from '1.0'
     or p_payload->>'revision' is distinct from (p_expected_revision+1)::text
     or jsonb_typeof(p_payload->'blocks') is distinct from 'array'
-    or octet_length(p_payload::text)>2097152 then
+    or octet_length(p_payload::text)>3145728 then
     raise exception 'Invalid presentation' using errcode='22023';
   end if;
   insert into public.presentation_heads(organization_id,id) values (p_organization_id,v_id) on conflict do nothing;

@@ -8,7 +8,7 @@ import { posePreview } from "./animation";
 export const TACTICAL_RENDERER_VERSION = "svg-2d/1.2.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
-export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
+export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; contextMask?: boolean; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
 export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
 const line = (a: Point, b: Point, attrs: SvgNode["attrs"]) => node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
@@ -52,7 +52,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     for (const channel of [1, 2, 3, 4]) nodes.push(worldLine({ x: 0, y: scene.field.width * channel / 5 }, { x: scene.field.length, y: scene.field.width * channel / 5 }, style));
   }
   // Context framing hides unrelated parent-pitch linework; Fit All/Pitch deliberately reveal it.
-  if (scene.context?.kind === "pitch" && scene.context.region !== "full" && (!options.fit || ["exercise", "context"].includes(options.fit))) {
+  if (scene.context?.kind === "pitch" && scene.context.region !== "full" && (options.contextMask || !options.fit || ["exercise", "context"].includes(options.fit))) {
     const a = contextArea(scene, options.setPieceFocus), box = screenRectangle({ x: a.origin.x - 2.5, y: a.origin.y - 2.5 }, a.length + 5, a.width + 5, view);
     const x = Math.max(0, Math.min(view.width, box.x)), y = Math.max(0, Math.min(view.height, box.y)), right = Math.max(x, Math.min(view.width, box.x + box.width)), bottom = Math.max(y, Math.min(view.height, box.y + box.height));
     for (const b of [{ x: 0, y: 0, width: view.width, height: y }, { x: 0, y: bottom, width: view.width, height: view.height - bottom }, { x: 0, y, width: x, height: bottom - y }, { x: right, y, width: view.width - right, height: bottom - y }]) nodes.push(node("rect", { ...b, fill: c.surround }));

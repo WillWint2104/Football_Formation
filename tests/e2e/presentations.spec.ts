@@ -72,24 +72,40 @@ test("passing playback, stage selection, pan/zoom and authored views save/reopen
   await close(page); await expect(page.locator(".presentation-shot")).toHaveCount(2); await page.locator('[aria-label^="Camera stage"]').first().selectOption(""); await page.locator('[aria-label^="Camera transition"]').last().fill("1");
   await page.getByRole("button", { name: "Save presentation", exact: true }).click(); await expect(page.getByRole("status").last()).toContainText("Saved presentation v1"); const saved = structuredClone(f.records[0]);
   await page.reload(); await loaded(page); await page.locator(".presentation-record").click(); await expect(page.locator(".presentation-shot")).toHaveCount(2); await show(page); await page.getByLabel("Authored stage views", { exact: true }).check(); await page.getByLabel("Presentation playhead", { exact: true }).fill("4");
-  await page.waitForTimeout(1150); expect(f.records[0]).toEqual(saved); expect(errors).toEqual([]); f.unchanged();
+  await page.waitForTimeout(1150); expect(f.records[0]).toEqual(saved);
+  await page.getByLabel("Presentation playhead", { exact: true }).fill("6"); await page.getByRole("dialog", { name: "Coaching presentation" }).focus(); await page.keyboard.press("Space");
+  await expect.poll(async () => Number(await diagram(page).getAttribute("data-time"))).toBeLessThan(6); await expect.poll(async () => Number(await diagram(page).getAttribute("data-time"))).toBeGreaterThan(.1);
+  await page.getByRole("button", { name: "Pause presentation animation", exact: true }).click();
+  await page.getByLabel("Presentation playhead", { exact: true }).focus(); await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: "Coaching presentation" })).toBeHidden();
+  expect(errors).toEqual([]); f.unchanged();
 });
 test("corner overview/detail, reduced-motion cuts, native fullscreen and keyboard section navigation", async ({ page }, info) => {
   const f = await storage(page); await page.emulateMedia({ reducedMotion: "reduce" }); await newPresentation(page); await add(page, "scene#presentation-2#1"); await page.getByRole("button", { name: "Add notes", exact: true }).click(); await page.getByLabel("Presentation notes", { exact: true }).fill("Attack the delivery. Review the near-post run.");
-  await page.getByRole("button", { name: "▶ Present", exact: true }).click(); await page.screenshot({ path: info.outputPath("corner-overview.png") });
-  const overview = Number(await diagram(page).getAttribute("data-scale")); await page.getByLabel("Focus object", { exact: true }).selectOption("entity:delivery-ball"); await page.getByRole("button", { name: "Detail", exact: true }).click(); expect(Number(await diagram(page).getAttribute("data-scale"))).toBeGreaterThan(overview);
+  await page.getByRole("button", { name: "▶ Present", exact: true }).click(); await page.getByLabel("Presentation rotation", { exact: true }).selectOption("270"); await page.screenshot({ path: info.outputPath("corner-overview.png") });
+  const overview = Number(await diagram(page).getAttribute("data-scale")); await page.getByLabel("Presentation playhead", { exact: true }).fill("4"); await page.getByLabel("Focus object", { exact: true }).selectOption("entity:a9"); await page.getByRole("button", { name: "Detail", exact: true }).click(); expect(Number(await diagram(page).getAttribute("data-scale"))).toBeGreaterThan(overview);
   await page.getByRole("button", { name: "Capture camera view", exact: true }).click(); await page.screenshot({ path: info.outputPath("corner-detail.png") }); await close(page);
   await page.getByRole("navigation", { name: "Presentation sections" }).locator(".presentation-section-row > button").first().click(); await page.locator('[aria-label^="Camera transition"]').fill("5");
   await show(page); await page.getByRole("button", { name: "Overview", exact: true }).click(); await page.getByLabel("Saved camera view", { exact: true }).selectOption({ label: "detail 1" });
   await expect.poll(async () => Number(await diagram(page).getAttribute("data-scale"))).toBeGreaterThan(overview); await page.getByRole("button", { name: "Fullscreen", exact: true }).click();
   await expect.poll(() => page.evaluate(() => document.fullscreenElement?.getAttribute("role"))).toBe("dialog");
   await page.keyboard.press("ArrowRight"); await expect(page.getByRole("dialog").getByRole("heading", { name: "Coaching notes", exact: true })).toBeVisible();
-  await page.keyboard.press("Home"); await expect(diagram(page)).toBeVisible(); await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: "Coaching presentation" })).toBeHidden(); f.unchanged();
+  await page.keyboard.press("Home"); await expect(diagram(page)).toBeVisible(); await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: "Coaching presentation" })).toBeHidden();
+  await show(page); const speed = page.getByLabel("Presentation playback speed", { exact: true }); await speed.focus(); await speed.press("Alt+ArrowDown");
+  await expect.poll(() => speed.evaluate(el => el.matches(":open"))).toBe(true); await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: "Coaching presentation" })).toBeVisible();
+  await page.keyboard.press("Escape"); await expect(page.getByRole("dialog", { name: "Coaching presentation" })).toBeHidden(); f.unchanged();
 });
-test("concurrent/uncertain saves block retries and preserve draft until explicit reload", async ({ page }) => {
+for (const status of [409, 503, 401]) test(`presentation save ${status} blocks retries and handles private drafts safely`, async ({ page }) => {
   await storage(page); await newPresentation(page); await page.getByRole("button", { name: "Add notes", exact: true }).click();
-  let writes = 0; await page.route("**/api/organizations/*/presentations", r => { if (r.request().method() === "POST") { writes++; return r.fulfill({ status: 409, json: { error: "Changed" } }); } return r.fallback(); });
-  await page.getByRole("button", { name: "Save presentation", exact: true }).click(); await expect(page.getByRole("status").last()).toContainText("changed elsewhere"); await expect(page.getByRole("button", { name: "Save presentation", exact: true })).toBeDisabled();
-  expect(writes).toBe(1); await expect(page.getByLabel("Presentation title", { exact: true })).toHaveValue("Focused coaching demonstration");
+  let writes = 0; await page.route("**/api/organizations/*/presentations", r => { if (r.request().method() === "POST") { writes++; return r.fulfill({ status, json: { error: "Unavailable" } }); } return r.fallback(); });
+  await page.getByRole("button", { name: "Save presentation", exact: true }).click();
+  await expect(page.getByRole("status").last()).toContainText(status === 409 ? "changed elsewhere" : status === 503 ? "Save outcome uncertain" : "Saved organisation unavailable");
+  if (status === 401) await expect(page.getByLabel("Presentation title", { exact: true })).toBeHidden();
+  else { await expect(page.getByRole("button", { name: "Save presentation", exact: true })).toBeDisabled(); await expect(page.getByLabel("Presentation title", { exact: true })).toHaveValue("Focused coaching demonstration"); }
+  expect(writes).toBe(1);
+});
+test("access loss on initial presentation read clears private presentation source controls", async ({ page }) => {
+  await storage(page); await page.route("**/api/organizations/*/presentations*", r => r.fulfill({ status: 401, json: { error: "Sign in" } }));
+  await page.goto("/presentations"); await expect(page.getByRole("status").last()).toContainText("Saved organisation unavailable");
+  await expect(page.getByLabel("Presentation source session", { exact: true })).toBeHidden(); await expect(page.getByRole("button", { name: "New presentation", exact: true })).toBeDisabled();
 });
 

@@ -5,6 +5,7 @@ import { blankPresentation, createBlock, fromSession, presentationSchema, resolv
 import { overviewView, areaView, focusView, interpolateView } from "../../lib/presentations/camera";
 import { evaluateScene } from "../../lib/tactical/evaluate";
 import { fitViewport, screenToWorld, worldToScreen } from "../../lib/tactical/viewport";
+import { drawScene } from "../../lib/tactical/drawing";
 
 test("session conversion includes only selected activities and never changes source history", () => {
   const bundle = presentationFixture(), before = JSON.stringify(bundle), session = bundle.sessions.find(s => s.content.activities.length >= 4)!;
@@ -56,4 +57,8 @@ test("camera transitions/pan/rotation are view-only and preserve deterministic s
   }
   assert.deepEqual(evaluateScene(scene, 4), pose); assert.equal(JSON.stringify(scene), original);
   assert.equal(areaView(detail.area, "action").framing, "action");
+  const corner = b.scenes[2], before = JSON.stringify(corner), v = overviewView(corner);
+  const options = { width: 1366, height: 600, fit: "custom" as const, customArea: v.area, seconds: 4 };
+  const plain = drawScene(corner, options), masked = drawScene(corner, { ...options, contextMask: true });
+  assert.deepEqual(plain.anchors, masked.anchors); assert.deepEqual(plain.view, masked.view); assert.ok(masked.nodes.length > plain.nodes.length); assert.equal(JSON.stringify(corner), before);
 });

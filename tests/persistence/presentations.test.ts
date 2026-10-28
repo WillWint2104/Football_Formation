@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { createClient } from "@supabase/supabase-js";
 import { presentationFixture } from "../presentations/fixture";
-import { blankPresentation, createBlock, type Presentation } from "../../lib/presentations/contracts";
+import { blankPresentation, createBlock, validatePresentation, MAX_PRESENTATION_BYTES, type Presentation } from "../../lib/presentations/contracts";
 import { handlePresentations, SupabasePresentationStore } from "../../lib/server/presentation-http";
 import { PersistenceError } from "../../lib/server/errors";
 const actor = "00000000-0000-4000-8000-000000000001", outsider = "00000000-0000-4000-8000-000000000002";
@@ -70,8 +70,17 @@ test("exact additive SQL migration enforces tenant RLS, revision CAS, immutable 
     await assert.rejects(save(outsider, 1, { ...f.presentation, revision: 2 }), /Organization unavailable/);
     await assert.rejects(save(actor, 1, { ...f.presentation, organizationId: "other-org", revision: 2 }), /Invalid presentation/);
     await save(actor, 1, { ...f.presentation, revision: 2, title: "Second saved revision" });
+    const nearLimit = blankPresentation(org); nearLimit.id = "near-size-limit";
+    while (JSON.stringify(nearLimit).length < MAX_PRESENTATION_BYTES - 100) { const b = createBlock("notes", "T".repeat(10000), null); b.notes = "N".repeat(10000); nearLimit.blocks.push(b); }
+    let excess = JSON.stringify(nearLimit).length - (MAX_PRESENTATION_BYTES - 100);
+    const last = nearLimit.blocks.at(-1)!; const removedNotes = Math.min(last.notes.length, excess); last.notes = last.notes.slice(removedNotes); excess -= removedNotes;
+    if (excess) last.title = last.title.slice(excess);
+    validatePresentation(nearLimit, f.bundle);
+    const databaseBytes = await db.query<{ bytes: number }>("select octet_length($1::jsonb::text) as bytes", [JSON.stringify(nearLimit)]);
+    assert.ok(databaseBytes.rows[0].bytes > MAX_PRESENTATION_BYTES, "jsonb formatting exceeds compact application size");
+    await save(actor, 0, nearLimit);
     const readAs = (who: string) => db.transaction(async tx => { await tx.exec("set local role authenticated"); await tx.query("select set_config('request.jwt.claim.sub',$1,true)", [who]); return tx.query("select payload from public.presentations_current"); });
-    assert.equal((await readAs(actor)).rows.length, 1); assert.equal((await readAs(outsider)).rows.length, 0);
+    assert.equal((await readAs(actor)).rows.length, 2); assert.equal((await readAs(outsider)).rows.length, 0);
     await assert.rejects(db.transaction(async tx => { await tx.exec("set local role authenticated"); await tx.query("select public.save_presentation($1,$2,2,$3::jsonb)", [org, actor, JSON.stringify({ ...f.presentation, revision: 3 })]); }), /permission denied/);
     await assert.rejects(db.exec("update public.presentation_revisions set payload='{}'"));
     await assert.rejects(db.exec("delete from public.presentation_revisions"));
@@ -80,7 +89,7 @@ test("exact additive SQL migration enforces tenant RLS, revision CAS, immutable 
     assert.equal((await db.query<{ payload: unknown }>("select payload from public.presentation_revisions where revision=1")).rows[0].payload instanceof Object, true);
     await assert.rejects(db.exec(await readFile("supabase/rollback/202610280001_empty_presentations_only.sql", "utf8")), /history exists/);
     await db.exec("rollback");
-    assert.equal((await db.query<{ count: number }>("select count(*)::int as count from public.presentation_revisions")).rows[0].count, 2);
+    assert.equal((await db.query<{ count: number }>("select count(*)::int as count from public.presentation_revisions")).rows[0].count, 3);
   } finally { await db.close(); }
 });
 
