@@ -47,7 +47,8 @@ exporter versions are not prominent coaching content. Meaningful saved values
 remain unchanged; empty optional sections are omitted. Unknown equipment quantities
 remain explicitly unknown. Planned activity minutes and the booked time window
 are labelled independently, including when they differ.
-Renderer provenance is `guide-pdf/1.1.0;svg-2d/1.1.0`.
+Renderer provenance is `guide-pdf/1.1.1;svg-2d/1.1.0` (V003 cover/brand-slot refinement;
+saved session, booking and diagram pins are unchanged).
 
 ## Shared document design system
 
@@ -60,7 +61,11 @@ one reusable engine with three content-adaptive layouts:
 - **Complete Session Guide**: compact overview/ordered sequence and activity
   units, without automatic page breaks per activity.
 - **Extended Coaching Pack**: the same primitives for longer/detailed content,
-  with an explicitly optional dedicated cover. No compulsory cover is inserted.
+  with an explicitly optional dedicated cover. The cover has a prominent club
+  identity/title, team/age group, saved objective/focus and a distinct logistics/staff
+  block. It does not repeat the compact activity list at the top of an otherwise
+  empty summary page. Detailed activities retain their saved order on subsequent
+  pages. No compulsory cover or invented decorative scene is inserted.
 
 Automatic selection uses one/zero activities for a sheet, two to five for a guide,
 and six or more for a pack. Explicit selection is available in the guide. A sheet
@@ -75,7 +80,11 @@ club name, optional secondary identity, primary/accent colours, footer, crest an
 secondary/sponsor raster mark. It accepts bounded PNG/JPEG bytes **only through
 the trusted server-side generator**, never an arbitrary URL/path, SVG or browser
 upload. Bytes are decoded, limited to 256 KiB/1024 pixels/one frame, and re-encoded
-before embedding. Marks fit fixed 36x32 and 48x26 point slots without stretching.
+before embedding. Branded content pages reserve a 56x56 point crest and an 88x32
+point secondary-mark slot. The optional cover reserves 96x108 and 112x40 points
+respectively. Each image is contained and centred, retaining its aspect ratio;
+header rules sit below the complete logo bounds. Unbranded headers and accepted
+activity/guide compositions retain their V002 measurements.
 Heading ink must meet 4.5:1 contrast on white paper. Long identity/footer text wraps
 with reserved print space. No-logo layouts reclaim the slots for a text identity.
 
@@ -160,6 +169,10 @@ synthetic crest/partner and an unbranded fallback. V001/V002 page counts and eve
 actual rendered page are provided for comparison. PDF structure,
 source manifest, byte limits and page sizes are tested. Poppler page captures and
 text/margin checks provide actual visual evidence, including readable player labels.
+V003 additionally compares optional covers and synthetic branding at identical source
+pins, checks tall/square crest and wide secondary-mark containment, and verifies
+pixel-identical standard sheets/normal guides against V002. The nine-page long
+case remains unchanged; cover selection remains explicit.
 
 HTTP/client tests cover exact pins, origin/Auth/org isolation, stale saves, private
 downloads, unchanged history, metadata validation and uncertain-save behaviour.

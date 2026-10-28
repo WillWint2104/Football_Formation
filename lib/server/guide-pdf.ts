@@ -18,6 +18,7 @@ import type { SessionActivity } from "../domain/session";
 import type { TacticalScene } from "../domain/tactical-scene";
 import { A4, PdfLayout, printColor } from "./pdf-layout";
 import { resolveDocumentDesign } from "./guide-design";
+import { drawGuideCover } from "./guide-cover";
 import { PersistenceError } from "./errors";
 
 export const PDF_RENDERER_VERSION = `${GUIDE_EXPORT_VERSION};${TACTICAL_RENDERER_VERSION}`;
@@ -120,29 +121,36 @@ export async function createGuidePdf(input: DomainBundle, reference: GuideRefere
   if (activities.length > 100 || diagramCount > 32 || JSON.stringify(session).length > 200_000) throw new PersistenceError(413, "Guide exceeds export complexity limits");
   const pdf = await PDFDocument.create(); pdf.registerFontkit(fontkit);
   const design = await resolveDocumentDesign(pdf, bundle.organizationId, activities.length, options, brand);
-  const [regular, bold] = await fontBytes(), layout = new PdfLayout(pdf, await pdf.embedFont(regular, { subset: true }), await pdf.embedFont(bold, { subset: true }), design.pageBrand);
+  const [regular, bold] = await fontBytes(), layout = new PdfLayout(pdf, await pdf.embedFont(regular, { subset: true }), await pdf.embedFont(bold, { subset: true }), design.pageBrand, design.cover);
   const manifest: ExportManifest = { session: { id: session.id, revision: session.revision }, booking: event ? { id: event.id, revision: event.revision } : null, rendererVersion: PDF_RENDERER_VERSION,
     diagrams: activities.flatMap((a) => a.content.diagrams.map((d) => ({ activity: a.id, scene: { ...d.scene }, seconds: d.representativeSeconds }))), design: design.provenance };
   pdf.setTitle(session.content.title); pdf.setAuthor(design.pageBrand.name); pdf.setCreator(PDF_RENDERER_VERSION); pdf.setProducer(PDF_RENDERER_VERSION); pdf.setLanguage("en-AU"); pdf.setSubject(JSON.stringify(manifest));
   const team = bundle.teams.find((candidate) => candidate.id === session.teamId)!;
-  layout.text(sessionLabels[session.content.kind].toUpperCase(), { size: tokens.label, bold: true, color: layout.brand.primary, gap: 5 });
-  layout.text(session.content.title, { size: tokens.title, bold: true, color: layout.brand.primary, gap: 8 });
-  layout.text([team.name, team.ageGroup].filter(Boolean).join(" · "), { bold: true, gap: 5 });
-  if (session.coaches.length) layout.text(session.coaches.map((assignment) => `${bundle.coaches.find((coach) => coach.id === assignment.coachId)!.displayName} (${assignment.role})`).join(" · "), { gap: 12 });
+  const teamLabel = [team.name, team.ageGroup].filter(Boolean).join(" · ");
+  const coaches = session.coaches.map((assignment) => `${bundle.coaches.find((coach) => coach.id === assignment.coachId)!.displayName} (${assignment.role})`).join(" · ");
   const start = event?.startsAt ? localParts(event.startsAt, event.timeZone) : null, end = event?.endsAt ? localParts(event.endsAt, event.timeZone) : null;
   const total = activityTotals(activities), facts: [string, string][] = [];
   if (event) facts.push(["Date", new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${event.localDate}T12:00:00Z`))]);
   if (event && start) facts.push(["Booked window", `${start.time}${end ? ` - ${end.date !== start.date ? `${end.date} ` : ""}${end.time}` : ""}${event.endsAt ? ` (${(Date.parse(event.endsAt) - Date.parse(event.startsAt!)) / 60_000} min)` : ""}\n${event.timeZone}`]);
   else if (event) facts.push(["Booked window", "Time to be confirmed"]);
   facts.push(["Planned activities", `${total.minutes} known min${total.unknown ? ` + ${total.unknown} untimed` : ""}`]);
-  layout.facts(facts);
-  if (event?.venue || event?.areaLabel) layout.text([event.venue ? `Venue: ${event.venue}` : "", event.areaLabel ? `Field area: ${event.areaLabel}` : ""].filter(Boolean).join(" · "), { gap: 10 });
-  if (session.content.objective) { layout.heading("Session objective"); layout.text(session.content.objective, { gap: 8 }); }
-  if (session.content.focus.length) layout.text(`Focus · ${session.content.focus.join(" · ")}`, { gap: 10, color: printTheme.muted });
-  if (activities.length > 1) {
-    layout.heading("Session sequence");
-    for (const [index, activity] of activities.entries()) layout.text(`${String(index + 1).padStart(2, "0")}  ${activity.content.title} · ${activity.durationMinutes === null ? "Untimed" : `${activity.durationMinutes} min`}`, { gap: 3 });
-    layout.y -= 8;
+  const venue = [event?.venue ? `Venue: ${event.venue}` : "", event?.areaLabel ? `Field area: ${event.areaLabel}` : ""].filter(Boolean).join(" · ");
+  if (design.cover) {
+    drawGuideCover(layout, { title: session.content.title, kind: sessionLabels[session.content.kind], team: teamLabel, coaches, objective: session.content.objective, focus: session.content.focus, facts, venue });
+  } else {
+    layout.text(sessionLabels[session.content.kind].toUpperCase(), { size: tokens.label, bold: true, color: layout.brand.primary, gap: 5 });
+    layout.text(session.content.title, { size: tokens.title, bold: true, color: layout.brand.primary, gap: 8 });
+    layout.text(teamLabel, { bold: true, gap: 5 });
+    if (coaches) layout.text(coaches, { gap: 12 });
+    layout.facts(facts);
+    if (venue) layout.text(venue, { gap: 10 });
+    if (session.content.objective) { layout.heading("Session objective"); layout.text(session.content.objective, { gap: 8 }); }
+    if (session.content.focus.length) layout.text(`Focus · ${session.content.focus.join(" · ")}`, { gap: 10, color: printTheme.muted });
+    if (activities.length > 1) {
+      layout.heading("Session sequence");
+      for (const [index, activity] of activities.entries()) layout.text(`${String(index + 1).padStart(2, "0")}  ${activity.content.title} · ${activity.durationMinutes === null ? "Untimed" : `${activity.durationMinutes} min`}`, { gap: 3 });
+      layout.y -= 8;
+    }
   }
   if (!activities.length) layout.text("No activities in this saved revision.");
   if (design.cover && activities.length) layout.next();

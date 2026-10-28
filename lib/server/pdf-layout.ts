@@ -32,16 +32,17 @@ export class PdfLayout {
   readonly width = A4.width - 2 * A4.margin;
   /** Longer configured footer identities reserve additional space instead of crossing the print margin. */
   get bottom() { return A4.bottom + (wrapText(this.brand.footer, this.regular, 7, this.width - 90).length - 1) * 9; }
-  constructor(readonly pdf: PDFDocument, readonly regular: PDFFont, readonly bold: PDFFont, readonly brand: PageBrand) { this.next(); }
+  constructor(readonly pdf: PDFDocument, readonly regular: PDFFont, readonly bold: PDFFont, readonly brand: PageBrand, cover = false) { this.next(cover); }
   /** Contain raster marks inside reserved boxes without changing their aspect ratios. */
   image(image: PDFImage, x: number, top: number, width: number, height: number) {
     const scale = Math.min(width / image.width, height / image.height);
     this.page.drawImage(image, { x: x + (width - image.width * scale) / 2, y: top - (height + image.height * scale) / 2, width: image.width * scale, height: image.height * scale });
   }
   /** Repeat compact identity furniture; absent assets reclaim their slots for the text identity. */
-  next() {
+  next(cover = false) {
     if (this.pdf.getPageCount() >= 80) throw new PersistenceError(413, "Guide exceeds the 80-page export limit");
     this.page = this.pdf.addPage([A4.width, A4.height]); this.y = A4.top;
+    if (cover) return;
     if (this.brand.crest) this.image(this.brand.crest, A4.margin, 815, tokens.crestWidth, tokens.crestHeight);
     if (this.brand.mark) this.image(this.brand.mark, A4.width - A4.margin - tokens.markWidth, 814, tokens.markWidth, tokens.markHeight);
     const left = A4.margin + (this.brand.crest ? tokens.crestWidth + 10 : 0), available = this.width - (left - A4.margin) - (this.brand.mark ? tokens.markWidth + 12 : 0);
@@ -49,7 +50,7 @@ export class PdfLayout {
     lines.forEach((line, i) => this.page.drawText(line, { x: left, y: 806 - i * 13, size: 11, font: this.bold, color: printColor(this.brand.primary) }));
     const subLines = wrapText(this.brand.secondary ?? this.brand.template, this.regular, 7.5, available);
     subLines.forEach((line, i) => this.page.drawText(line, { x: left, y: 806 - lines.length * 13 - i * 10, size: 7.5, font: this.regular, color: printColor(printTheme.muted) }));
-    const rule = Math.min(779, 800 - lines.length * 13 - subLines.length * 10);
+    const rule = Math.min(779, 800 - lines.length * 13 - subLines.length * 10, this.brand.crest ? 815 - tokens.crestHeight - 8 : 779, this.brand.mark ? 814 - tokens.markHeight - 8 : 779);
     this.page.drawLine({ start: { x: A4.margin, y: rule }, end: { x: A4.width - A4.margin, y: rule }, color: printColor(this.brand.accent), thickness: 2 }); this.y = rule - 14;
   }
   /** Keep related content together where possible; oversized content continues with the same furniture. */

@@ -52,6 +52,26 @@ test("multiple diagrams resolve each saved context instead of inheriting an unre
   assert.ok(first.view.target.maxX - first.view.target.minX <= 38, "final-third context must not expand to the full 105 m pitch");
 });
 
+test("accepted sheets, normal guide and nine-page long case retain their pagination without opting into a cover", async () => {
+  for (const [id, pages] of [["possession", 1], ["full-pitch", 1], ["session-guide", 2], ["long-session", 9]] as const) {
+    const { bundle, reference } = exportFixture(id), result = await createGuidePdf(bundle, reference);
+    assert.equal(result.pageCount, pages, id); assert.equal(result.manifest.design.cover, false);
+  }
+});
+
+test("explicit composed covers retain every source pin and the long pack's nine pages with tall or square synthetic marks", async () => {
+  const { bundle, reference } = exportFixture("extended-cover"), before = structuredClone(bundle);
+  for (const shape of ["tall", "square"] as const) {
+    const brand = await syntheticDocumentBrand(bundle.organizationId, shape);
+    const pack = await createGuidePdf(bundle, reference, { template: "extended-pack", cover: true }, brand);
+    assert.equal(pack.pageCount, 9); assert.equal(pack.manifest.design.cover, true);
+    assert.deepEqual(pack.manifest.session, { id: reference.session, revision: reference.revision });
+    assert.deepEqual(pack.manifest.booking, { id: reference.event, revision: reference.bookingRevision });
+    assert.deepEqual(pack.manifest.diagrams.map((pin) => pin.scene), before.sessions.find((s) => s.id === reference.session)!.content.activities.flatMap((a) => a.content.diagrams.map((pin) => pin.scene)));
+    assert.deepEqual(bundle, before);
+  }
+});
+
 test("club marks cannot fetch URLs or embed SVG, animated, oversized or mismatched raster payloads", async () => {
   const { bundle, reference } = exportFixture("possession"), brand = await syntheticDocumentBrand(bundle.organizationId);
   await assert.rejects(createGuidePdf(bundle, reference, {}, { ...brand, crest: { ...brand.crest!, bytes: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"/>') } }), /single-frame/);
