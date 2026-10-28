@@ -19,7 +19,7 @@ export function SceneDiagram({ scene, title, options = {}, interaction }: { scen
   }, []);
   let drawing: SceneDrawing | null = null, errorMessage = "Invalid scene";
   try { drawing = drawScene(scene, { ...options, ...size }); } catch (error) { errorMessage = error instanceof Error ? error.message : errorMessage; }
-  return <div ref={ref} className="scene-diagram" data-scene-id={scene.id} data-revision={scene.revision} data-width={size.width} data-height={size.height} data-scale={drawing?.view.scale} data-time={drawing?.seconds} data-clipped={drawing?.clippedEntities} data-label-collisions={drawing?.labelCollisions}
+  return <div ref={ref} className="scene-diagram" data-scene-id={scene.id} data-revision={scene.revision} data-width={size.width} data-height={size.height} data-scale={drawing?.view.scale} data-center-x={drawing?.view.center.x} data-center-y={drawing?.view.center.y} data-time={drawing?.seconds} data-clipped={drawing?.clippedEntities} data-label-collisions={drawing?.labelCollisions}
     onPointerDown={interaction && drawing ? (e) => interaction.down(e, drawing.view) : undefined}
     onPointerMove={interaction && drawing ? (e) => interaction.move(e, drawing.view) : undefined}
     onPointerUp={interaction && drawing ? (e) => interaction.up(e, drawing.view) : undefined}

@@ -85,7 +85,9 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
   if (options.paths !== "none") for (const path of evaluated.paths) if (!evaluated.hiddenEntityIds.includes(path.entityId) && (options.paths !== "active" || path.active)) overlays.push(...arrow(path.points.map(p), path.movement));
   for (const ghost of options.ghosts ?? []) {
     const at = p(ghost.position);
-    nodes.push(node("g", { "data-ghost-id": ghost.id, pointerEvents: "none", opacity: .55 }, undefined, [node("circle", { cx: at.x, cy: at.y, r: 17, fill: "none", stroke: c.line, strokeWidth: 1.2, strokeDasharray: "3 3" }), text({ x: at.x + 21, y: at.y - 9 }, ghost.label, { fontSize: 10 }), title(ghost.label)]));
+    if (at.x < 0 || at.x > view.width || at.y < 0 || at.y > view.height) continue;
+    const label = shorten(ghost.label, 18), width = label.length * 6;
+    nodes.push(node("g", { "data-ghost-id": ghost.id, pointerEvents: "none", opacity: .55 }, undefined, [node("circle", { cx: at.x, cy: at.y, r: 17, fill: "none", stroke: c.line, strokeWidth: 1.2, strokeDasharray: "3 3" }), text({ x: Math.max(4, Math.min(view.width - width - 4, at.x + 21)), y: Math.max(12, Math.min(view.height - 4, at.y - 9)) }, label, { fontSize: 10 }), title(ghost.label)]));
   }
   nodes.push(...overlays);
   const markers: SvgNode[] = [];

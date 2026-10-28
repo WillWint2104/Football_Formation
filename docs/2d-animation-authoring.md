@@ -101,6 +101,50 @@ old scenes without visibility produce unchanged static drawings. Existing PDF
 generation merely records this renderer version in provenance. Approved print
 layout, branding, access checks and document history are unchanged.
 
+## View-only stage magnification (PR 15 V002)
+
+Overview returns to the existing exercise/context fit. Fit Exercise, Fit All and
+Fit Pitch/Boundary remain available under Authoring display. Fit Stage / Action
+captures the deliberately selected stage's carried starting positions, all path
+vertices, visible balls and all stage overlays. Stationary players within six
+metres of the original action vertices are included as support, without recursively
+expanding through the team. Local football contexts retain their goal; full-pitch
+actions include a goal when a path vertex approaches within 18 metres. Equipment
+footprints and a half-metre margin plus a 32-pixel gutter protect the target.
+
+Detail / Focus Selection fits selected visible players, balls, equipment or stage
+overlays. Selected movement tracks include their complete stage path; selecting
+an area fits that area's full dimensions. Hidden/deleted selections are rejected
+without moving the camera. Both fits use existing `fitViewport` custom areas and
+uniform metre projection. They do not rewrite a single scene coordinate.
+
+Fit targets are view-only snapshots. Playback, scrubbing, explicit stage selection,
+pose edits and undo/redo do not silently refit them. Click Fit Stage again to frame
+another stage or changed path. Manual pointer zoom, Alt-drag pan, camera rotation
+and Expand board remain available. The status identifies the held framing and
+manual override. A deliberate close-up may crop unrelated objects and linework;
+the cropped-marker count includes those unrelated objects. Arbitrary manual zoom
+or subsequent path edits can move content out of the held view: explicitly refit.
+
+Applying the eight illustrative examples never changes their geometry: seven
+start with the first stage's action; full-pitch movement starts with an overview.
+On setup only, the action examples choose the better-fitting 0/270 degree view for
+the available canvas. Explicit later fits preserve the chosen orientation. A square
+rondo is necessarily limited by canvas height; Detail and Expand board provide
+closer inspection without stretching the grid. Reopening a saved scene restores
+the established overview, not a persisted camera preference.
+
+The following presentation milestone can add a separate, optional presentation
+document keyed by exact scene revision and stage ID. It should store establishing,
+action and detail shots as explicit metre bounds/centre, orientation and scale,
+with opt-in transition duration. Resolve an authored shot to a fixed target once,
+then interpolate only camera centre/scale on a separate presentation clock. Keep
+movement evaluation at the exact saved scene time. Missing/stale shot references
+must fall back to overview; reduced-motion and manual override must hold a view.
+No camera data, schema migration, automatic following, easing or camera timeline
+is persisted/implemented in this PR. Historical records, guide pins and PDF layouts
+are unchanged.
+
 ## Verification and limits
 
 Eight explicitly illustrative, never-auto-uploaded examples cover simple passing,

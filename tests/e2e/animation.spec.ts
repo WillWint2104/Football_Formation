@@ -5,6 +5,7 @@ import { coachingSample } from "../../lib/coaching/sample";
 import { domainBundleSchema } from "../../lib/domain/validation";
 import { diagramHref, type DiagramTarget } from "../../lib/tactical/persistence";
 import { guideHref } from "../../lib/documents/contracts";
+import { actionFrame } from "../../lib/tactical/framing";
 
 const target: DiagramTarget = { kind: "session", id: "sample-3", revision: 1, activity: "activity-1", event: "sample-4", booking: 1, diagram: null };
 /** Simulate only transport/Auth; all animation geometry and saved owner/scene contracts are production code. */
@@ -25,6 +26,7 @@ async function choose(page: Page, id: string) { const list = page.locator(".edit
 
 for (const example of animationExamples) test(`animation desktop acceptance: ${example.title}`, async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", (error) => errors.push(error.message)); await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, example.id);
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
   const duration = sceneDuration(example.scene);
   for (const time of [0, duration / 2, duration]) {
     await seek(page, time); const evaluated = evaluateScene(example.scene, time);
@@ -38,6 +40,7 @@ for (const example of animationExamples) test(`animation desktop acceptance: ${e
 });
 test("pose drag, keyframe editing, shared boundaries, undo/redo and stage operations update actual geometry", async ({ page }) => {
   await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-passing");
+  await page.getByLabel("Camera rotation", { exact: true }).selectOption("0");
   await choose(page, "ball"); await page.getByRole("button", { name: "End pose", exact: true }).click();
   await page.getByLabel("Pose X", { exact: true }).fill("4"); await page.getByLabel("Pose Y", { exact: true }).fill("5"); await page.getByRole("button", { name: "Record pose keyframe", exact: true }).click(); expect(await anchor(page, "ball")).toEqual({ x: 4, y: 5 });
   await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); expect(await anchor(page, "ball")).toEqual({ x: 1, y: 4 });
@@ -100,4 +103,64 @@ test("stage reorder, deletion and undo keep canvas, selected stage and local pos
   await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "5"); await expect(page.getByLabel("Stage pose time")).toHaveValue("1");
   await page.getByRole("button", { name: "Move stage later", exact: true }).click(); await page.getByRole("button", { name: "Delete stage", exact: true }).click();
   await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "7"); await expect(page.getByLabel("Stage title", { exact: true })).toHaveValue("Switch the angle"); await expect(page.getByLabel("Stage pose time")).toHaveValue("3");
+});
+
+async function cameraState(page: Page) { return page.locator(".editor-surface .scene-diagram").evaluate((node) => ["scale", "center-x", "center-y"].map((key) => Number(node.getAttribute(`data-${key}`)))); }
+for (const example of animationExamples) test(`magnification fits complete stage paths without moving world coordinates: ${example.id}`, async ({ page }) => {
+  const mock = await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, example.id);
+  for (const [index, stage] of example.scene.stages.entries()) {
+    await page.getByRole("button", { name: new RegExp(`Select stage ${index + 1}:`) }).click();
+    await page.getByRole("button", { name: "Fit stage / Action", exact: true }).click();
+    const view = await cameraState(page), frame = actionFrame(example.scene, stage.id)!;
+    const start = example.scene.stages.slice(0, index).reduce((sum, s) => sum + s.durationSeconds, 0);
+    for (const seconds of [start, start + stage.durationSeconds / 2, start + stage.durationSeconds - .01]) {
+      await seek(page, seconds); expect(await cameraState(page)).toEqual(view);
+      const surface = (await page.locator(".editor-surface .scene-diagram").boundingBox())!;
+      for (const id of frame.entityIds) {
+        const entity = page.locator(`.editor-surface [data-entity-id="${id}"]`), box = (await entity.boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(surface.x); expect(box.y).toBeGreaterThanOrEqual(surface.y); expect(box.x + box.width).toBeLessThanOrEqual(surface.x + surface.width); expect(box.y + box.height).toBeLessThanOrEqual(surface.y + surface.height);
+        expect(await anchor(page, id)).toEqual(evaluateScene(example.scene, seconds).entities.find((e) => e.id === id)!.position);
+      }
+    }
+  }
+  expect(mock.writes()).toBe(0);
+});
+test("detail, pointer zoom, pan and stage changes keep a held camera through playback and scrubbing", async ({ page }) => {
+  const mock = await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-corner");
+  await page.getByRole("button", { name: /Select stage 2:/ }).click(); await page.getByRole("button", { name: "Fit stage / Action", exact: true }).click();
+  const action = await cameraState(page); await choose(page, "a9"); await page.getByRole("button", { name: "Detail / Focus selection", exact: true }).click(); const detail = await cameraState(page); expect(detail[0]).toBeGreaterThan(action[0]);
+  const surface = (await page.locator(".editor-surface").boundingBox())!;
+  await page.mouse.move(surface.x + surface.width / 2, surface.y + surface.height / 2); await page.mouse.wheel(0, -120); await expect.poll(async () => (await cameraState(page))[0]).toBeGreaterThan(detail[0]);
+  const zoomed = await cameraState(page); await page.mouse.move(surface.x + surface.width / 2, surface.y + surface.height / 2); await page.keyboard.down("Alt"); await page.mouse.down(); await page.mouse.move(surface.x + surface.width / 2 + 30, surface.y + surface.height / 2 + 20, { steps: 4 }); await page.mouse.up(); await page.keyboard.up("Alt");
+  const panned = await cameraState(page); expect(panned[0]).toBe(zoomed[0]); expect(panned.slice(1)).not.toEqual(zoomed.slice(1));
+  await page.getByRole("button", { name: /Select stage 1:/ }).click(); expect(await cameraState(page)).toEqual(panned);
+  await seek(page, 2); await page.getByLabel("Playback speed").selectOption("2"); await page.getByRole("button", { name: "Play animation", exact: true }).click();
+  await expect.poll(async () => Number(await page.locator(".scene-diagram").getAttribute("data-time"))).toBeGreaterThan(3.1); expect(await cameraState(page)).toEqual(panned); await page.getByRole("button", { name: "Pause animation", exact: true }).click();
+  await seek(page, 4); const expected = evaluateScene(animationExamples.find((e) => e.id === "animation-corner")!.scene, 4).entities.find((e) => e.id === "a9")!.position;
+  await page.getByRole("button", { name: "Fit stage / Action", exact: true }).click(); expect(await anchor(page, "a9")).toEqual(expected);
+  await page.getByRole("button", { name: "Overview", exact: true }).click(); expect((await cameraState(page))[0]).toBeLessThan(action[0]); expect(mock.writes()).toBe(0);
+});
+test("camera changes stay out of immutable saves and history; reopening restores scene geometry", async ({ page }) => {
+  const mock = await storage(page); await page.goto(diagramHref(target)); await loaded(page); await apply(page, "animation-full");
+  await page.getByRole("button", { name: /Select stage 2:/ }).click(); await page.getByRole("button", { name: "Fit stage / Action", exact: true }).click(); await choose(page, "ball");
+  await page.getByRole("button", { name: "Detail / Focus selection", exact: true }).click(); await page.getByRole("button", { name: "Zoom in", exact: true }).click();
+  await page.getByRole("button", { name: "↶ Undo", exact: true }).click();
+  // View controls did not insert an undo entry: the preceding scene setup is undone.
+  await expect(page.getByRole("button", { name: "↶ Undo", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "↷ Redo", exact: true }).click();
+  await page.getByRole("button", { name: "Save diagram", exact: true }).click(); await expect(page).toHaveURL(/revision=2/);
+  const saved = structuredClone(mock.bundle().scenes[0]), source = animationExamples.find((e) => e.id === "animation-full")!.scene;
+  expect(saved.entities).toEqual(source.entities); expect(saved.stages).toEqual(source.stages); expect(Object.keys(saved).sort()).toEqual(Object.keys(source).sort());
+  await page.getByRole("button", { name: "Fit stage / Action", exact: true }).click(); await expect(page.getByRole("button", { name: "Save diagram", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "↶ Undo", exact: true })).toBeDisabled(); await page.reload(); await loaded(page); await seek(page, 5);
+  expect(mock.bundle().scenes[0]).toEqual(saved); expect(await anchor(page, "ball")).toEqual(evaluateScene(saved, 5).entities.find((e) => e.id === "ball")!.position); expect(mock.writes()).toBe(1);
+});
+test("framing an entirely hidden stage returns safely to overview", async ({ page }) => {
+  await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-passing");
+  const list = page.locator(".editor-object-list"); await list.locator("summary").click();
+  for (const [index, button] of (await list.locator("button[data-object-id]").all()).entries()) await button.click({ modifiers: index ? ["Shift"] : [] });
+  await page.getByRole("button", { name: "Hide selected in stage", exact: true }).click(); await page.getByRole("button", { name: "Fit stage / Action", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Overview", exact: true })).toHaveAttribute("aria-pressed", "true"); await expect(page.locator(".editor-feedback")).toContainText("No visible action");
+  await page.getByRole("button", { name: "Detail / Focus selection", exact: true }).click(); await expect(page.locator(".editor-feedback")).toContainText("Select a visible");
+  await expect(page.locator(".scene-diagram-error")).toHaveCount(0);
 });
