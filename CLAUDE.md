@@ -108,13 +108,15 @@ PR 06 shared 2D renderer is merged as GitHub PR #12 at approved head d518b2a,
 merge commit 054d79a. PR 07 context-aware static editor merged as GitHub PR #13
 at approved head 4922867, merge 565dae7. PR 09 illustrated coaching PDFs are
 merged as GitHub PR #14 at approved head 14bac97, merge 85354f3. PR 08 animation
-authoring is authorised for implementation/review only; do not merge, deploy manually
-or provision hosted resources without owner approval. See `docs/2d-animation-authoring.md`
+authoring merged as GitHub PR #15 at approved head 284fd4b, merge 6586bfd.
+PR 10 coaching presentations is authorised for implementation/review only;
+do not merge its new PR, deploy manually or provision hosted resources without
+owner approval. See `docs/coaching-presentations.md`, `docs/2d-animation-authoring.md`
 and `docs/illustrated-coaching-pdfs.md`
 for exact generated documents/private storage. See `docs/context-aware-editor.md` for
 optional context/colour compatibility, authoring and exact saved-owner pins.
 See `docs/shared-2d-renderer.md` for shared drawing, framing and evaluation contracts.
-Fullscreen 2D presentation and hosted integration verification follow later. 3D/Meshy stay paused.
+Hosted integration verification follows presentation. 3D/Meshy stay paused.
 See `docs/coaching-guides-private-documents.md` for exact guides, private storage and staging.
 See `docs/interactive-calendar.md` for sample/saved-mode boundaries and the staging gate.
 See `docs/session-library.md` for authoring, independent reuse and shared snapshot behaviour.
