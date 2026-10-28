@@ -13,6 +13,7 @@ export function prepareScene(input: unknown): TacticalScene {
   // Reject oversized arrays before Zod clones/traverses the payload. Malformed shapes still go through the strict schema.
   let rawTracks = 0, rawFrames = 0;
   if (Array.isArray(candidate?.stages)) for (const stage of candidate.stages) {
+    if (stage && typeof stage === "object" && Array.isArray(stage.hiddenEntityIds) && stage.hiddenEntityIds.length > RENDER_LIMITS.entities) throw new RangeError("Stage visibility exceeds renderer entity limits");
     if (!stage || typeof stage !== "object" || !Array.isArray(stage.tracks)) continue;
     rawTracks += stage.tracks.length;
     if (rawTracks > RENDER_LIMITS.tracks) throw new RangeError("Scene exceeds renderer track limits");
@@ -66,6 +67,7 @@ export type EvaluatedScene = {
   entities: TacticalEntity[];
   paths: { id: string; entityId: string; movement: EntityTrack["movement"]; points: Point[]; active: boolean }[];
   annotations: AnnotationTrack[];
+  hiddenEntityIds: string[];
 };
 
 /** Pure right-continuous evaluation: carry completed movements, clamp finite time, and use half-open annotation windows. */
@@ -73,7 +75,7 @@ export function evaluateScene(input: unknown, requestedSeconds: number): Evaluat
   if (!Number.isFinite(requestedSeconds)) throw new RangeError("Snapshot time must be finite");
   const scene = prepareScene(input), duration = sceneDuration(scene), seconds = Math.max(0, Math.min(duration, requestedSeconds));
   const positions = new Map(scene.entities.map((entity) => [entity.id, { ...entity.position }]));
-  const result: EvaluatedScene = { sceneId: scene.id, revision: scene.revision, seconds, duration, stage: null, entities: [], paths: [], annotations: [] };
+  const result: EvaluatedScene = { sceneId: scene.id, revision: scene.revision, seconds, duration, stage: null, entities: [], paths: [], annotations: [], hiddenEntityIds: [] };
   let start = 0;
   for (let index = 0; index < scene.stages.length; index++) {
     const stage = scene.stages[index], end = start + stage.durationSeconds;
@@ -83,6 +85,7 @@ export function evaluateScene(input: unknown, requestedSeconds: number): Evaluat
     }
     const localSeconds = seconds - start;
     result.stage = { id: stage.id, title: stage.title, index, localSeconds };
+    result.hiddenEntityIds = [...(stage.hiddenEntityIds ?? [])];
     for (const track of stage.tracks) {
       if (track.kind === "annotation") {
         if (localSeconds >= track.visibleFrom && localSeconds < track.visibleUntil) result.annotations.push(structuredClone(track));

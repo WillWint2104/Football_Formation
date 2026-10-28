@@ -54,3 +54,28 @@
 .editor-expanded { position: fixed; inset: 0; z-index: 80; background: var(--color-shell); padding: 12px; overflow: auto; }
 .editor-expanded .editor-inspector { max-height: calc(100dvh - 90px); }
 @media (min-width:1700px) { .editor-layout { grid-template-columns: minmax(0,1fr) 310px; } }
+.editor-mode { display: flex; gap: 3px; }
+.editor-topbar > label select { max-width: 290px; }
+.animation-timeline { padding: 10px; border: 1px solid var(--color-shell-edge); background: var(--color-shell-panel); margin-top: 8px; border-radius: 5px; }
+.animation-transport { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.animation-transport > input[type="range"] { min-width: 120px; flex: 1; padding: 0; accent-color: var(--color-shell-accent); }
+.animation-transport output { font: 11px var(--font-jetbrains),monospace; color: var(--color-shell-muted); min-width: 115px; }
+.animation-transport label { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+.animation-transport select { padding: 5px; font-size: 12px; }
+.animation-stages { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; }
+.animation-stages button { display: block; flex-basis: 90px; flex-shrink: 0; text-align: left; min-width: 0; max-width: 440px; }
+.animation-stages strong { display: block; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.animation-stages span { display: block; font-size: 10px; margin-top: 4px; }
+.animation-hint { color: var(--color-shell-muted); font-size: 10px; margin: 5px 0 0; }
+.animation-keyframes > div { display: flex; gap: 3px; align-items: center; }
+.animation-keyframes > div > button:first-child { flex: 1; text-align: left; font-variant-numeric: tabular-nums; }
+.editor-animation .editor-inspector { max-height: calc(100dvh - 265px); }
+.editor-inspector .editor-button-grid button { white-space: normal; }
+.editor-workspace:has(.editor-animation) .editor-heading { margin: 5px 0; }
+.editor-workspace:has(.editor-animation) .editor-heading p { margin: 2px 0; }
+.editor-workspace:has(.editor-animation) .editor-heading h1 { font-size: 21px; }
+.editor-animation .editor-topbar { padding: 5px; margin-bottom: 6px; }
+.editor-animation .editor-tools { padding: 5px; }
+.editor-animation .editor-tools button { padding: 5px 7px; }
+.editor-animation .editor-viewbar { padding: 4px 5px; }
+.editor-animation .editor-status { padding: 5px 8px; }

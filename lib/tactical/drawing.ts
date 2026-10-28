@@ -4,10 +4,10 @@ import { fitViewport, metricGrid, worldToScreen, equipmentFootprint, screenRecta
 import { contextArea } from "./context";
 import { tacticalPalette as c } from "./palette";
 
-export const TACTICAL_RENDERER_VERSION = "svg-2d/1.1.0";
+export const TACTICAL_RENDERER_VERSION = "svg-2d/1.2.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
-export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[] };
+export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
 export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
 const line = (a: Point, b: Point, attrs: SvgNode["attrs"]) => node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
@@ -57,7 +57,8 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     for (const b of [{ x: 0, y: 0, width: view.width, height: y }, { x: 0, y: bottom, width: view.width, height: view.height - bottom }, { x: 0, y, width: x, height: bottom - y }, { x: right, y, width: view.width - right, height: bottom - y }]) nodes.push(node("rect", { ...b, fill: c.surround }));
   }
   const overlays: SvgNode[] = [], labels: SvgNode[] = [];
-  const visible = evaluated.entities.map((entity) => ({ entity, screen: p(entity.position) })).filter(({ screen }) => screen.x >= 20 && screen.x <= view.width - 20 && screen.y >= 20 && screen.y <= view.height - 20);
+  const displayed = evaluated.entities.filter((entity) => !evaluated.hiddenEntityIds.includes(entity.id));
+  const visible = displayed.map((entity) => ({ entity, screen: p(entity.position) })).filter(({ screen }) => screen.x >= 20 && screen.x <= view.width - 20 && screen.y >= 20 && screen.y <= view.height - 20);
   const boxes: Box[] = visible.map(({ screen }) => ({ x: screen.x - 19, y: screen.y - 19, w: 38, h: 38 }));
   let labelCollisions = 0;
   const place = (candidates: Box[]) => {
@@ -81,7 +82,11 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       labels.push(node("g", { "data-annotation-id": track.id }, undefined, [node("rect", { x: box.x, y: box.y, width: w, height: 23, rx: 4, fill: c.ink, fillOpacity: 0.9 }), text({ x: box.x + 8, y: box.y + 15 }, content), title(a.text)]));
     }
   }
-  if (options.paths !== "none") for (const path of evaluated.paths) if (options.paths !== "active" || path.active) overlays.push(...arrow(path.points.map(p), path.movement));
+  if (options.paths !== "none") for (const path of evaluated.paths) if (!evaluated.hiddenEntityIds.includes(path.entityId) && (options.paths !== "active" || path.active)) overlays.push(...arrow(path.points.map(p), path.movement));
+  for (const ghost of options.ghosts ?? []) {
+    const at = p(ghost.position);
+    nodes.push(node("g", { "data-ghost-id": ghost.id, pointerEvents: "none", opacity: .55 }, undefined, [node("circle", { cx: at.x, cy: at.y, r: 17, fill: "none", stroke: c.line, strokeWidth: 1.2, strokeDasharray: "3 3" }), text({ x: at.x + 21, y: at.y - 9 }, ghost.label, { fontSize: 10 }), title(ghost.label)]));
+  }
   nodes.push(...overlays);
   for (const { entity, screen: at } of [...visible].sort((a, b) => Number(a.entity.kind === "player") - Number(b.entity.kind === "player"))) {
     const group: SvgNode[] = [title(entity.kind === "player" ? `Team ${entity.team.toUpperCase()} · #${entity.number}${entity.positionLabel ? ` · ${entity.positionLabel}` : ""} · ${entity.position.x.toFixed(1)}, ${entity.position.y.toFixed(1)} m` : entity.kind === "equipment" ? entity.equipment : "Ball")];
@@ -113,7 +118,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     const a = track.annotation, points = a.kind === "arrow" ? [a.from, a.to] : a.kind === "note" ? [a.position] : [a.area.origin, { x: a.area.origin.x + a.area.length, y: a.area.origin.y + a.area.width }];
     points.map(p).forEach((q) => nodes.push(node("circle", { cx: q.x, cy: q.y, r: 5, fill: c.guide, stroke: c.ink, strokeWidth: 1, pointerEvents: "none" })));
   }
-  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: evaluated.entities.length - visible.length, outsideField: evaluated.entities.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: evaluated.entities.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
+  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: displayed.length - visible.length, outsideField: displayed.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: displayed.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
 }
 
 /** Interpolate equipment-footprint edges without changing their metre anchors. */

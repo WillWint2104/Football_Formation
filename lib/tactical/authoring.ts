@@ -15,13 +15,13 @@ export function travel(history: History, direction: "undo" | "redo"): History {
   return history.future.length ? { past: [...history.past, history.present].slice(-50), present: history.future[0], future: history.future.slice(1) } : history;
 }
 /** Translate selected anchors and every associated movement keyframe; static annotations retain their stage timing. */
-export function moveObjects(source: TacticalScene, selected: string[], dx: number, dy: number): TacticalScene {
+export function moveObjects(source: TacticalScene, selected: string[], dx: number, dy: number, stageId?: string): TacticalScene {
   const scene = structuredClone(source), move = (p: Point) => ({ x: p.x + dx, y: p.y + dy });
   const entities = new Set(selected.filter((s) => s.startsWith("entity:")).map((s) => s.slice(7)));
   scene.entities.forEach((e) => { if (entities.has(e.id)) e.position = move(e.position); });
   scene.stages.forEach((s, index) => s.tracks.forEach((t) => {
     if (t.kind !== "annotation") { if (entities.has(t.entityId)) t.keyframes.forEach((f) => { f.position = move(f.position); }); }
-    else if (index === 0 && selected.includes(`annotation:${t.id}`)) {
+    else if ((stageId ? s.id === stageId : index === 0) && selected.includes(`annotation:${t.id}`)) {
       const a = t.annotation;
       if (a.kind === "arrow") { a.from = move(a.from); a.to = move(a.to); }
       else if (a.kind === "area") a.area.origin = move(a.area.origin); else a.position = move(a.position);
@@ -30,10 +30,10 @@ export function moveObjects(source: TacticalScene, selected: string[], dx: numbe
   return prepareScene(scene);
 }
 /** Remove selected objects and their motion tracks while leaving unrelated stages and annotations unchanged. */
-export function removeObjects(source: TacticalScene, selected: string[]): TacticalScene {
+export function removeObjects(source: TacticalScene, selected: string[], stageId?: string): TacticalScene {
   const scene = structuredClone(source), ids = new Set(selected.filter((s) => s.startsWith("entity:")).map((s) => s.slice(7)));
   scene.entities = scene.entities.filter((e) => !ids.has(e.id));
-  scene.stages.forEach((s, index) => { s.tracks = s.tracks.filter((t) => t.kind === "annotation" ? index !== 0 || !selected.includes(`annotation:${t.id}`) : !ids.has(t.entityId)); });
+  scene.stages.forEach((s, index) => { s.tracks = s.tracks.filter((t) => t.kind === "annotation" ? (stageId ? s.id !== stageId : index !== 0) || !selected.includes(`annotation:${t.id}`) : !ids.has(t.entityId)); if (s.hiddenEntityIds) s.hiddenEntityIds = s.hiddenEntityIds.filter((id) => !ids.has(id)); });
   return prepareScene(scene);
 }
 /** Snap in world metres, with optional nearest object anchors taking precedence within the supplied world tolerance. */
@@ -76,9 +76,11 @@ export function addEntity(source: TacticalScene, at: Point, kind: "player" | "ba
 }
 export type TacticalEntityEquipment = Extract<TacticalEntity, { kind: "equipment" }>["equipment"];
 /** Author static overlays in the first stage without flattening existing animation stages or changing durations. */
-export function addAnnotation(source: TacticalScene, annotation: { kind: "arrow"; from: Point; to: Point; movement: "pass" | "run" | "press" | "rotation" } | { kind: "area"; area: TrainingArea; label: string } | { kind: "note"; position: Point; text: string }, allocate = () => crypto.randomUUID()): TacticalScene {
+export function addAnnotation(source: TacticalScene, annotation: { kind: "arrow"; from: Point; to: Point; movement: "pass" | "run" | "press" | "rotation" } | { kind: "area"; area: TrainingArea; label: string } | { kind: "note"; position: Point; text: string }, allocate = () => crypto.randomUUID(), stageId?: string): TacticalScene {
   const scene = structuredClone(source);
   if (!scene.stages.length) scene.stages.push({ id: allocate(), title: "Static diagram", durationSeconds: 1, tracks: [] });
-  scene.stages[0].tracks.push({ id: allocate(), kind: "annotation", visibleFrom: 0, visibleUntil: scene.stages[0].durationSeconds, annotation: structuredClone(annotation) });
+  const stage = stageId ? scene.stages.find((s) => s.id === stageId) : scene.stages[0];
+  if (!stage) throw new Error("Select an existing stage");
+  stage.tracks.push({ id: allocate(), kind: "annotation", visibleFrom: 0, visibleUntil: stage.durationSeconds, annotation: structuredClone(annotation) });
   return prepareScene(scene);
 }

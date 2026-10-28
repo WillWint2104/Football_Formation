@@ -109,6 +109,8 @@ export const stageSchema = z
     title: textSchema,
     durationSeconds: z.number().positive().finite(),
     tracks: z.array(trackSchema),
+    // Additive, stage-local visibility; absent means every entity is visible.
+    hiddenEntityIds: z.array(idSchema).max(512).optional(),
   })
   .superRefine((stage, ctx) => {
     if (duplicateIds(stage.tracks))
@@ -194,6 +196,8 @@ export const tacticalSceneSchema = z
       scene.entities.map((entity) => [entity.id, entity]),
     );
     scene.stages.forEach((stage, si) => {
+      if (stage.hiddenEntityIds && (new Set(stage.hiddenEntityIds).size !== stage.hiddenEntityIds.length || stage.hiddenEntityIds.some((id) => !entities.has(id))))
+        ctx.addIssue({ code: "custom", path: ["stages", si, "hiddenEntityIds"], message: "Stage visibility requires unique existing entities" });
       const movingEntities = new Set<string>();
       stage.tracks.forEach((track, ti) => {
         if (track.kind === "annotation") return;

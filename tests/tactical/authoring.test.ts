@@ -9,6 +9,8 @@ import { coachingSample } from "../../lib/coaching/sample";
 import { resolveDiagramTarget, saveDiagram, type DiagramTarget } from "../../lib/tactical/persistence";
 import { domainBundleSchema } from "../../lib/domain/validation";
 import { eventSession, latestEvents } from "../../lib/calendar/schedule";
+import { animationExamples } from "../../lib/tactical/animation-examples";
+import { setStageVisible } from "../../lib/tactical/animation";
 
 const fixture = () => structuredClone(editorExamples[3].scene);
 function target(): DiagramTarget { return { kind: "session", id: "sample-3", revision: 1, activity: "activity-1", event: "sample-4", booking: 1, diagram: null }; }
@@ -82,7 +84,7 @@ test("exercise/template diagrams are independent snapshots and invalid source/bo
   assert.throws(() => saveDiagram(bundle, exercise, { ...draft(bundle), organizationId: "other-club" }), /Organisation/);
   assert.throws(() => saveDiagram(a.bundle, a.target, { ...a.scene, id: "substitution" }), /pinned source/);
 });
-test("production SQL round-trips optional context/colours with immutable scene pins and optimistic concurrency", async () => {
+test("production SQL round-trips animation stages, visibility, context and colours with immutable pins and optimistic concurrency", async () => {
   const db = new PGlite(), actor = "00000000-0000-4000-8000-000000000001", initial = coachingSample();
   try {
     await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
@@ -91,7 +93,8 @@ test("production SQL round-trips optional context/colours with immutable scene p
     await db.exec(await readFile("supabase/migrations/202610260001_coaching_persistence.sql", "utf8"));
     await db.query("insert into public.organizations(id,name) values ($1,'Synthetic scene test')", [initial.organizationId]);
     await db.query("insert into public.organization_memberships(organization_id,user_id,role) values ($1,$2,'owner')", [initial.organizationId, actor]);
-    const scene = draft(initial), player = scene.entities.find((e) => e.kind === "player")!; if (player.kind === "player") player.color = "#123abc";
+    const animated = { ...structuredClone(animationExamples[2].scene), id: "new-scene", organizationId: initial.organizationId };
+    const scene = setStageVisible(animated, animated.stages[0].id, ["ball"], false), player = scene.entities.find((e) => e.kind === "player")!; if (player.kind === "player") player.color = "#123abc";
     const first = saveDiagram(initial, target(), scene), second = saveDiagram(first.bundle, first.target, moveObjects(first.scene, [`entity:${player.id}`], 1, 0));
     const save = (v: number, bundle: typeof initial) => db.transaction(async (tx) => { await tx.exec("set local role service_role"); return tx.query("select public.save_coaching_bundle($1,$2,$3,$4::jsonb)", [initial.organizationId, actor, v, JSON.stringify(domainBundleSchema.parse(bundle))]); });
     await save(0, first.bundle); await save(1, second.bundle);
