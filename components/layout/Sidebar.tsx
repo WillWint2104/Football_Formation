@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardList,
   Library,
+  Presentation,
   Menu,
   Settings,
   Shield,
@@ -42,6 +43,7 @@ const navigation: {
   { label: "Templates", href: "/templates", icon: ClipboardList },
   { label: "Exercise Library", href: "/exercises", icon: Library },
   { label: "Coaches", href: "/coaches", icon: Users },
+  { label: "Presentations", href: "/presentations", icon: Presentation },
   { label: "Tactics", href: "/lineup", aliases: ["/tactical-renderer", "/tactical-editor"], icon: Workflow },
   {
     label: "Squad",

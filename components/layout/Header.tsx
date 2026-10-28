@@ -8,6 +8,7 @@ const workspaceLabels: Record<string, string> = {
   "/sessions": "Sessions", "/templates": "Session templates",
   "/exercises": "Exercise library", "/coaches": "Coach directory",
   "/guides": "Coaching guide",
+  "/presentations": "Coaching presentations",
 };
 
 /** Shows route context and available tactics tools without advertising planned tools as links. */
@@ -18,7 +19,7 @@ export function Header() {
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
       ? "Calendar"
-      : ["/sessions", "/templates", "/exercises", "/coaches", "/guides"].includes(pathname)
+      : ["/sessions", "/templates", "/exercises", "/coaches", "/guides", "/presentations"].includes(pathname)
         ? workspaceLabels[pathname]
       : ["/roster", "/player-profiles"].includes(pathname)
         ? "Squad"
@@ -51,16 +52,7 @@ export function Header() {
           </Link>
           <Link href="/tactical-renderer" aria-current={pathname === "/tactical-renderer" ? "page" : undefined} className={`border-b-2 px-3 py-3 text-body-md font-semibold focus-visible:outline-2 focus-visible:outline-shell-accent ${pathname === "/tactical-renderer" ? "border-shell-accent text-shell-accent" : "border-transparent text-shell-text"}`}>Renderer preview</Link>
           <Link href="/tactical-editor" aria-current={pathname === "/tactical-editor" ? "page" : undefined} className={`border-b-2 px-3 py-3 text-body-md font-semibold focus-visible:outline-2 focus-visible:outline-shell-accent ${pathname === "/tactical-editor" ? "border-shell-accent text-shell-accent" : "border-transparent text-shell-text"}`}>2D Editor</Link>
-          {["2D Presentation"].map((label) => (
-            <span
-              key={label}
-              aria-disabled="true"
-              className="flex items-center gap-2 px-3 py-3 text-body-md text-shell-muted"
-            >
-              {label}
-              <span className="font-mono text-[10px] uppercase">Planned</span>
-            </span>
-          ))}
+          <Link href="/presentations" className="px-3 py-3 text-body-md text-shell-text focus-visible:outline-2 focus-visible:outline-shell-accent">2D Presentation</Link>
         </nav>
       )}
     </header>
