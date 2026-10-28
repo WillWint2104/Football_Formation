@@ -1,7 +1,7 @@
 "use client";
 
 import type { TacticalScene } from "@/lib/domain/tactical-scene";
-import { annotationWindow, changeStageOrder, duplicateStage, removeKeyframe, retimeKeyframe, setPose, setStageVisible, stageRanges, updateStage } from "@/lib/tactical/animation";
+import { annotationWindow, changeStageOrder, duplicateStage, posePreview, removeKeyframe, retimeKeyframe, setPose, setStageVisible, stageRanges, updateStage } from "@/lib/tactical/animation";
 import { evaluateScene } from "@/lib/tactical/evaluate";
 
 type Props = { scene: TacticalScene; stageId: string; selected: string[]; seconds: number; onSeekPose: (seconds: number) => void; operate: (fn: () => TacticalScene) => void };
@@ -9,7 +9,7 @@ type Props = { scene: TacticalScene; stageId: string; selected: string[]; second
 export function AnimationProperties({ scene, stageId, selected, seconds, onSeekPose, operate }: Props) {
   const range = stageRanges(scene).find((r) => r.stage.id === stageId); if (!range) return <p>Add a stage to begin animation authoring.</p>;
   const { stage, start, index } = range, local = Math.max(0, Math.min(stage.durationSeconds, Math.round((seconds - start) * 1_000_000) / 1_000_000));
-  const entity = selected.length === 1 ? evaluateScene(scene, seconds).entities.find((e) => `entity:${e.id}` === selected[0]) : undefined;
+  const entity = selected.length === 1 ? evaluateScene(posePreview(scene, stageId, seconds), seconds).entities.find((e) => `entity:${e.id}` === selected[0]) : undefined;
   const track = stage.tracks.find((t) => t.kind !== "annotation" && t.entityId === entity?.id);
   const annotation = stage.tracks.find((t) => t.kind === "annotation" && selected.includes(`annotation:${t.id}`));
   return <>

@@ -60,6 +60,7 @@ test("stage visibility and annotation windows are local; ghosts are view-only", 
   const mock = await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-passing"); await choose(page, "a1");
   await expect(page.locator("[data-ghost-id]")).toHaveCount(1); await page.getByLabel("Start / end ghosts").uncheck(); await expect(page.locator("[data-ghost-id]")).toHaveCount(0);
   await page.getByRole("button", { name: "Hide selected in stage", exact: true }).click(); await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(0);
+  await page.getByLabel("Start / end ghosts").check(); await expect(page.locator("[data-ghost-id]")).toHaveCount(0);
   await seek(page, 3); await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(1);
   await page.getByRole("button", { name: "T Note", exact: true }).click(); await page.getByRole("button", { name: "Insert at centre", exact: true }).click();
   await page.getByLabel("Label", { exact: true }).fill("Release into space"); await page.getByRole("button", { name: "Apply overlay properties", exact: true }).click();
@@ -163,4 +164,14 @@ test("framing an entirely hidden stage returns safely to overview", async ({ pag
   await expect(page.getByRole("button", { name: "Overview", exact: true })).toHaveAttribute("aria-pressed", "true"); await expect(page.locator(".editor-feedback")).toContainText("No visible action");
   await page.getByRole("button", { name: "Detail / Focus selection", exact: true }).click(); await expect(page.locator(".editor-feedback")).toContainText("Select a visible");
   await expect(page.locator(".scene-diagram-error")).toHaveCount(0);
+});
+test("End pose retains selected-stage visibility and overlays; timeline seeking still enters the next stage", async ({ page }) => {
+  await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "animation-passing"); await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await choose(page, "a1"); await page.getByRole("button", { name: "Hide selected in stage", exact: true }).click();
+  await page.getByRole("button", { name: /Select stage 2:/ }).click(); await page.getByRole("button", { name: "T Note", exact: true }).click(); await page.getByRole("button", { name: "Insert at centre", exact: true }).click();
+  await page.getByLabel("Label", { exact: true }).fill("Next stage only"); await page.getByRole("button", { name: "Apply overlay properties", exact: true }).click();
+  await page.getByRole("button", { name: /Select stage 1:/ }).click(); await choose(page, "a1"); const view = await cameraState(page); await page.getByRole("button", { name: "End pose", exact: true }).click();
+  await expect(page.locator(".scene-diagram")).toHaveAttribute("data-time", "3"); await expect(page.locator(".editor-surface svg desc")).toContainText("Receive and open");
+  await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(0); await expect(page.locator("[data-ghost-id]")).toHaveCount(0); await expect(page.locator(".editor-surface")).not.toContainText("Next stage only"); expect(await cameraState(page)).toEqual(view);
+  await seek(page, 3); await expect(page.locator(".editor-surface svg desc")).toContainText("Play the third player"); await expect(page.locator('.editor-surface [data-entity-id="a1"]')).toHaveCount(1); await expect(page.locator(".editor-surface")).toContainText("Next stage only");
 });

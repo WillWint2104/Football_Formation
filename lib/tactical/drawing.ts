@@ -3,11 +3,12 @@ import { evaluateScene, prepareScene, type Point } from "./evaluate";
 import { fitViewport, metricGrid, worldToScreen, equipmentFootprint, screenRectangle, type FitMode, type Camera, type Projection, type Rotation } from "./viewport";
 import { contextArea } from "./context";
 import { tacticalPalette as c } from "./palette";
+import { posePreview } from "./animation";
 
 export const TACTICAL_RENDERER_VERSION = "svg-2d/1.2.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
-export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
+export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
 export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
 const line = (a: Point, b: Point, attrs: SvgNode["attrs"]) => node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
@@ -17,7 +18,7 @@ const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && a.x + a.w > b.x && a.y <
 
 /** One portable drawing tree drives React, standalone SVG and later illustrated exports. No persisted geometry is changed. */
 export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing {
-  const scene = prepareScene(input), evaluated = evaluateScene(scene, options.seconds ?? 0);
+  const scene = prepareScene(input), seconds = options.seconds ?? 0, evaluated = evaluateScene(options.poseStageId ? posePreview(scene, options.poseStageId, seconds) : scene, seconds);
   const view = fitViewport(scene, { ...options, fit: options.fit ?? "exercise" });
   const p = (point: Point) => worldToScreen(point, view), nodes: SvgNode[] = [];
   const rect = (origin: Point, length: number, width: number, attrs: SvgNode["attrs"]) => node("rect", { ...screenRectangle(origin, length, width, view), ...attrs });

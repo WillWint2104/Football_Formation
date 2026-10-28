@@ -130,7 +130,7 @@ or subsequent path edits can move content out of the held view: explicitly refit
 
 Applying the eight illustrative examples never changes their geometry: seven
 start with the first stage's action; full-pitch movement starts with an overview.
-On setup only, the action examples choose the better-fitting 0/270 degree view for
+On setup only, the action examples choose the better fit at 0° or 270° for
 the available canvas. Explicit later fits preserve the chosen orientation. A square
 rondo is necessarily limited by canvas height; Detail and Expand board provide
 closer inspection without stretching the grid. Reopening a saved scene restores
@@ -146,6 +146,12 @@ must fall back to overview; reduced-motion and manual override must hold a view.
 No camera data, schema migration, automatic following, easing or camera timeline
 is persisted/implemented in this PR. Historical records, guide pins and PDF layouts
 are unchanged.
+
+An explicit End pose uses a read-only scene prefix for exact endpoint evaluation,
+so selected-stage visibility is not replaced by the next stage's annotations.
+Camera fitting still receives the entire original scene. Playback and ordinary
+timeline seeking retain right-continuous evaluation. Hidden selected entities
+also hide their start/end ghosts. These preview adapters never enter saved data.
 
 ## Verification and limits
 

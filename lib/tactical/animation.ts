@@ -6,6 +6,11 @@ export function stageRanges(scene: TacticalScene) {
   let start = 0;
   return scene.stages.map((stage, index) => { const range = { stage, index, start, end: start + stage.durationSeconds }; start = range.end; return range; });
 }
+/** Read-only endpoint preview: truncate only evaluation, never the saved scene or its camera-fit source. */
+export function posePreview(scene: TacticalScene, stageId: string, seconds: number): TacticalScene {
+  const range = stageRanges(scene).find((r) => r.stage.id === stageId);
+  return range && seconds === range.end ? { ...scene, stages: scene.stages.slice(0, range.index + 1) } : scene;
+}
 /** Resolve a stage by identity so reordering cannot target a stale array index. */
 function stageOf(scene: TacticalScene, id: string) { const stage = scene.stages.find((s) => s.id === id); if (!stage) throw new Error("Select an existing stage"); return stage; }
 const round = (seconds: number) => Math.round(seconds * 1_000_000) / 1_000_000;

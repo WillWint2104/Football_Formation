@@ -3,7 +3,7 @@ import test from "node:test";
 import { actionFrame } from "../../lib/tactical/framing";
 import { animationExamples } from "../../lib/tactical/animation-examples";
 import { evaluateScene } from "../../lib/tactical/evaluate";
-import { stageRanges, setStageVisible } from "../../lib/tactical/animation";
+import { stageRanges, setStageVisible, posePreview } from "../../lib/tactical/animation";
 import { addAnnotation } from "../../lib/tactical/authoring";
 import { fitViewport, worldToScreen, screenToWorld } from "../../lib/tactical/viewport";
 import { drawScene } from "../../lib/tactical/drawing";
@@ -70,4 +70,15 @@ test("close-up ghost labels stay inside the viewport and offscreen ghosts do not
   const ghost = drawing.nodes.find((n) => n.attrs["data-ghost-id"] === "end")!, label = ghost.children!.find((n) => n.tag === "text")!;
   assert.ok(Number(label.attrs.x) >= 4 && Number(label.attrs.x) + 18 <= 116 && Number(label.attrs.y) >= 12 && Number(label.attrs.y) <= 116);
   assert.ok(!drawing.nodes.some((n) => n.attrs["data-ghost-id"] === "offscreen"));
+});
+test("an exact pose endpoint keeps selected-stage visibility while full evaluation and camera framing stay unchanged", () => {
+  const original = animationExamples[0].scene, first = original.stages[0], second = original.stages[1];
+  const scene = addAnnotation(setStageVisible(original, first.id, ["a1"], false), { kind: "note", position: { x: 35, y: 35 }, text: "Next stage only" }, () => "next-note", second.id), before = structuredClone(scene), seconds = first.durationSeconds;
+  assert.equal(evaluateScene(scene, seconds).stage!.id, second.id);
+  const preview = posePreview(scene, first.id, seconds); assert.equal(evaluateScene(preview, seconds).stage!.id, first.id);
+  assert.deepEqual(evaluateScene(scene, seconds).entities, evaluateScene(preview, seconds).entities);
+  const options = { width: 790, height: 230, fit: "all" as const, seconds };
+  const timeline = drawScene(scene, options), endpoint = drawScene(scene, { ...options, poseStageId: first.id });
+  assert.deepEqual(endpoint.view, timeline.view); assert.ok(timeline.anchors.some((a) => a.id === "a1")); assert.ok(!endpoint.anchors.some((a) => a.id === "a1"));
+  assert.equal(posePreview(scene, first.id, seconds - .001), scene); assert.deepEqual(scene, before);
 });
