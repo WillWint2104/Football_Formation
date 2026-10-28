@@ -47,8 +47,9 @@ exporter versions are not prominent coaching content. Meaningful saved values
 remain unchanged; empty optional sections are omitted. Unknown equipment quantities
 remain explicitly unknown. Planned activity minutes and the booked time window
 are labelled independently, including when they differ.
-Renderer provenance is `guide-pdf/1.1.1;svg-2d/1.1.0` (V003 cover/brand-slot refinement;
-saved session, booking and diagram pins are unchanged).
+V003's accepted renderer provenance was `guide-pdf/1.1.1;svg-2d/1.1.0`.
+PR 08 records `svg-2d/1.2.0` for additive animated-stage visibility; PDF layouts
+and historical bytes remain unchanged. See `2d-animation-authoring.md`.
 
 ## Shared document design system
 

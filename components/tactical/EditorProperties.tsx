@@ -7,12 +7,13 @@ import { SpaceConversion } from "./SpaceConversion";
 import { tacticalPalette } from "@/lib/tactical/palette";
 import { useState } from "react";
 
-type Props = { scene: TacticalScene; selected: string[]; mutate: (fn: (draft: TacticalScene) => void) => void; edit: (scene: TacticalScene) => void; onFrame: () => void };
+type Props = { scene: TacticalScene; selected: string[]; mutate: (fn: (draft: TacticalScene) => void) => void; edit: (scene: TacticalScene) => void; onFrame: () => void; stageId?: string; animation?: boolean };
 /** Context-specific properties share the existing domain contracts; camera controls never enter this component. */
-export function EditorProperties({ scene, selected, mutate, edit, onFrame }: Props) {
+export function EditorProperties({ scene, selected, mutate, edit, onFrame, stageId, animation }: Props) {
   const [error, setError] = useState("");
-  const entity = selected.length === 1 ? scene.entities.find((e) => `entity:${e.id}` === selected[0]) : undefined;
-  const track = selected.length === 1 ? scene.stages[0]?.tracks.find((t) => t.kind === "annotation" && `annotation:${t.id}` === selected[0]) : undefined;
+  const entity = !animation && selected.length === 1 ? scene.entities.find((e) => `entity:${e.id}` === selected[0]) : undefined;
+  const stage = (stageId ? scene.stages.find((s) => s.id === stageId) : scene.stages[0]);
+  const track = selected.length === 1 ? stage?.tracks.find((t) => t.kind === "annotation" && `annotation:${t.id}` === selected[0]) : undefined;
   const annotation = track?.kind === "annotation" ? track.annotation : undefined;
   const context = scene.context ?? { kind: "pitch" as const, region: "full" as const, attack: "positive-x" as const };
   const area = contextArea(scene), dataKey = JSON.stringify({ field: scene.field, context });
@@ -36,12 +37,12 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame }: Pro
     </section>}
     {annotation && track && <section key={JSON.stringify(annotation)}><p className="calendar-eyebrow">Selected overlay</p><h2>{annotation.kind === "arrow" ? `${annotation.movement} route` : annotation.kind === "area" ? "Training zone" : "Coaching note"}</h2>
       <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); mutate((draft) => {
-        const item = draft.stages[0].tracks.find((t) => t.id === track.id); if (item?.kind !== "annotation") return; const a = item.annotation;
+        const item = draft.stages.find((s) => s.id === stage?.id)?.tracks.find((t) => t.id === track.id); if (item?.kind !== "annotation") return; const a = item.annotation;
         if (a.kind === "arrow") { a.from = { x: numeric(data, "x"), y: numeric(data, "y") }; a.to = { x: numeric(data, "endX"), y: numeric(data, "endY") }; a.movement = data.get("movement") as typeof a.movement; }
         else if (a.kind === "area") { a.area = { origin: { x: numeric(data, "x"), y: numeric(data, "y") }, length: numeric(data, "length"), width: numeric(data, "width") }; a.label = String(data.get("text")); }
         else { a.position = { x: numeric(data, "x"), y: numeric(data, "y") }; a.text = String(data.get("text")); }
       }); }}><div className="editor-row"><label>Start X (m)<input name="x" type="number" step="any" defaultValue={annotation.kind === "arrow" ? annotation.from.x : annotation.kind === "area" ? annotation.area.origin.x : annotation.position.x} required /></label><label>Start Y (m)<input name="y" type="number" step="any" defaultValue={annotation.kind === "arrow" ? annotation.from.y : annotation.kind === "area" ? annotation.area.origin.y : annotation.position.y} required /></label></div>
-        {annotation.kind === "arrow" ? <><div className="editor-row"><label>End X (m)<input name="endX" type="number" step="any" defaultValue={annotation.to.x} required /></label><label>End Y (m)<input name="endY" type="number" step="any" defaultValue={annotation.to.y} required /></label></div><label>Movement<select name="movement" defaultValue={annotation.movement}>{["pass", "run", "press", "rotation"].map((m) => <option key={m}>{m}</option>)}</select></label><p className="calendar-muted">{Math.hypot(annotation.to.x - annotation.from.x, annotation.to.y - annotation.from.y).toFixed(2)} m route · first-stage timing retained</p></> : <><label>Label<input name="text" maxLength={200} defaultValue={annotation.kind === "note" ? annotation.text : annotation.label} required /></label>{annotation.kind === "area" && <div className="editor-row"><label>Length (m)<input name="length" type="number" min=".01" step="any" defaultValue={annotation.area.length} required /></label><label>Width (m)<input name="width" type="number" min=".01" step="any" defaultValue={annotation.area.width} required /></label></div>}</>}
+        {annotation.kind === "arrow" ? <><div className="editor-row"><label>End X (m)<input name="endX" type="number" step="any" defaultValue={annotation.to.x} required /></label><label>End Y (m)<input name="endY" type="number" step="any" defaultValue={annotation.to.y} required /></label></div><label>Movement<select name="movement" defaultValue={annotation.movement}>{["pass", "run", "press", "rotation"].map((m) => <option key={m}>{m}</option>)}</select></label><p className="calendar-muted">{Math.hypot(annotation.to.x - annotation.from.x, annotation.to.y - annotation.from.y).toFixed(2)} m route · selected-stage timing retained</p></> : <><label>Label<input name="text" maxLength={200} defaultValue={annotation.kind === "note" ? annotation.text : annotation.label} required /></label>{annotation.kind === "area" && <div className="editor-row"><label>Length (m)<input name="length" type="number" min=".01" step="any" defaultValue={annotation.area.length} required /></label><label>Width (m)<input name="width" type="number" min=".01" step="any" defaultValue={annotation.area.width} required /></label></div>}</>}
         <button>Apply overlay properties</button></form>
     </section>}
     <section key={dataKey}><p className="calendar-eyebrow">Field context</p><h2>{context.kind === "neutral" ? "Independent training area" : context.region.replaceAll("-", " ")}</h2>

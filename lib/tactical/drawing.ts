@@ -3,11 +3,12 @@ import { evaluateScene, prepareScene, type Point } from "./evaluate";
 import { fitViewport, metricGrid, worldToScreen, equipmentFootprint, screenRectangle, type FitMode, type Camera, type Projection, type Rotation } from "./viewport";
 import { contextArea } from "./context";
 import { tacticalPalette as c } from "./palette";
+import { posePreview } from "./animation";
 
-export const TACTICAL_RENDERER_VERSION = "svg-2d/1.1.0";
+export const TACTICAL_RENDERER_VERSION = "svg-2d/1.2.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
-export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[] };
+export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
 export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
 const line = (a: Point, b: Point, attrs: SvgNode["attrs"]) => node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
@@ -17,7 +18,7 @@ const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && a.x + a.w > b.x && a.y <
 
 /** One portable drawing tree drives React, standalone SVG and later illustrated exports. No persisted geometry is changed. */
 export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing {
-  const scene = prepareScene(input), evaluated = evaluateScene(scene, options.seconds ?? 0);
+  const scene = prepareScene(input), seconds = options.seconds ?? 0, evaluated = evaluateScene(options.poseStageId ? posePreview(scene, options.poseStageId, seconds) : scene, seconds);
   const view = fitViewport(scene, { ...options, fit: options.fit ?? "exercise" });
   const p = (point: Point) => worldToScreen(point, view), nodes: SvgNode[] = [];
   const rect = (origin: Point, length: number, width: number, attrs: SvgNode["attrs"]) => node("rect", { ...screenRectangle(origin, length, width, view), ...attrs });
@@ -57,7 +58,8 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     for (const b of [{ x: 0, y: 0, width: view.width, height: y }, { x: 0, y: bottom, width: view.width, height: view.height - bottom }, { x: 0, y, width: x, height: bottom - y }, { x: right, y, width: view.width - right, height: bottom - y }]) nodes.push(node("rect", { ...b, fill: c.surround }));
   }
   const overlays: SvgNode[] = [], labels: SvgNode[] = [];
-  const visible = evaluated.entities.map((entity) => ({ entity, screen: p(entity.position) })).filter(({ screen }) => screen.x >= 20 && screen.x <= view.width - 20 && screen.y >= 20 && screen.y <= view.height - 20);
+  const displayed = evaluated.entities.filter((entity) => !evaluated.hiddenEntityIds.includes(entity.id));
+  const visible = displayed.map((entity) => ({ entity, screen: p(entity.position) })).filter(({ screen }) => screen.x >= 20 && screen.x <= view.width - 20 && screen.y >= 20 && screen.y <= view.height - 20);
   const boxes: Box[] = visible.map(({ screen }) => ({ x: screen.x - 19, y: screen.y - 19, w: 38, h: 38 }));
   let labelCollisions = 0;
   const place = (candidates: Box[]) => {
@@ -81,8 +83,15 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       labels.push(node("g", { "data-annotation-id": track.id }, undefined, [node("rect", { x: box.x, y: box.y, width: w, height: 23, rx: 4, fill: c.ink, fillOpacity: 0.9 }), text({ x: box.x + 8, y: box.y + 15 }, content), title(a.text)]));
     }
   }
-  if (options.paths !== "none") for (const path of evaluated.paths) if (options.paths !== "active" || path.active) overlays.push(...arrow(path.points.map(p), path.movement));
+  if (options.paths !== "none") for (const path of evaluated.paths) if (!evaluated.hiddenEntityIds.includes(path.entityId) && (options.paths !== "active" || path.active)) overlays.push(...arrow(path.points.map(p), path.movement));
+  for (const ghost of options.ghosts ?? []) {
+    const at = p(ghost.position);
+    if (at.x < 0 || at.x > view.width || at.y < 0 || at.y > view.height) continue;
+    const label = shorten(ghost.label, 18), width = label.length * 6;
+    nodes.push(node("g", { "data-ghost-id": ghost.id, pointerEvents: "none", opacity: .55 }, undefined, [node("circle", { cx: at.x, cy: at.y, r: 17, fill: "none", stroke: c.line, strokeWidth: 1.2, strokeDasharray: "3 3" }), text({ x: Math.max(4, Math.min(view.width - width - 4, at.x + 21)), y: Math.max(12, Math.min(view.height - 4, at.y - 9)) }, label, { fontSize: 10 }), title(ghost.label)]));
+  }
   nodes.push(...overlays);
+  const markers: SvgNode[] = [];
   for (const { entity, screen: at } of [...visible].sort((a, b) => Number(a.entity.kind === "player") - Number(b.entity.kind === "player"))) {
     const group: SvgNode[] = [title(entity.kind === "player" ? `Team ${entity.team.toUpperCase()} · #${entity.number}${entity.positionLabel ? ` · ${entity.positionLabel}` : ""} · ${entity.position.x.toFixed(1)}, ${entity.position.y.toFixed(1)} m` : entity.kind === "equipment" ? entity.equipment : "Ball")];
     if (entity.kind === "player") {
@@ -105,15 +114,16 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     else if (entity.equipment === "marker") group.push(node("circle", { cx: at.x, cy: at.y, r: 5, fill: c.equipment, stroke: c.outline, strokeWidth: 1 }));
     else if (entity.equipment === "pole") group.push(node("rect", { x: at.x - 2, y: at.y - 9, width: 4, height: 18, rx: 2, fill: c.equipment, stroke: c.outline }));
     else group.push(node("circle", { cx: at.x, cy: at.y - 7, r: 3.5, fill: c.b }), node("rect", { x: at.x - 5, y: at.y - 3, width: 10, height: 15, rx: 2, fill: c.b, stroke: c.line, strokeWidth: 0.7 }));
-    nodes.push(node("g", { "data-entity-id": entity.id, "data-world-x": entity.position.x, "data-world-y": entity.position.y }, undefined, group));
-    if (options.selectedIds?.includes(`entity:${entity.id}`)) nodes.push(node("circle", { cx: at.x, cy: at.y, r: 20, fill: "none", stroke: c.guide, strokeWidth: 2, pointerEvents: "none" }));
+    markers.push(node("g", { "data-entity-id": entity.id, "data-world-x": entity.position.x, "data-world-y": entity.position.y }, undefined, group));
+    if (options.selectedIds?.includes(`entity:${entity.id}`)) markers.push(node("circle", { cx: at.x, cy: at.y, r: 20, fill: "none", stroke: c.guide, strokeWidth: 2, pointerEvents: "none" }));
   }
-  nodes.push(...labels);
+  // Numbered markers keep paint priority when a very dense viewport cannot place every note without overlap.
+  nodes.push(...labels, ...markers);
   for (const track of evaluated.annotations) if (options.selectedIds?.includes(`annotation:${track.id}`)) {
     const a = track.annotation, points = a.kind === "arrow" ? [a.from, a.to] : a.kind === "note" ? [a.position] : [a.area.origin, { x: a.area.origin.x + a.area.length, y: a.area.origin.y + a.area.width }];
     points.map(p).forEach((q) => nodes.push(node("circle", { cx: q.x, cy: q.y, r: 5, fill: c.guide, stroke: c.ink, strokeWidth: 1, pointerEvents: "none" })));
   }
-  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: evaluated.entities.length - visible.length, outsideField: evaluated.entities.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: evaluated.entities.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
+  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: displayed.length - visible.length, outsideField: displayed.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: displayed.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
 }
 
 /** Interpolate equipment-footprint edges without changing their metre anchors. */

@@ -10,8 +10,10 @@ PR 05 (coaching guides and private documents) was approved and merged as GitHub 
 PR 06 (shared 2D tactical renderer) is merged as GitHub PR #12 at approved head
 d518b2a, merge 054d79a. PR 07 (context-aware static tactical editor) merged as
 GitHub PR #13 at approved head 4922867, merge 565dae7. PR 09 illustrated coaching
-PDF generation is authorised for implementation/review only. Do not merge it or
-deploy manually. See `illustrated-coaching-pdfs.md`. Hosted
+PDF generation merged as GitHub PR #14 at approved head 14bac97, merge 85354f3.
+PR 08 animation authoring is authorised for implementation/review only; do not
+merge it or deploy manually. See `2d-animation-authoring.md` and
+`illustrated-coaching-pdfs.md`. Hosted
 Supabase activation requires separate approval. See `context-aware-editor.md`.
 See `shared-2d-renderer.md` for metre projection, adaptive framing and stage evaluation.
 See `coaching-guides-private-documents.md` for document boundaries and staging.
