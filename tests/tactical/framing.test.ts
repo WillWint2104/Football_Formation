@@ -51,6 +51,12 @@ test("detail targets selected paths or complete areas; hidden, stale and empty s
   const zone = actionFrame(withArea, stage.id, ["annotation:focus-zone"])!;
   assert.ok(zone.area.origin.x <= 90 && zone.area.origin.y <= 28 && zone.area.length >= 8 && zone.area.width >= 9);
 });
+test("a grid-wide rondo retains its boundary equipment while a local pass avoids distant cones", () => {
+  const rondo = animationExamples.find((e) => e.id === "animation-rondo")!.scene, passing = animationExamples[0].scene;
+  const frame = actionFrame(rondo, rondo.stages[0].id)!;
+  for (const cone of rondo.entities.filter((e) => e.kind === "equipment")) assert.ok(frame.entityIds.includes(cone.id));
+  assert.ok(!actionFrame(passing, passing.stages[0].id)!.entityIds.some((id) => passing.entities.find((e) => e.id === id)?.kind === "equipment"));
+});
 test("a held stage without any visible action falls back to context; bounded edge coordinates stay valid", () => {
   const scene = structuredClone(animationExamples[0].scene); scene.stages[0].tracks = []; scene.stages[0].hiddenEntityIds = scene.entities.map((e) => e.id);
   assert.equal(actionFrame(scene, scene.stages[0].id)!.area.length, scene.field.length);

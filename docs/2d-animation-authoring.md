@@ -108,7 +108,9 @@ Fit Pitch/Boundary remain available under Authoring display. Fit Stage / Action
 captures the deliberately selected stage's carried starting positions, all path
 vertices, visible balls and all stage overlays. Stationary players within six
 metres of the original action vertices are included as support, without recursively
-expanding through the team. Local football contexts retain their goal; full-pitch
+expanding through the team. Independent boundary grids retain their equipment when
+the action extent spans at least 75% of each dimension; local passing close-ups
+avoid distant cones. Local football contexts retain their goal; full-pitch
 actions include a goal when a path vertex approaches within 18 metres. Equipment
 footprints and a half-metre margin plus a 32-pixel gutter protect the target.
 

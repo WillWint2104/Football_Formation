@@ -45,6 +45,13 @@ export function actionFrame(input: TacticalScene, stageId: string, selection?: s
     // Compare to the original action, rather than recursively including an entire team.
     const core = [...points];
     for (const entity of start) if (entity.kind === "player" && core.some((p) => Math.hypot(p.x - entity.position.x, p.y - entity.position.y) <= 6)) includeEntity(entity.id);
+    // When the action spans most of an independent grid, its boundary cones are
+    // useful context too. A local passing close-up does not pull in distant cones.
+    const extent = framePoints(points);
+    if (scene.context?.kind === "neutral" && scene.context.boundary && extent.length >= scene.field.length * .75 && extent.width >= scene.field.width * .75) {
+      points.push({ x: 0, y: 0 }, { x: scene.field.length, y: scene.field.width });
+      for (const entity of start) if (entity.kind === "equipment" && entity.position.x >= 0 && entity.position.x <= scene.field.length && entity.position.y >= 0 && entity.position.y <= scene.field.width) includeEntity(entity.id);
+    }
     // Explicit local football contexts retain the relevant goal; a full-pitch action
     // includes a goal only when its action actually approaches that end.
     if (scene.context?.kind === "pitch") for (const right of [false, true]) {
