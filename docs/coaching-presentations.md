@@ -92,7 +92,10 @@ document exits warn about unsaved drafts.
 
 Sample mode is explicitly page-memory only. It never uploads sample records or
 pretends to be durable storage. Tests supply synthetic saved transport responses;
-SQL tests apply the real migration in local PGlite. Neither proves a hosted
+SQL tests apply the real migration in local PGlite. A separate-process restart
+test writes both the source bundle and presentation through the production SQL
+RPCs, closes the filesystem database, then reopens it under authenticated RLS and
+compares the exact sources, camera settings and notes. Neither proves a hosted
 multi-user deployment.
 
 ## Migration and rollback gate
