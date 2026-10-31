@@ -50,6 +50,7 @@ const bootstrap = `
 async function initialize(db: PGlite) {
   await db.exec(bootstrap);
   await db.exec(await readFile(migrationPath, "utf8"));
+  await db.exec(await readFile("supabase/migrations/20261031115109_coaching_revision_conflict_pt409.sql", "utf8"));
 }
 
 /** Simulate PostgREST's verified role/claim context; this is an RLS test, not an Auth-server substitute. */
@@ -238,7 +239,7 @@ test("production SQL: persistence, RLS isolation and immutable revisions", async
     await t.test(
       "stale writes and attempted history rewrites fail atomically",
       async () => {
-        await assert.rejects(save(db, alice, 1), /Revision conflict/);
+        await assert.rejects(save(db, alice, 1), { code: "PT409", message: "Revision conflict" });
         const rewritten = fixture();
         rewritten.sessions[0].content.title = "Overwrite revision one";
         await assert.rejects(

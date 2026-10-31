@@ -42,7 +42,7 @@ export interface CoachingStore {
 
 /** Map database failures without disclosing SQL, keys, other organizations or record content. */
 export function databaseError(error: { code?: string }): PersistenceError {
-  if (error.code === "40001")
+  if (error.code === "PT409" || error.code === "40001")
     return new PersistenceError(
       409,
       "Saved information changed; reload before saving",
