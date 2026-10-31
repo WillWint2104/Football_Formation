@@ -1,6 +1,7 @@
 // No request URL, headers, body, cookie, provider message or exception text is recorded.
 import { performance } from 'node:perf_hooks';
 const codes = new Set(['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'EACCES', 'ETIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_SOCKET']);
+/** Classify transport failures using an allowlist without returning provider text or secrets. */
 export function errorCategory(error, deadline = false) {
     if (deadline || error?.name === 'TimeoutError')
         return 'timeout';
@@ -9,6 +10,7 @@ export function errorCategory(error, deadline = false) {
     const code = error?.cause?.code ?? error?.code;
     return codes.has(code) ? code : 'transport_error';
 }
+/** Read at most the supplied byte limit; never expose the body in diagnostic output. */
 async function boundedBody(response, limit) {
     const reader = response.body?.getReader();
     if (!reader)
@@ -33,6 +35,10 @@ async function boundedBody(response, limit) {
     }
     return Buffer.concat(parts).toString('utf8');
 }
+/**
+ * Send once with an independent header/body deadline, retaining received status on timeout.
+ * A timeout does not establish database commit state. Reporting failure preserves the result.
+ */
 export async function measure(label, send, { timeoutMs = 30000, onResult = async () => { } } = {}) {
     if (!/^[a-z0-9.-]{1,64}$/.test(label) || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000)
         throw new Error('Invalid diagnostic specification');
@@ -74,6 +80,7 @@ export async function measure(label, send, { timeoutMs = 30000, onResult = async
         return { ...result, reporting: 'failed' };
     }
 }
+/** Validate two distinct safe labels, then collect both outcomes without retries or fail-fast loss. */
 export async function collectPair(specs, options) {
     if (specs.length !== 2)
         throw new Error('Exactly two requests required');
@@ -82,6 +89,7 @@ export async function collectPair(specs, options) {
     const settled = await Promise.allSettled(specs.map(s => measure(s.label, s.send, options)));
     return settled.map((s, i) => s.status === 'fulfilled' ? s.value : { label: specs[i].label, status: null, headersMs: null, elapsedMs: null, attempts: 1, completion: 'diagnostic_error', category: 'collector_error', ackVersion: null, dbCommit: 'unknown' });
 }
+/** Require separate HTTP, snapshot-history and reporting proofs before accepting a single commit. */
 export function reconcile(before, after, results) {
     const old = new Map(before.snapshots.map(s => [s.organizationId + '@' + s.version, s.hash]));
     const now = new Map(after.snapshots.map(s => [s.organizationId + '@' + s.version, s.hash]));
