@@ -16,6 +16,13 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Local JSON Session Designer
+
+Open [http://localhost:3000/session-designer](http://localhost:3000/session-designer).
+Import, edit, brand, download and print coaching sessions without login or a
+Supabase connection. See [the designer guide](docs/session-designer.md) for the
+portable JSON contract, examples and browser-draft limits.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
