@@ -1,0 +1,23 @@
+{
+  "format": "football-formation-session",
+  "schemaVersion": "1.0",
+  "session": {
+    "name": "Recovery & Mobility",
+    "type": "recovery",
+    "objectives": ["Use a low-intensity session to reflect on the previous match and restore comfortable movement."],
+    "activities": [
+      {
+        "id": "reflection",
+        "name": "Player Check-In",
+        "role": "briefing",
+        "instructions": ["Invite players to report how they feel and discuss the session focus."]
+      },
+      {
+        "id": "mobility",
+        "name": "Guided Mobility",
+        "instructions": ["Use comfortable, controlled mobility movements.", "Adapt the activity to individual needs."],
+        "coachingPoints": ["Avoid forcing range of movement."]
+      }
+    ]
+  }
+}

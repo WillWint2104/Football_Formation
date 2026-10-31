@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   ClipboardList,
+  FileJson,
   Library,
   Presentation,
   Menu,
@@ -40,6 +41,7 @@ const navigation: {
     icon: CalendarDays,
   },
   { label: "Sessions", href: "/sessions", icon: ClipboardList },
+  { label: "Session Designer", href: "/session-designer", icon: FileJson },
   { label: "Templates", href: "/templates", icon: ClipboardList },
   { label: "Exercise Library", href: "/exercises", icon: Library },
   { label: "Coaches", href: "/coaches", icon: Users },
@@ -125,7 +127,7 @@ export function Sidebar() {
       <p className="px-6 pt-6 font-mono text-label-caps uppercase tracking-widest text-shell-muted">
         Coaching workspace
       </p>
-      <Navigation />
+      <div className="min-h-0 flex-1 overflow-y-auto"><Navigation /></div>
       <p className="mt-auto px-6 pb-6 text-body-md text-shell-muted">
         Plan. Prepare. Coach.
       </p>

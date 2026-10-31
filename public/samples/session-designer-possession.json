@@ -1,0 +1,83 @@
+{
+  "format": "football-formation-session",
+  "schemaVersion": "1.0",
+  "session": {
+    "name": "Build Through Pressure",
+    "type": "possession",
+    "team": "U15–U17",
+    "durationMinutes": 80,
+    "playerCount": 14,
+    "objectives": [
+      "Create passing options around the player in possession.",
+      "Recognise when to play through pressure and when to switch.",
+      "Support the next pass with purposeful movement."
+    ],
+    "focus": ["Support angles", "Scanning", "Press resistance"],
+    "activities": [
+      {
+        "id": "activation",
+        "name": "Dynamic Passing Activation",
+        "role": "warm-up",
+        "durationMinutes": 10,
+        "playerCount": 14,
+        "area": { "length": 25, "width": 20 },
+        "equipment": [{ "name": "Balls", "quantity": 7 }, { "name": "Cones", "quantity": 8 }],
+        "instructions": ["Set out two passing areas.", "Players pass in pairs and move into a new space after each pass.", "Add dynamic mobility between passing actions."],
+        "coachingPoints": ["Look before receiving.", "Use the first touch to prepare the next pass."],
+        "progressions": ["Receive on the back foot and change direction."],
+        "regressions": ["Reduce movement speed and allow extra touches."],
+        "variations": ["Alternate short and longer passes."]
+      },
+      {
+        "id": "rondo",
+        "name": "5v2 Rondo",
+        "durationMinutes": 15,
+        "playerCount": 7,
+        "area": { "length": 12, "width": 12 },
+        "equipment": [{ "name": "Balls", "quantity": 2 }, { "name": "Cones", "quantity": 4 }],
+        "instructions": ["Run two groups of five attackers against two defenders.", "Keep possession and move to offer a new passing angle.", "Rotate defenders every two minutes."],
+        "coachingPoints": ["Keep support angles open.", "Communicate before the receiver is under pressure."],
+        "progressions": ["Limit attackers to two touches."],
+        "regressions": ["Increase the playing area."],
+        "variations": ["Award a point for a split pass."],
+        "diagrams": [{ "scene": { "id": "rondo-reference", "revision": 1 }, "representativeSeconds": 0 }]
+      },
+      {
+        "id": "positional-play",
+        "name": "Positional Possession",
+        "durationMinutes": 20,
+        "playerCount": 14,
+        "area": { "length": 40, "width": 30 },
+        "equipment": [{ "name": "Cones", "quantity": 8 }, { "name": "Bibs", "quantity": 14 }, { "name": "Balls", "quantity": 3 }],
+        "instructions": ["Organise six against six with two neutral players.", "Use the neutral players to maintain possession.", "Switch the ball when the central route is blocked."],
+        "coachingPoints": ["Maintain width and depth.", "Move as the ball travels.", "Recognise the free player before receiving."],
+        "progressions": ["Require a switch before scoring a possession point."],
+        "regressions": ["Allow the neutral players unlimited touches."],
+        "variations": ["Change the positions of the neutral players."]
+      },
+      {
+        "id": "conditioned-game",
+        "name": "Build-Out Conditioned Game",
+        "durationMinutes": 25,
+        "playerCount": 14,
+        "area": { "length": 50, "width": 40 },
+        "equipment": [{ "name": "Small goals", "quantity": 4 }, { "name": "Bibs", "quantity": 14 }, { "name": "Balls", "quantity": 4 }],
+        "instructions": ["Play seven against seven towards two small goals at each end.", "Restart from the defending end after every goal.", "Reward controlled progression through the middle third."],
+        "coachingPoints": ["Create a passing option on both sides of the ball.", "React together when possession changes."],
+        "progressions": ["Apply a time limit to progress out of the defensive third."],
+        "regressions": ["Allow an unopposed first pass from restarts."],
+        "variations": ["Award an additional point for switching before scoring."]
+      },
+      {
+        "id": "cool-down",
+        "name": "Mobility & Reflection",
+        "role": "cool-down",
+        "durationMinutes": 10,
+        "playerCount": 14,
+        "equipment": [],
+        "instructions": ["Reduce intensity with walking and gentle mobility.", "Ask players to describe one way they created a passing option."],
+        "coachingPoints": ["Keep movements comfortable and controlled."]
+      }
+    ]
+  }
+}

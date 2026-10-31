@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { MobileNavigation } from "./Sidebar";
 
 const workspaceLabels: Record<string, string> = {
+  "/session-designer": "Session Designer",
   "/sessions": "Sessions", "/templates": "Session templates",
   "/exercises": "Exercise library", "/coaches": "Coach directory",
   "/guides": "Coaching guide",
@@ -19,7 +20,7 @@ export function Header() {
     ? "Tactics"
     : ["/calendar", "/team-schedule"].includes(pathname)
       ? "Calendar"
-      : ["/sessions", "/templates", "/exercises", "/coaches", "/guides", "/presentations"].includes(pathname)
+      : ["/sessions", "/templates", "/exercises", "/coaches", "/guides", "/presentations", "/session-designer"].includes(pathname)
         ? workspaceLabels[pathname]
       : ["/roster", "/player-profiles"].includes(pathname)
         ? "Squad"
