@@ -91,6 +91,7 @@ test("production SQL round-trips animation stages, visibility, context and colou
       create schema auth; create table auth.users(id uuid primary key); create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       grant usage on schema auth,public to anon,authenticated,service_role; insert into auth.users values ('${actor}');`);
     await db.exec(await readFile("supabase/migrations/202610260001_coaching_persistence.sql", "utf8"));
+    await db.exec(await readFile("supabase/migrations/20261031115109_coaching_revision_conflict_pt409.sql", "utf8"));
     await db.query("insert into public.organizations(id,name) values ($1,'Synthetic scene test')", [initial.organizationId]);
     await db.query("insert into public.organization_memberships(organization_id,user_id,role) values ($1,$2,'owner')", [initial.organizationId, actor]);
     const animated = { ...structuredClone(animationExamples[2].scene), id: "new-scene", organizationId: initial.organizationId };
@@ -101,6 +102,6 @@ test("production SQL round-trips animation stages, visibility, context and colou
     const read = await db.transaction(async (tx) => { await tx.exec("set local role authenticated"); await tx.query("select set_config('request.jwt.claim.sub',$1,true)", [actor]); return tx.query<{ bundle: unknown }>("select bundle from public.organization_snapshots where organization_id=$1 and version=2", [initial.organizationId]); });
     const reopened = domainBundleSchema.parse(read.rows[0].bundle); assert.deepEqual(reopened, second.bundle);
     assert.deepEqual(resolveDiagramTarget(reopened, first.target).scene, first.scene); assert.deepEqual(resolveDiagramTarget(reopened, second.target).scene, second.scene);
-    await assert.rejects(save(1, second.bundle), (error: unknown) => typeof error === "object" && error !== null && "code" in error && error.code === "40001");
+    await assert.rejects(save(1, second.bundle), (error: unknown) => typeof error === "object" && error !== null && "code" in error && error.code === "PT409");
   } finally { await db.close(); }
 });

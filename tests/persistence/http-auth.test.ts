@@ -347,20 +347,15 @@ test("reads revalidate persisted records and never cache private data", async ()
 
 test("conflicts are 409 and raw provider/SQL secrets never appear in responses", async () => {
   const { post, authenticate, store } = harness();
-  store.save = async () => {
-    throw databaseError({ code: "40001" });
-  };
-  assert.equal(
-    (
-      await handlePersistence(
-        post({ expectedVersion: 0, bundle: fixture() }),
-        "club-demo",
-        origin,
-        authenticate,
-      )
-    ).status,
-    409,
-  );
+  for (const code of ["PT409", "40001"]) {
+    store.save = async () => { throw databaseError({ code }); };
+    const response = await handlePersistence(
+      post({ expectedVersion: 0, bundle: fixture() }),
+      "club-demo", origin, authenticate,
+    );
+    assert.equal(response.status, 409);
+    assert.doesNotMatch(await response.text(), /PT409|40001|SQL|secret/);
+  }
   store.save = async () => {
     throw new Error("service-key-super-secret: SQL internal row content");
   };
