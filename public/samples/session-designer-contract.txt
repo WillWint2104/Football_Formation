@@ -26,6 +26,8 @@ session:
 
 activity:
   id: optional stable activity ID; allocated locally if omitted
+      1–128 characters, starting with a letter or digit; remaining characters
+      may be letters, digits, underscores or hyphens. Unique within the session.
   name: required non-empty string, maximum 200 characters
   role: exercise (default), warm-up, cool-down or briefing
   durationMinutes: positive number or null
@@ -39,6 +41,7 @@ activity:
   diagrams: [{ "scene": { "id": "saved-scene-id", "revision": 1 },
                "representativeSeconds": 0 }]
              Optional references only, not embedded scenes or external URLs.
+             scene.id uses the same character/length rule as activity IDs.
              The designer does not fetch or resolve these references.
 
 branding (optional and independent from session content):

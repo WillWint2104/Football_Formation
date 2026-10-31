@@ -64,12 +64,22 @@ export function applySessionContent(document: DesignerDocument, content: Session
     activities: content.activities.map(({ id, role, durationMinutes, content: { title, ...exercise } }) => ({ id, role, durationMinutes, name: title, ...structuredClone(exercise) })) } };
 }
 
-/** Clean editor-only blank lines at the boundary; never replace unknown quantities with zero. */
-export function exportDocument(document: DesignerDocument): DesignerDocument {
-  const clean = applySessionContent(document, { ...toSessionContent(document), activities: toSessionContent(document).activities.map((a) => ({ ...a, content: cleanExercise(a.content) })) });
+/** Shared non-throwing presentation/export cleanup; drafts retain the user's unfinished input. */
+export function cleanDocument(document: DesignerDocument): DesignerDocument {
+  const content = toSessionContent(document);
+  const clean = applySessionContent(document, { ...content, activities: content.activities.map((a) => ({ ...a, content: cleanExercise(a.content) })) });
+  clean.session.name = clean.session.name.trim();
+  clean.session.team = clean.session.team?.trim() || null;
+  clean.branding = { ...clean.branding, clubName: clean.branding.clubName?.trim() || null };
   clean.session.objectives = clean.session.objectives.map((s) => s.trim()).filter(Boolean);
   clean.session.focus = clean.session.focus.map((s) => s.trim()).filter(Boolean);
-  const parsed = portableSessionSchema.parse(clean);
+  clean.session.activities = clean.session.activities.map((a) => ({ ...a, name: a.name.trim(), equipment: a.equipment.map((e) => ({ ...e, name: e.name.trim() })) }));
+  return clean;
+}
+
+/** Validate at the output boundary; never replace unknown quantities with zero. */
+export function exportDocument(document: DesignerDocument): DesignerDocument {
+  const parsed = portableSessionSchema.parse(cleanDocument(document));
   if (new TextEncoder().encode(JSON.stringify(parsed)).length > MAX_SESSION_JSON_BYTES) throw new Error("Session exceeds the 2 MB portable JSON limit. Shorten the content or remove the logo.");
   return parsed;
 }

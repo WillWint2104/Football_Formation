@@ -202,3 +202,48 @@ test("immediate client-side navigation flushes the current draft before leaving 
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Session Designer", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Draft recovered");
 });
+
+test("preview and print omit blank coaching lines exactly as JSON export does", async ({ page }) => {
+  await page.addInitScript(() => { window.print = () => { document.documentElement.dataset.printInvoked = "true"; }; });
+  await open(page); await acceptFile(page);
+  await page.locator(".designer-session-details > summary").click();
+  await page.getByLabel("Session objective").fill("First objective\n\nSecond objective\n");
+  await page.locator(".designer-session-details > summary").click();
+  await page.getByLabel("Setup & delivery instructions", { exact: true }).fill("Instruction one\n\nInstruction two\n");
+  await page.getByRole("button", { name: "Branded preview", exact: true }).click();
+  const plan = page.getByLabel("Branded session plan", { exact: true });
+  await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
+  await expect(plan.locator("article").first().locator(".designer-plan-section").first().locator("li")).toHaveCount(2);
+  const event = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  const exported = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
+  expect(exported.session.objectives).toEqual(["First objective", "Second objective"]);
+  expect(exported.session.activities[0].instructions).toEqual(["Instruction one", "Instruction two"]);
+  await page.getByRole("button", { name: "Print / Save as PDF", exact: true }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-print-invoked", "true");
+  await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
+});
+
+test("a delayed sample response cannot replace newer pasted JSON", async ({ page }) => {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/samples/session-designer-possession.json", async (route) => { await gate; await route.fulfill({ contentType: "application/json", body: await readFile(samplePath, "utf8") }); });
+  await open(page);
+  const request = page.waitForRequest("**/samples/session-designer-possession.json");
+  await page.getByRole("button", { name: "Load five-activity sample" }).click(); await request;
+  const newer = await readFile("public/samples/session-designer-recovery.json", "utf8");
+  await page.getByLabel("Session JSON", { exact: true }).fill(newer);
+  const response = page.waitForResponse("**/samples/session-designer-possession.json"); release(); await response;
+  await page.getByRole("button", { name: "Validate & preview import" }).click();
+  await expect(page.getByLabel("Session JSON", { exact: true })).toHaveValue(newer);
+  await expect(page.getByRole("region", { name: "Import preview" })).toContainText("Recovery & Mobility");
+});
+
+test("schema-invalid browser drafts have concise recovery messages rather than raw validator JSON", async ({ page }) => {
+  await page.addInitScript((key) => localStorage.setItem(key, JSON.stringify({ version: 2, savedAt: new Date().toISOString(), document: {} })), DESIGNER_DRAFT_KEY);
+  await open(page);
+  await expect(page.getByRole("status")).toContainText("Browser draft unavailable:");
+  await expect(page.getByRole("status")).toContainText("version:");
+  expect((await page.getByRole("status").innerText()).length).toBeLessThan(700);
+  await expect(page.getByRole("status")).not.toContainText('"code":');
+  await acceptFile(page); await expect(page.getByLabel("Session title")).toHaveValue("Build Through Pressure");
+});

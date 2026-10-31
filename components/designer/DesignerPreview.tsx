@@ -3,7 +3,7 @@ import { activityTotals } from "@/lib/coaching/sessions";
 import { sessionLabels } from "@/lib/calendar/schedule";
 import { printTheme, printTokens } from "@/lib/documents/print-theme";
 import { contrastingInk } from "@/lib/designer/branding";
-import { hexColorSchema, toSessionContent, type DesignerDocument } from "@/lib/designer/contract";
+import { cleanDocument, hexColorSchema, toSessionContent, type DesignerDocument } from "@/lib/designer/contract";
 
 function Lines({ title, lines, ordered = false }: { title: string; lines: string[]; ordered?: boolean }) {
   const List = ordered ? "ol" : "ul";
@@ -12,7 +12,7 @@ function Lines({ title, lines, ordered = false }: { title: string; lines: string
 
 /** Print presentation uses existing guide typography/tokens and the same adapted session content. */
 export function DesignerPreview({ document, visible }: { document: DesignerDocument; visible: boolean }) {
-  const { session, branding } = document, content = toSessionContent(document), totals = activityTotals(content.activities);
+  const clean = cleanDocument(document), { session, branding } = clean, content = toSessionContent(clean), totals = activityTotals(content.activities);
   const color = (value: string | null, fallback: string) => hexColorSchema.safeParse(value).success ? value! : fallback;
   const primary = color(branding.primaryColor, printTheme.navy), secondary = color(branding.secondaryColor, printTheme.ink), accent = color(branding.accentColor, printTheme.gold);
   const style = { "--plan-primary": primary, "--plan-secondary": secondary, "--plan-accent": accent, "--plan-primary-ink": contrastingInk(primary), "--plan-accent-ink": contrastingInk(accent), "--plan-body-size": `${printTokens.body}pt` } as CSSProperties;

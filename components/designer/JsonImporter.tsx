@@ -21,11 +21,23 @@ export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocume
     finally { if (generation.current === token) setBusy(false); }
   }
   async function readFile(files: FileList | File[]) {
-    const token = ++generation.current; setCandidate(null); setErrors([]);
-    if (files.length !== 1 || !/\.json$/i.test(files[0].name)) { setErrors(["Choose one .json session file."]); return; }
-    if (files[0].size > MAX_SESSION_JSON_BYTES) { setErrors(["JSON exceeds 2 MB. Choose a smaller session file."]); return; }
+    const token = ++generation.current; setCandidate(null); setErrors([]); setBusy(true);
+    if (files.length !== 1 || !/\.json$/i.test(files[0].name)) { setErrors(["Choose one .json session file."]); setBusy(false); return; }
+    if (files[0].size > MAX_SESSION_JSON_BYTES) { setErrors(["JSON exceeds 2 MB. Choose a smaller session file."]); setBusy(false); return; }
     try { const value = await files[0].text(); if (generation.current !== token) return; setText(value); await validate(value); }
-    catch { setErrors(["The file could not be read. Choose a local .json file."]); }
+    catch { if (generation.current === token) setErrors(["The file could not be read. Choose a local .json file."]); }
+    finally { if (generation.current === token) setBusy(false); }
+  }
+  async function loadSample() {
+    const token = ++generation.current; setBusy(true); setErrors([]); setCandidate(null);
+    try {
+      const response = await fetch("/samples/session-designer-possession.json", { signal: AbortSignal.timeout(10000) });
+      if (!response.ok) throw new Error();
+      const value = await response.text();
+      if (generation.current !== token) return;
+      setText(value); await validate(value);
+    } catch { if (generation.current === token) setErrors(["The sample could not be loaded. Use the downloadable example."]); }
+    finally { if (generation.current === token) setBusy(false); }
   }
   return <div className="designer-import-layout"><section className="designer-import-card" aria-label="JSON session importer"><div className="designer-panel-heading"><FileJson size={21} aria-hidden="true" /><h2>Bring your session plan</h2></div>
     <p>Paste your session JSON, or choose a file. Review every activity before opening it.</p>
@@ -36,7 +48,7 @@ export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocume
     </div>
     <label>Session JSON<textarea aria-label="Session JSON" className="designer-json-input" rows={13} spellCheck={false} value={text} maxLength={MAX_SESSION_JSON_BYTES} placeholder={'{\n  "format": "football-formation-session",\n  "schemaVersion": "1.0",\n  "session": { "name": "Your coaching session" }\n}'} onChange={(e) => { generation.current++; setText(e.target.value); setCandidate(null); setErrors([]); setBusy(false); }} /></label>
     <div className="designer-actions"><button className="calendar-primary" type="button" disabled={busy || !text.trim()} onClick={() => void validate(text)}>{busy ? "Validating…" : "Validate & preview import"}</button>
-      <button type="button" disabled={busy} onClick={async () => { setErrors([]); try { const response = await fetch("/samples/session-designer-possession.json"); if (!response.ok) throw new Error(); const value = await response.text(); setText(value); await validate(value); } catch { setErrors(["The sample could not be loaded. Use the downloadable example."]); } }}>Load five-activity sample</button></div>
+      <button type="button" disabled={busy} onClick={() => void loadSample()}>Load five-activity sample</button></div>
     {!!errors.length && <div role="alert" className="designer-error-list"><strong>Check your JSON</strong><ul>{errors.map((error, i) => <li key={i}>{error}</li>)}</ul></div>}
     {candidate && <section className="designer-import-preview" aria-label="Import preview"><div className="designer-panel-heading"><CheckCircle2 size={20} aria-hidden="true" /><h2>Ready to open</h2></div><h3>{candidate.session.name}</h3><p>{candidate.session.type ? sessionLabels[candidate.session.type] : "Type not specified"} · {candidate.session.team ?? "Team not specified"} · {candidate.session.activities.length} activities</p>
       <ol>{candidate.session.activities.map((a) => <li key={a.id}><strong>{a.name}</strong><span>{a.durationMinutes === null ? "Duration unknown" : `${a.durationMinutes} min`} · {a.playerCount === null ? "Players unknown" : `${a.playerCount} players`}</span></li>)}</ol>

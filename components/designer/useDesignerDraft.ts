@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { blankDesignerDocument, type DesignerDocument } from "@/lib/designer/contract";
+import { blankDesignerDocument, designerErrors, type DesignerDocument } from "@/lib/designer/contract";
 import { decodeDraft, DESIGNER_DRAFT_KEY, encodeDraft } from "@/lib/designer/drafts";
 import { verifyLogo } from "@/lib/designer/branding";
 
@@ -29,7 +29,7 @@ export function useDesignerDraft() {
           setSaveState(`Draft recovered from this browser · ${new Date(draft.savedAt).toLocaleString()}`);
         } else if (alive) setSaveState("No browser draft yet. Changes will be saved here automatically.");
       } catch (error) {
-        if (alive) setSaveState(error instanceof Error ? `Browser draft unavailable: ${error.message}. Download JSON to keep your work.` : "Browser storage is unavailable. Download JSON to keep your work.");
+        if (alive) setSaveState(`Browser draft unavailable: ${designerErrors(error).slice(0, 3).join(" ")}. Download JSON to keep your work.`);
       } finally { if (alive) setReady(true); }
     })();
     return () => { alive = false; };
@@ -43,7 +43,7 @@ export function useDesignerDraft() {
         const text = encodeDraft(current.current); localStorage.setItem(DESIGNER_DRAFT_KEY, text); previous.current = text;
         if (showStatus) setSaveState(`Draft saved in this browser · ${new Date().toLocaleTimeString()}`);
       } catch (error) {
-        if (showStatus) setSaveState(`Draft not saved: ${error instanceof Error ? error.message : "Browser storage is full or unavailable"}. Use Download JSON.`);
+        if (showStatus) setSaveState(`Draft not saved: ${designerErrors(error).slice(0, 3).join(" ")}. Use Download JSON.`);
       }
     }
     const timer = setTimeout(() => save(true), 300);

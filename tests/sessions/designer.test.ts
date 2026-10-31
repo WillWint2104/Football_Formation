@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import sharp from "sharp";
-import { applySessionContent, blankDesignerDocument, exportDocument, logoSchema, MAX_SESSION_JSON_BYTES, parseSessionJson, serializeSessionJson, toSessionContent } from "../../lib/designer/contract";
+import { applySessionContent, blankDesignerDocument, cleanDocument, exportDocument, logoSchema, MAX_SESSION_JSON_BYTES, parseSessionJson, serializeSessionJson, toSessionContent } from "../../lib/designer/contract";
 import { decodeDraft, DRAFT_RETENTION_MS, encodeDraft } from "../../lib/designer/drafts";
 import { rasterInfo } from "../../lib/designer/images";
 import { sessionContentSchema } from "../../lib/domain/session";
@@ -90,6 +90,18 @@ test("blank editor lines are cleaned while missing quantities are not turned int
   const result = exportDocument(doc);
   assert.equal(result.session.objectives.length, 3); assert.equal(result.session.activities[0].instructions.length, 3);
   assert.equal(result.session.activities[0].equipment[0].quantity, null);
+});
+
+test("preview cleanup and JSON export produce the same coaching content without mutating unfinished edits", () => {
+  const doc = parseSessionJson(sample);
+  doc.session.name = "  A trimmed plan  "; doc.branding.clubName = "  Example  ";
+  doc.session.objectives = ["One objective", "", "  "];
+  doc.session.activities[0].instructions = ["Instruction one", "", "Instruction two", " "];
+  const before = structuredClone(doc), clean = cleanDocument(doc);
+  assert.deepEqual(clean, exportDocument(doc)); assert.deepEqual(doc, before);
+  assert.equal(clean.session.name, "A trimmed plan"); assert.equal(clean.branding.clubName, "Example");
+  assert.deepEqual(clean.session.activities[0].instructions, ["Instruction one", "Instruction two"]);
+  doc.session.name = ""; assert.doesNotThrow(() => cleanDocument(doc));
 });
 
 test("external image URLs, SVG payloads, mismatched dimensions and HEX injection are rejected", async () => {
