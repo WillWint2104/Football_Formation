@@ -190,3 +190,15 @@ test("incomplete drafts recover, and another tab's draft is never silently overw
   await expect(page.getByRole("status")).toContainText("Another tab changed this draft");
   expect(await page.evaluate((key) => localStorage.getItem(key), DESIGNER_DRAFT_KEY)).toBe(stored);
 });
+
+test("immediate client-side navigation flushes the current draft before leaving the designer", async ({ page }) => {
+  await open(page); await acceptFile(page);
+  await page.locator(".designer-session-details > summary").click();
+  await page.getByLabel("Session title").fill("Draft retained when navigating away");
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Tactics", exact: true }).click();
+  await expect(page).toHaveURL(/\/lineup$/);
+  const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).document.session.name, DESIGNER_DRAFT_KEY);
+  expect(stored).toBe("Draft retained when navigating away");
+  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Session Designer", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Draft recovered");
+});

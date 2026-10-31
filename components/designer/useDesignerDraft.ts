@@ -11,6 +11,10 @@ export function useDesignerDraft() {
   const [ready, setReady] = useState(false);
   const [saveState, setSaveState] = useState("Checking this browser for a draft…");
   const current = useRef(document), edited = useRef(false), previous = useRef<string | null>(null);
+  const flushPending = useRef<() => void>(() => undefined);
+
+  // Client-side navigation does not emit pagehide/beforeunload. Flush before this route unmounts too.
+  useEffect(() => () => { flushPending.current(); }, []);
 
   useEffect(() => {
     let alive = true;
@@ -44,6 +48,7 @@ export function useDesignerDraft() {
     }
     const timer = setTimeout(() => save(true), 300);
     const flush = () => save(false);
+    flushPending.current = flush;
     window.addEventListener("pagehide", flush); window.addEventListener("beforeunload", flush);
     return () => { clearTimeout(timer); window.removeEventListener("pagehide", flush); window.removeEventListener("beforeunload", flush); };
   }, [document, ready]);
