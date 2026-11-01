@@ -105,7 +105,8 @@
   .designer-print .designer-plan-objectives,.designer-print .designer-plan-sequence{padding-top:4mm}
   .designer-print .designer-plan-facts{gap:4mm;padding-bottom:3mm}
   .designer-print :is(th,td){padding:1.5mm 1mm}
-  .designer-print .designer-plan-activity{break-inside:auto;padding-top:4mm;margin-top:4mm;border-top-width:1px}
+  .designer-print .designer-plan-activity{break-inside:avoid-page;padding-top:4mm;margin-top:4mm;border-top-width:1px}
+  .designer-print .designer-plan-activity:has(.designer-plan-long){break-inside:auto}
   .designer-print .designer-plan-activity>header{padding-bottom:2mm;break-after:avoid}
   .designer-print .designer-plan-activity>header h2{font-size:15pt}
   .designer-print .designer-plan-activity>header>strong{font-size:11pt}
