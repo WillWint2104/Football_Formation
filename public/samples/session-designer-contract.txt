@@ -1,0 +1,71 @@
+Football Formation — Portable Session JSON v1.0
+
+Use /session-designer without signing in. This format is independent from the
+saved organisation/domain interchange format. Unsupported fields and versions
+are rejected rather than silently discarded. Maximum JSON size: 2 MB UTF-8.
+
+Minimal valid input:
+{
+  "format": "football-formation-session",
+  "schemaVersion": "1.0",
+  "session": { "name": "Your session" }
+}
+
+Top-level fields: format, schemaVersion, session, optional branding.
+
+session:
+  name: required non-empty string, maximum 200 characters
+  type: conditioning | possession | goalkeeper | technical | tactical |
+        recovery | testing | combined | other, or null (unknown)
+  team: team/age-group description string or null
+  objectives: array of strings
+  focus: array of short tags
+  durationMinutes: positive number or null (planned total, not inferred)
+  playerCount: positive integer or null
+  activities: ordered array, up to 100 activities; empty is allowed
+
+activity:
+  id: optional stable activity ID; allocated locally if omitted
+      1–128 characters, starting with a letter or digit; remaining characters
+      may be letters, digits, underscores or hyphens. Unique within the session.
+  name: required non-empty string, maximum 200 characters
+  role: exercise (default), warm-up, cool-down or briefing
+  durationMinutes: positive number or null
+  playerCount: positive integer or null
+  area: { "length": 20, "width": 15, "origin": { "x": 0, "y": 0 } }, or null
+        All dimensions/coordinates are metres. Missing origin defaults to 0,0.
+  equipment: [{ "name": "Cones", "quantity": 4 }]
+             Quantity may be null (unknown) or a nonnegative integer.
+  instructions, coachingPoints, progressions, regressions, variations:
+             arrays of strings; missing arrays default to empty
+  diagrams: [{ "scene": { "id": "saved-scene-id", "revision": 1 },
+               "representativeSeconds": 0 }]
+             Optional references only, not embedded scenes or external URLs.
+             scene.id uses the same character/length rule as activity IDs.
+             The designer does not fetch or resolve these references.
+
+branding (optional and independent from session content):
+  clubName: string or null
+  primaryColor, secondaryColor, accentColor: #RRGGBB strings or null
+  logo: null, or an embedded raster object produced by the logo uploader:
+        { name, mimeType, width, height, dataUrl }
+        PNG/JPEG only; width and height at most 512; image at most 512 KB.
+        dataUrl contains validated base64 image bytes, never an external URL.
+
+Missing optional scalar values remain null (unknown). Missing coaching arrays
+stay empty. Unknown session type displays as "Not specified". A blank dimension
+or quantity never becomes a factual zero. Every export writes the normalised
+versioned format, including optional branding and embedded logo when supplied.
+
+Logo upload: PNG/JPEG up to 4 MB, at most 4096 pixels per edge and 16 megapixels.
+Images are decoded and re-encoded to at most 512 pixels per edge, preserving
+aspect ratio and PNG transparency. Oversized/invalid images are rejected.
+
+Drafts: one current draft in this browser, maximum 2 MB, retained for 30 days.
+Incomplete edits can be recovered; export/print validates completed fields.
+Storage denial, quota and conflicting tabs are reported. Download JSON is the
+portable backup. This feature does not upload or cloud-save anything.
+
+Print: use Print / Save as PDF, then your browser's print dialog. Enable
+background graphics to retain filled club colours. This is local browser print
+output, not an authenticated/server-generated PDF or attached cloud document.
