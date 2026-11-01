@@ -6,6 +6,7 @@ import { contrastingInk } from "@/lib/designer/branding";
 import { cleanDocument, hexColorSchema, toSessionContent, type DesignerDocument } from "@/lib/designer/contract";
 
 function Lines({ title, lines, ordered = false }: { title: string; lines: string[]; ordered?: boolean }) {
+  if (!lines.length) return null;
   const List = ordered ? "ol" : "ul";
   return <section className="designer-plan-section"><h3>{title}</h3>{lines.length ? <List>{lines.map((line, i) => <li key={i}>{line}</li>)}</List> : <p className="designer-plan-muted">Not specified</p>}</section>;
 }
@@ -31,8 +32,8 @@ export function DesignerPreview({ document, visible }: { document: DesignerDocum
       {content.activities.map((a, i) => <article className="designer-plan-activity" key={a.id} aria-label={`Plan activity ${i + 1}: ${a.content.title}`}><header><span className="designer-plan-number">{String(i + 1).padStart(2, "0")}</span><div><p className="designer-plan-muted">{a.role.replaceAll("-", " ")}</p><h2>{a.content.title}</h2></div><strong>{a.durationMinutes === null ? "Duration unknown" : `${a.durationMinutes} min`}</strong></header>
         <div className="designer-plan-setup"><section><h3>Setup</h3><dl><dt>Players</dt><dd>{a.content.playerCount ?? "Not specified"}</dd><dt>Field dimensions</dt><dd>{a.content.area ? `${a.content.area.length} × ${a.content.area.width} m` : "Not specified"}</dd>{a.content.area && <><dt>Origin (metres)</dt><dd>{a.content.area.origin.x}, {a.content.area.origin.y}</dd></>}</dl></section>
           <section><h3>Equipment</h3>{a.content.equipment.length ? <ul>{a.content.equipment.map((item, n) => <li key={n}>{item.name} · {item.quantity ?? "quantity unknown"}</li>)}</ul> : <p className="designer-plan-muted">Not specified</p>}</section></div>
-        <Lines title="Setup & delivery instructions" lines={a.content.instructions} ordered />
-        <div className="designer-plan-coaching"><Lines title="Coaching points" lines={a.content.coachingPoints} /><Lines title="Progressions" lines={a.content.progressions} /><Lines title="Regressions" lines={a.content.regressions} /><Lines title="Variations" lines={a.content.variations} /></div>
+        <div className={a.content.instructions.join("").length + a.content.coachingPoints.join("").length > 1200 || a.content.instructions.length > 10 ? "designer-plan-delivery designer-plan-long" : "designer-plan-delivery"}><Lines title="Setup & delivery instructions" lines={a.content.instructions} ordered /><Lines title="Coaching points" lines={a.content.coachingPoints} /></div>
+        <div className={[...a.content.progressions, ...a.content.regressions, ...a.content.variations].join("").length > 900 ? "designer-plan-coaching designer-plan-long" : "designer-plan-coaching"}><Lines title="Progressions" lines={a.content.progressions} /><Lines title="Regressions" lines={a.content.regressions} /><Lines title="Variations" lines={a.content.variations} /></div>
         {!!a.content.diagrams.length && <section className="designer-plan-references"><h3>Tactical diagram references</h3><ul>{a.content.diagrams.map((d, n) => <li key={n}>Scene {d.scene.id} · revision {d.scene.revision} · {d.representativeSeconds} seconds</li>)}</ul><p className="designer-plan-muted">References only. Scene geometry is not included in this portable plan.</p></section>}
       </article>)}
       <footer className="designer-plan-footer"><span>{branding.clubName ?? "Coaching session plan"}</span><span>Prepared with Football Formation</span></footer>

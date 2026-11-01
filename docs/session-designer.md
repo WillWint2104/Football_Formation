@@ -30,6 +30,32 @@ the existing strict `sessionContentSchema`. The shared `SessionContentFields`,
 `ActivitySequence`, `ExerciseFields`, `cleanExercise` and timing utilities are reused.
 Existing saved revisions, persistence APIs and tactical coordinates are unchanged.
 
+## Focused coaching workspace (C2)
+
+Use **Overview** to review objectives, the running order, separate planned/known
+durations and the equipment summary. Select an activity there or in the numbered
+rail to edit it. The rail and selected activity scroll independently. With a rail
+button focused, Up/Down and Home/End select practices; ordinary Tab navigation
+and the explicit Previous/Next and reorder buttons remain available. Arrow keys
+inside a text or number input keep their normal editing behavior.
+
+Setup & Equipment, Delivery and Coaching Guidance retain the existing fields.
+Coordinate origins are under **Advanced field controls**. Session details remain
+available below the activity workspace and through **Edit session details** in
+Overview. **Club Branding** opens a secondary panel; close it or press Escape
+inside it to return focus to its toggle. Closing never clears its values.
+
+Equipment summaries compare the largest known per-activity quantities (including
+repeated names within a practice); they do not certify the kit required by
+parallel groups. Unknown quantities remain explicit. Elapsed times after an
+untimed activity remain unknown. Portable v1 still has no staff/venue/booking
+fields and no scene geometry.
+
+Browser print now uses compact activity blocks and delivery/coaching columns.
+Pagination follows content rather than imposing a page per activity or a fixed
+three-page limit. Long instructions continue in normal flow; the minimum body
+size remains 9.5 pt. Empty optional coaching sections do not reserve blank space.
+
 - [Field reference and minimum JSON](../public/samples/session-designer-contract.txt)
 - [Five-activity possession example](../public/samples/session-designer-possession.json)
 - [Recovery example without branding or diagrams](../public/samples/session-designer-recovery.json)

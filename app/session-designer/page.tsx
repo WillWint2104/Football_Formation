@@ -3,6 +3,7 @@ import { SessionDesigner } from "@/components/designer/SessionDesigner";
 import "../calendar/calendar.css";
 import "../sessions/sessions.css";
 import "./designer.css";
+import "./refinement.css";
 
 export const metadata: Metadata = { title: "JSON Session Designer | Football Formation" };
 
