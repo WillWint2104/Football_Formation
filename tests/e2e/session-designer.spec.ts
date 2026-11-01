@@ -246,7 +246,8 @@ test("a delayed sample response cannot replace newer pasted JSON", async ({ page
   await page.getByLabel("Session JSON", { exact: true }).fill(newer);
   release(); await pendingRequest.response();
   await page.getByRole("button", { name: "Validate & preview import" }).click();
-  await expect(page.getByLabel("Session JSON", { exact: true })).toHaveValue(newer);
+  // Textarea values use LF even when the checked-out fixture uses Windows CRLF.
+  await expect(page.getByLabel("Session JSON", { exact: true })).toHaveValue(newer.replace(/\r\n?/g, "\n"));
   await expect(page.getByRole("region", { name: "Import preview" })).toContainText("Recovery & Mobility");
 });
 
