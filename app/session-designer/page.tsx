@@ -5,6 +5,7 @@ import "../sessions/sessions.css";
 import "./designer.css";
 import "./refinement.css";
 import "./package-import.css";
+import "./activity-diagrams.css";
 
 export const metadata: Metadata = { title: "JSON Session Designer | Football Formation" };
 

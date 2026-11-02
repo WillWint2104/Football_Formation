@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Exercise, SessionActivity } from "@/lib/domain/session";
 import { activityTotals, latest, newActivity } from "@/lib/coaching/sessions";
 import { ExerciseFields } from "./ExerciseFields";
 
 /** Ordered coaching activities with optional roles, unknown durations and reusable exercise snapshots. */
 export type ActivitySelection = { id: string; onChange: (id: string) => void };
-export function ActivitySequence({ activities, exercises, onChange, localAuthoring = false, focused = false, selection }: { activities: SessionActivity[]; exercises: Exercise[]; onChange: (value: SessionActivity[]) => void; localAuthoring?: boolean; focused?: boolean; selection?: ActivitySelection }) {
+export function ActivitySequence({ activities, exercises, onChange, localAuthoring = false, focused = false, selection, activityVisual }: { activities: SessionActivity[]; exercises: Exercise[]; onChange: (value: SessionActivity[]) => void; localAuthoring?: boolean; focused?: boolean; selection?: ActivitySelection; activityVisual?: (activity: SessionActivity) => ReactNode }) {
   const [selected, setSelected] = useState(activities[0]?.id ?? "");
   const list = useRef<HTMLOListElement>(null), detail = useRef<HTMLDivElement>(null);
   const select = (id: string) => { setSelected(id); selection?.onChange(id); };
@@ -36,7 +36,7 @@ export function ActivitySequence({ activities, exercises, onChange, localAuthori
     <div className="coaching-activity-layout"><nav className="designer-activity-nav" aria-label="Session activities">{focused && <h3>Session activities</h3>}<ol ref={list} className="coaching-activity-list">{activities.map((a, i) => <li key={a.id}><button type="button" aria-pressed={a.id === current?.id} aria-current={focused && a.id === current?.id ? "step" : undefined} onKeyDown={(e) => railKey(e, i)} onClick={() => navigate(a.id)}>
       <span>{String(i + 1).padStart(2, "0")}</span><strong>{a.content.title}</strong><small>{a.role.replaceAll("-", " ")} · {a.durationMinutes === null ? "Untimed" : `${a.durationMinutes} min`}</small></button></li>)}</ol>
       {focused && <button className="designer-add-activity" type="button" onClick={add}>Add activity</button>}</nav>
-      <div ref={detail} className="coaching-activity-detail" tabIndex={focused ? 0 : undefined} aria-label={focused ? "Selected activity editing area" : undefined}>{current ? <>{focused && <header className="designer-selected-heading"><p>Activity {index + 1} of {activities.length} · {current.role.replaceAll("-", " ")}</p><h2>{current.content.title || "Untitled activity"}</h2></header>}<div className="coaching-inline-controls"><button type="button" disabled={index <= 0} onClick={() => { const next = [...activities]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; onChange(next); }}>Move activity up</button>
+      <div ref={detail} className="coaching-activity-detail" tabIndex={focused ? 0 : undefined} aria-label={focused ? "Selected activity editing area" : undefined}>{current ? <>{focused && <header className="designer-selected-heading"><p>Activity {index + 1} of {activities.length} · {current.role.replaceAll("-", " ")}</p><h2>{current.content.title || "Untitled activity"}</h2></header>}{activityVisual?.(current)}<div className="coaching-inline-controls"><button type="button" disabled={index <= 0} onClick={() => { const next = [...activities]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; onChange(next); }}>Move activity up</button>
         <button type="button" disabled={index === activities.length - 1} onClick={() => { const next = [...activities]; [next[index], next[index + 1]] = [next[index + 1], next[index]]; onChange(next); }}>Move activity down</button>
         <button type="button" onClick={() => { onChange(activities.filter((a) => a.id !== current.id)); navigate(activities[index + 1]?.id ?? activities[index - 1]?.id ?? ""); }}>Remove activity</button></div>
         <div className="coaching-form-row"><label>Activity role<select aria-label="Activity role" value={current.role} onChange={(e) => change({ ...current, role: e.target.value as SessionActivity["role"] })}>

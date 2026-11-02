@@ -1,0 +1,62 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { SessionActivity } from "@/lib/domain/session";
+import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import { previewAttachment, type DiagramPin } from "@/lib/designer/attachments";
+import { sceneDuration } from "@/lib/tactical/evaluate";
+import { downloadDiagramPackage, type ActivityDiagramsController } from "./useActivityDiagrams";
+
+export function DiagramWorkspaceStatus({ controller: c }: { controller: ActivityDiagramsController }) {
+  return <section className="designer-diagram-status" aria-label="Local diagram workspace" data-no-print>
+    <div className="diagram-status-heading"><div><strong>{c.active ? `Complete plan · owner v${c.active.ownerVersion}` : "Local tactical diagrams"}</strong></div>
+      <div><button type="button" disabled={c.busy} onClick={() => void c.browse()}>Browse local plans</button>{c.active && <><button type="button" disabled={c.busy || c.blocked} onClick={() => void c.save()}>Save complete plan</button><button type="button" onClick={c.downloadCurrent}>Download complete package</button></>}</div></div>
+    {c.message && <p className={c.active && !c.blocked && (c.message.startsWith("Complete local plan") || c.message.startsWith("Independent complete plan")) ? "diagram-passive-message" : undefined} role={c.blocked ? "alert" : undefined} aria-live={c.blocked ? "assertive" : "polite"}>{c.message}</p>}
+    {c.dirty && !c.blocked && <p className="diagram-dirty">Text edits are newer than the complete snapshot. Save complete plan to include them.</p>}
+    {<details key={c.active?.documentId ?? "unlinked"} className="diagram-plan-list"><summary>Saved local plans ({c.entries.length})</summary><p>Text drafts and complete packages are saved separately. Legacy JSON contains references only; diagrams are not printed yet.</p><ul>{c.entries.map((e) => <li key={e.documentId}><strong>{e.name ?? "Unverified package"}</strong><code>{e.documentId}</code><span>{e.status} · {e.ownerVersion ? `v${e.ownerVersion}` : "needs recovery"}</span><button type="button" disabled={c.busy} onClick={() => void c.inspect(e.documentId)}>Review plan {e.documentId}</button></li>)}</ul></details>}
+    {(c.blocked || c.recovery || c.backup) && <section className="diagram-recovery" aria-label="Diagram recovery"><h3>Review before continuing</h3><p>The current text draft stays in place until you choose. Download JSON above to keep its current text.</p>
+      {c.recovery && <><p>Verified complete snapshot: <strong>{c.recovery.package.document.session.name}</strong> · owner v{c.recovery.ownerVersion}</p><button type="button" onClick={() => downloadDiagramPackage(c.recovery!.package, "verified-recovery")}>Download verified snapshot</button><button type="button" disabled={c.busy} onClick={() => void c.openRecovery()}>Open reviewed plan as independent copy</button></>}
+      {c.backup && <button type="button" onClick={() => downloadDiagramPackage(c.backup!, "unsaved-candidate")}>Download complete candidate</button>}
+      {c.canRecoverText && <button type="button" disabled={c.busy} onClick={() => void c.openRecovery(true)}>Keep current text &amp; revalidate linked diagrams</button>}
+      <button type="button" disabled={c.busy} onClick={() => void c.recheck()}>Recheck diagram storage</button><button type="button" disabled={c.busy} onClick={() => c.detach()}>Keep reference-only text draft</button>
+    </section>}
+  </section>;
+}
+
+export function ActivityDiagrams({ activity, controller: c }: { activity: SessionActivity; controller: ActivityDiagramsController }) {
+  const pins = activity.content.diagrams;
+  const [selected, setSelected] = useState(0), [choosing, setChoosing] = useState(false);
+  const [expanded, setExpanded] = useState(false), dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (expanded) dialog.current?.showModal(); }, [expanded]);
+  const [sceneIndex, setSceneIndex] = useState(""), [seconds, setSeconds] = useState("0"), [fit, setFit] = useState<"exercise" | "pitch" | "all">("exercise");
+  const index = Math.min(selected, Math.max(0, pins.length - 1)), pin = pins[index];
+  const scene = sceneIndex === "" ? undefined : c.source?.package.scenes[Number(sceneIndex)];
+  const candidate: DiagramPin | null = scene ? { scene: { id: scene.id, revision: scene.revision }, representativeSeconds: seconds.trim() === "" ? NaN : Number(seconds) } : null;
+  const preview = choosing && candidate && c.source ? previewAttachment(c.source.package, activity.id, candidate)
+    : pin && c.active ? previewAttachment(c.active.package, activity.id, pin) : null;
+  const resolved = preview?.ok ? preview.value : null;
+  const validChoice = choosing && candidate && preview?.ok;
+  const disabled = c.busy || c.blocked;
+  async function attach(replace: boolean) {
+    if (!candidate || !validChoice) return;
+    await c.save({ activityId: activity.id, index: replace ? index : null, pin: candidate });
+    // Keep candidate preview visible until the coach deliberately returns to attached diagrams.
+  }
+  return <section className="activity-diagrams" aria-label="Activity tactical diagrams">
+    <header><div><p className="diagram-eyebrow">ACTIVITY WORKSPACE · EXACT SCENE REVISIONS</p><h3>Tactical diagrams <span>{pins.length}/20</span></h3></div><button type="button" aria-expanded={choosing} onClick={() => { setChoosing(!choosing); if (!choosing) void c.browse(); }}> {choosing ? "Close scene browser" : "Add / replace diagram"}</button></header>
+    {!!pins.length && <nav className="diagram-tabs" aria-label="Attached diagrams">{pins.map((p, i) => <button type="button" key={i} aria-pressed={!choosing && index === i} onClick={() => { setSelected(i); setChoosing(false); }}>Diagram {i + 1}<small>{p.scene.id || "Missing ID"} · r{p.scene.revision} · {p.representativeSeconds} s</small></button>)}</nav>}
+    <div className="diagram-canvas-toolbar"><strong>{choosing ? "Source preview · not yet attached" : pin ? `Attached diagram ${index + 1}` : "No diagram attached"}</strong><label>Frame<select aria-label="Diagram framing" value={fit} onChange={(e) => setFit(e.target.value as typeof fit)}><option value="exercise">Fit exercise</option><option value="pitch">Fit pitch</option><option value="all">Fit all content</option></select></label><button type="button" disabled={!resolved} onClick={() => setExpanded(true)}>Expand diagram</button></div>
+    <div className="activity-diagram-canvas">{resolved ? <SceneDiagram scene={resolved.scene} title={`${choosing ? "Source preview" : "Attached diagram"}: ${activity.content.title}`} options={{ fit, seconds: resolved.representativeSeconds, paths: "stage", gridMetres: resolved.scene.field.length > 50 ? 5 : 1, labels: true }} />
+      : <div className="diagram-empty"><strong>{preview && !preview.ok ? "Exact diagram unavailable" : pin ? "Reference-only diagram" : "Build a visual coaching plan"}</strong><p>{preview && !preview.ok ? preview.diagnostics.slice(0, 3).map((d) => d.message).join(" ") : pin ? "Open the matching complete local plan to resolve this reference. No namespace or revision is inferred." : "Import a session package, then choose a saved scene for this activity. Setup and progression diagrams can sit together."}</p></div>}</div>
+    {resolved && <p className="diagram-exact-pin"><strong>{resolved.scene.id} · r{resolved.scene.revision} · {resolved.representativeSeconds} s</strong><span>Namespace: {resolved.namespace} · {resolved.scene.field.length} × {resolved.scene.field.width} m</span></p>}
+    {!choosing && pin && <div className="diagram-attachment-actions"><button type="button" disabled={disabled || !c.active} onClick={() => { setChoosing(true); void c.browse(); }}>Replace selected diagram</button><button type="button" disabled={disabled || !c.active} onClick={() => void c.save({ activityId: activity.id, index, pin: null })}>Remove selected diagram</button></div>}
+    {choosing && <section className="diagram-source-browser" aria-label="Local scene browser"><h4>Choose an exact local scene</h4><p>Source packages stay unchanged. The selected revision is copied into this plan; organisation namespaces are preserved.</p><div className="diagram-source-fields"><label>Local scene package<select aria-label="Local scene package" disabled={disabled} value={c.source?.documentId ?? ""} onChange={(e) => { setSceneIndex(""); setSeconds("0"); if (e.target.value) void c.selectSource(e.target.value); }}><option value="">Select an imported package</option>{c.entries.filter((e) => e.status === "ready" && (!c.active || e.namespace === c.active.package.sceneNamespace)).map((e) => <option key={e.documentId} value={e.documentId}>{e.name ?? e.documentId} · owner v{e.ownerVersion} · {e.documentId.slice(0, 8)}</option>)}</select></label>
+      <label>Scene revision<select aria-label="Scene revision" disabled={disabled || !c.source} value={sceneIndex} onChange={(e) => { setSceneIndex(e.target.value); setSeconds("0"); }}><option value="">Choose scene and revision</option>{c.source?.package.scenes.map((s, i) => <option key={`${s.id}-${s.revision}`} value={i}>{s.id} · r{s.revision} · {s.field.length} × {s.field.width} m</option>)}</select></label>
+      <label>Representative seconds<input aria-label="Representative seconds" type="number" min="0" step="any" disabled={disabled || !scene} value={seconds} onChange={(e) => setSeconds(e.target.value)} /><small>{scene ? `Allowed: 0–${sceneDuration(scene)} s · no clamping` : "Choose an exact scene first"}</small></label></div>
+      {c.source && <p>Source: <strong>{c.source.package.document.session.name}</strong> · owner v{c.source.ownerVersion}</p>}
+      <div className="diagram-attachment-actions"><button type="button" disabled={disabled || !validChoice || pins.length >= 20} onClick={() => void attach(false)}>Attach as diagram {pins.length + 1}</button>{!!pins.length && <button type="button" disabled={disabled || !validChoice} onClick={() => void attach(true)}>Replace diagram {index + 1} with preview</button>}<button type="button" onClick={() => setChoosing(false)}>Return to attached diagrams</button></div>
+    </section>}
+    <p className="diagram-coaching-heading">Setup, delivery &amp; coaching guidance ↓</p>
+    {expanded && resolved && <dialog ref={dialog} className="activity-diagram-expanded" aria-label="Expanded activity diagram" onClose={() => setExpanded(false)} onKeyDown={(event) => { if (event.key === "Tab") { event.preventDefault(); dialog.current?.querySelector<HTMLButtonElement>("button")?.focus(); } }}><header><div><h3>{activity.content.title}</h3><p>{choosing ? "Source preview · not attached · " : ""}{resolved.scene.id} · r{resolved.scene.revision} · {resolved.representativeSeconds} s</p></div><button type="button" autoFocus onClick={() => dialog.current?.close()}>Close diagram · Esc</button></header><div className="expanded-diagram-canvas"><SceneDiagram scene={resolved.scene} title={activity.content.title} options={{ fit, seconds: resolved.representativeSeconds, paths: "stage", gridMetres: resolved.scene.field.length > 50 ? 5 : 1, labels: true }} /></div><p>Namespace: {resolved.namespace} · View only · scene coordinates unchanged</p></dialog>}
+  </section>;
+}

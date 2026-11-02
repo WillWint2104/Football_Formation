@@ -33,7 +33,7 @@ export function ExerciseFields({ content, onChange, editDiagramReferences = fals
   });
   const diagrams = <>
     {editDiagramReferences ? <section className="coaching-field-section"><div className="coaching-section-heading"><h3>Diagram references</h3><button type="button" onClick={() => update("diagrams", [...content.diagrams, { scene: { id: "", revision: 1 }, representativeSeconds: 0 }])}>Add diagram reference</button></div>
-      <p className="calendar-muted">Optional saved scene references. Scene geometry is not embedded or fetched by this local designer.</p>
+      <p className="calendar-muted">Optional saved scene references. Legacy JSON contains references only. Complete local packages can also carry scene geometry.</p>
       {content.diagrams.map((diagram, index) => <div className="designer-diagram-reference" key={index}>
         <label>Scene ID {index + 1}<input maxLength={128} value={diagram.scene.id} onChange={(e) => update("diagrams", content.diagrams.map((v, i) => i === index ? { ...v, scene: { ...v.scene, id: e.target.value } } : v))} /></label>
         <label>Revision {index + 1}<input type="number" min="1" step="1" value={diagram.scene.revision} onChange={(e) => update("diagrams", content.diagrams.map((v, i) => i === index ? { ...v, scene: { ...v.scene, revision: Number(e.target.value) } } : v))} /></label>

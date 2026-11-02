@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { blankDesignerDocument, designerErrors, type DesignerDocument } from "@/lib/designer/contract";
 import { decodeDraft, DESIGNER_DRAFT_KEY, encodeDraft } from "@/lib/designer/drafts";
 import { verifyLogo } from "@/lib/designer/branding";
@@ -57,5 +57,13 @@ export function useDesignerDraft() {
     const next = typeof value === "function" ? value(current.current) : value;
     current.current = next; edited.current = true; setDocument(next); setSaveState("Saving browser draft…");
   }
-  return { document, update, ready, saveState };
+  const getCurrent = useCallback(() => current.current, []);
+  const isDraftCurrent = useCallback(() => localStorage.getItem(DESIGNER_DRAFT_KEY) === previous.current, []);
+  const reviewDraft = useCallback(() => localStorage.getItem(DESIGNER_DRAFT_KEY), []);
+  /** Only an explicit recovery/open confirmation may adopt a newly reviewed draft base. */
+  function adoptReviewedDraft(expected: string | null, next: DesignerDocument) {
+    if (localStorage.getItem(DESIGNER_DRAFT_KEY) !== expected) throw new Error("Another tab changed the draft during confirmation. Review again; nothing was replaced.");
+    previous.current = expected; update(next);
+  }
+  return { document, update, ready, saveState, getCurrent, isDraftCurrent, reviewDraft, adoptReviewedDraft };
 }
