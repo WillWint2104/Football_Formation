@@ -12,6 +12,8 @@ import { DesignerPreview } from "./DesignerPreview";
 import { useActivityDiagrams } from "./useActivityDiagrams";
 import { ActivityDiagrams, DiagramWorkspaceStatus } from "./ActivityDiagrams";
 import { SessionOverview } from "./SessionOverview";
+import { useLocalAuthoring } from "./useLocalAuthoring";
+import { LocalAuthoringHost, LocalAuthoringNotice } from "./LocalAuthoringHost";
 
 /** Fully local import/edit/brand/export flow; no authenticated APIs or saved revision engine is invoked. */
 export function SessionDesigner() {
@@ -23,6 +25,7 @@ export function SessionDesigner() {
   const heading = useRef<HTMLHeadingElement>(null);
   const editorRef = useRef<HTMLElement>(null), brandButton = useRef<HTMLButtonElement>(null);
   const diagrams = useActivityDiagrams(draft, () => { setEpoch((n) => n + 1); setSelected(""); setView("edit"); });
+  const authoring = useLocalAuthoring(draft, diagrams);
   const content = toSessionContent(document), totals = activityTotals(content.activities);
 
   useEffect(() => {
@@ -49,6 +52,9 @@ export function SessionDesigner() {
     } catch (failure) { setErrors(designerErrors(failure)); }
   }
   return <div className={`session-designer calendar-workspace coaching-workspace${diagrams.active ? " designer-has-diagram-plan" : ""}`}>
+    {authoring.work && <LocalAuthoringHost controller={authoring} />}
+    <div hidden={!!authoring.work}>
+    <LocalAuthoringNotice controller={authoring} />
     <div className="designer-heading" data-no-print><div><p className="calendar-eyebrow">Session Designer · Local authoring</p><h1 ref={heading} tabIndex={-1}>{view === "import" ? "JSON Session Designer" : document.session.name || "Untitled coaching session"}</h1><p>{view === "import" ? "Import, edit and print a complete coaching session." : `${document.session.team ?? "Team not specified"} · ${content.activities.length} activities · ${totals.minutes} known min${totals.unknown ? ` · ${totals.unknown} untimed` : ""}`}</p></div><div className="designer-actions">
       <button type="button" disabled={!ready || printRequested} onClick={() => preview(true)}><Printer size={16} aria-hidden="true" />Print / Save as PDF</button>
       <button type="button" className="calendar-primary" disabled={!ready} onClick={download}><Download size={16} aria-hidden="true" />Download JSON</button>
@@ -64,7 +70,7 @@ export function SessionDesigner() {
     {view === "overview" && <SessionOverview document={document} onActivity={(id) => { setSelected(id); setView("edit"); }} onDetails={() => { setView("edit"); requestAnimationFrame(() => { const details = editorRef.current?.querySelector<HTMLDetailsElement>(".designer-session-details"); if (details) { details.open = true; details.querySelector("input")?.focus(); } }); }} />}
     <div className={`designer-edit-layout ${view === "preview" ? "designer-preview-layout" : ""}`} hidden={view === "import" || view === "overview"}>
       <section ref={editorRef} className="designer-editor" aria-label="Local session editor" hidden={view !== "edit"} data-no-print>
-        <div className="coaching-editor" key={epoch}><SessionContentFields activityVisual={(activity) => <ActivityDiagrams key={activity.id} activity={activity} controller={diagrams} />} content={content} exercises={[]} focused selection={{ id: selected, onChange: setSelected }} localAuthoring collapsibleDetails metadataFields={<div className="designer-meta-fields"><label>Team or age group<input maxLength={200} placeholder="Not specified" value={document.session.team ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, team: e.target.value || null } })} /></label>
+        <div className="coaching-editor" key={epoch}><SessionContentFields activityVisual={(activity) => <ActivityDiagrams key={activity.id} activity={activity} controller={diagrams} authoring={authoring} />} content={content} exercises={[]} focused selection={{ id: selected, onChange: setSelected }} localAuthoring collapsibleDetails metadataFields={<div className="designer-meta-fields"><label>Team or age group<input maxLength={200} placeholder="Not specified" value={document.session.team ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, team: e.target.value || null } })} /></label>
           <label>Planned duration (minutes)<input type="number" min="0.01" step="any" placeholder="Unknown" value={document.session.durationMinutes ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, durationMinutes: e.target.value === "" ? null : Number(e.target.value) } })} /></label>
           <label>Session participants<input type="number" min="1" step="1" placeholder="Unknown" value={document.session.playerCount ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, playerCount: e.target.value === "" ? null : Number(e.target.value) } })} /></label></div>} typeSelection={{ value: document.session.type, onChange: (type) => update({ ...document, session: { ...document.session, type } }) }} onChange={(next) => update(applySessionContent(document, next))} /></div>
       </section>
@@ -72,5 +78,6 @@ export function SessionDesigner() {
       <DesignerPreview document={document} visible={view === "preview"} />
     </div>
     <div id="designer-brand-disclosure" className="designer-brand-drawer" style={{ top: brandTop, maxHeight: `calc(100dvh - ${brandTop + 16}px)` }} hidden={!brandOpen} data-no-print onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setBrandOpen(false); brandButton.current?.focus(); } }}><button className="designer-close-brand" type="button" onClick={() => { setBrandOpen(false); brandButton.current?.focus(); }}>Close branding</button><BrandingPanel key={epoch} branding={document.branding} onChange={(branding) => update((current) => ({ ...current, branding }))} /></div>
+    </div>
   </div>;
 }

@@ -6,6 +6,7 @@ import { SceneDiagram } from "@/components/tactical/SceneDiagram";
 import { previewAttachment, type DiagramPin } from "@/lib/designer/attachments";
 import { sceneDuration } from "@/lib/tactical/evaluate";
 import { downloadDiagramPackage, type ActivityDiagramsController } from "./useActivityDiagrams";
+import type { LocalAuthoringController } from "./useLocalAuthoring";
 
 export function DiagramWorkspaceStatus({ controller: c }: { controller: ActivityDiagramsController }) {
   return <section className="designer-diagram-status" aria-label="Local diagram workspace" data-no-print>
@@ -23,7 +24,7 @@ export function DiagramWorkspaceStatus({ controller: c }: { controller: Activity
   </section>;
 }
 
-export function ActivityDiagrams({ activity, controller: c }: { activity: SessionActivity; controller: ActivityDiagramsController }) {
+export function ActivityDiagrams({ activity, controller: c, authoring }: { activity: SessionActivity; controller: ActivityDiagramsController; authoring?: LocalAuthoringController }) {
   const pins = activity.content.diagrams;
   const [selected, setSelected] = useState(0), [choosing, setChoosing] = useState(false);
   const [expanded, setExpanded] = useState(false), dialog = useRef<HTMLDialogElement>(null);
@@ -43,7 +44,9 @@ export function ActivityDiagrams({ activity, controller: c }: { activity: Sessio
     // Keep candidate preview visible until the coach deliberately returns to attached diagrams.
   }
   return <section className="activity-diagrams" aria-label="Activity tactical diagrams">
-    <header><div><p className="diagram-eyebrow">ACTIVITY WORKSPACE · EXACT SCENE REVISIONS</p><h3>Tactical diagrams <span>{pins.length}/20</span></h3></div><button type="button" aria-expanded={choosing} onClick={() => { setChoosing(!choosing); if (!choosing) void c.browse(); }}> {choosing ? "Close scene browser" : "Add / replace diagram"}</button></header>
+    <header><div><p className="diagram-eyebrow">ACTIVITY WORKSPACE · EXACT SCENE REVISIONS</p><h3>Tactical diagrams <span>{pins.length}/20</span></h3></div><div className="diagram-authoring-controls">
+      {authoring && <><button type="button" disabled={disabled || authoring.busy || !!authoring.recover || pins.length >= 20} onClick={() => void authoring.start(activity.id, null)}>Create Diagram</button><button type="button" disabled={disabled || authoring.busy || !!authoring.recover || !pin || !c.active || !resolved || choosing} onClick={() => void authoring.start(activity.id, index)}>Edit Diagram</button></>}
+      <button type="button" aria-expanded={choosing} onClick={() => { setChoosing(!choosing); if (!choosing) void c.browse(); }}> {choosing ? "Close scene browser" : "Add / replace diagram"}</button></div></header>
     {!!pins.length && <nav className="diagram-tabs" aria-label="Attached diagrams">{pins.map((p, i) => <button type="button" key={i} aria-pressed={!choosing && index === i} onClick={() => { setSelected(i); setChoosing(false); }}>Diagram {i + 1}<small>{p.scene.id || "Missing ID"} · r{p.scene.revision} · {p.representativeSeconds} s</small></button>)}</nav>}
     <div className="diagram-canvas-toolbar"><strong>{choosing ? "Source preview · not yet attached" : pin ? `Attached diagram ${index + 1}` : "No diagram attached"}</strong><label>Frame<select aria-label="Diagram framing" value={fit} onChange={(e) => setFit(e.target.value as typeof fit)}><option value="exercise">Fit exercise</option><option value="pitch">Fit pitch</option><option value="all">Fit all content</option></select></label><button type="button" disabled={!resolved} onClick={() => setExpanded(true)}>Expand diagram</button></div>
     <div className="activity-diagram-canvas">{resolved ? <SceneDiagram scene={resolved.scene} title={`${choosing ? "Source preview" : "Attached diagram"}: ${activity.content.title}`} options={{ fit, seconds: resolved.representativeSeconds, paths: "stage", gridMetres: resolved.scene.field.length > 50 ? 5 : 1, labels: true }} />

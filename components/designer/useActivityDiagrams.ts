@@ -172,8 +172,40 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
     try { downloadDiagramPackage(attachmentCandidate(getCurrent(), active?.package ?? null)); }
     catch (error) { fail(error); }
   }
+  async function prepareAuthoring() {
+    if (busy || blocked || !isSafeDraft()) throw new Error("Review the local plan or conflicting text draft before opening the editor.");
+    const before = structuredClone(getCurrent()), owner = activeRef.current, epoch = generation.current;
+    const pkg = attachmentCandidate(before, owner?.package ?? null);
+    if (owner) {
+      const read = await repository.read(owner.documentId);
+      if (!read.ok) throw new Error(read.error.message);
+      if (read.value.status !== "ready" || read.value.snapshot.ownerVersion !== owner.ownerVersion || read.value.snapshot.sha256 !== owner.sha256)
+        throw new Error("The source local plan changed or is unavailable. Review it before opening a local copy.");
+    }
+    if (epoch !== generation.current || !sameDocument(before, getCurrent()) || !isSafeDraft()) throw new Error("The draft changed while opening the local editor.");
+    if (owner) return owner;
+    const created = await repository.create(pkg);
+    if (!created.ok) throw new Error(created.error.message);
+    setRecovery(created.value); setBlocked(true);
+    if (epoch !== generation.current || !sameDocument(before, getCurrent()) || !isSafeDraft()) throw new Error("A complete source plan was saved, but the draft changed. Review the saved plan; no text was replaced.");
+    bind(created.value); setRecovery(null); setBlocked(false); return created.value;
+  }
+  function adoptLocalSave(origin: RecoveredCompanion, saved: RecoveredCompanion, before: DesignerDocument, next: DesignerDocument) {
+    setRecovery(saved); setBlocked(true);
+    const owner = activeRef.current;
+    if (!owner || owner.documentId !== origin.documentId || owner.ownerVersion !== origin.ownerVersion || owner.sha256 !== origin.sha256
+      || !sameDocument(before, getCurrent()) || !isSafeDraft()) throw new Error("The accepted complete plan was saved, but this tab changed before acknowledgement. Review its saved version; the current text was preserved.");
+    draft.update(next); bind(saved); setRecovery(null); setBlocked(false); setBackup(null);
+    setMessage(`Complete local plan saved · owner v${saved.ownerVersion}. Local copy accepted; original scene revisions retained.`);
+  }
+  function reviewAuthoringOrigin(origin: RecoveredCompanion) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("localPlan") !== origin.documentId || Number(url.searchParams.get("localVersion")) !== origin.ownerVersion || !isSafeDraft())
+      throw new Error("The source association changed. Review the saved local plan before recovery.");
+    bind(origin); setRecovery(null); setBlocked(false);
+  }
   const dirty = active !== null && !sameDocument(draft.document, active.package.document);
   const canRecoverText = blocked && recovery !== null && typeof window !== "undefined" && new URL(window.location.href).searchParams.get("localPlan") === recovery.documentId;
-  return { active, entries, source, recovery, backup, blocked, busy, message, dirty, canRecoverText, browse, selectSource, inspect, openRecovery, detach, save, recheck, downloadCurrent };
+  return { active, entries, source, recovery, backup, blocked, busy, message, dirty, canRecoverText, browse, selectSource, inspect, openRecovery, detach, save, recheck, downloadCurrent, prepareAuthoring, adoptLocalSave, reviewAuthoringOrigin };
 }
 export type ActivityDiagramsController = ReturnType<typeof useActivityDiagrams>;
