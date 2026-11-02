@@ -5,9 +5,11 @@ import { FileJson, FileUp, CheckCircle2 } from "lucide-react";
 import { designerErrors, MAX_SESSION_JSON_BYTES, parseSessionJson, type DesignerDocument } from "@/lib/designer/contract";
 import { verifyLogo } from "@/lib/designer/branding";
 import { sessionLabels } from "@/lib/calendar/schedule";
+import { PackageImporter } from "./PackageImporter";
 
 /** Validation/preview is separate from accepting a replacement draft. No partial import is applied. */
 export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocument) => void }) {
+  const [mode, setMode] = useState<"legacy" | "package">("legacy"), [packageBusy, setPackageBusy] = useState(false);
   const [text, setText] = useState(""), [candidate, setCandidate] = useState<DesignerDocument | null>(null);
   const [errors, setErrors] = useState<string[]>([]), [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null), generation = useRef(0);
@@ -39,7 +41,8 @@ export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocume
     } catch { if (generation.current === token) setErrors(["The sample could not be loaded. Use the downloadable example."]); }
     finally { if (generation.current === token) setBusy(false); }
   }
-  return <div className="designer-import-layout"><section className="designer-import-card" aria-label="JSON session importer"><div className="designer-panel-heading"><FileJson size={21} aria-hidden="true" /><h2>Bring your session plan</h2></div>
+  return <><nav className="designer-import-modes" aria-label="Import format"><button type="button" aria-pressed={mode === "legacy"} disabled={packageBusy} onClick={() => setMode("legacy")}>Legacy session JSON</button><button type="button" aria-pressed={mode === "package"} disabled={busy || packageBusy} onClick={() => setMode("package")}>Import Session &amp; Diagrams</button></nav>
+    <div hidden={mode !== "legacy"}><div className="designer-import-layout"><section className="designer-import-card" aria-label="JSON session importer"><div className="designer-panel-heading"><FileJson size={21} aria-hidden="true" /><h2>Bring your session plan</h2></div>
     <p>Paste your session JSON, or choose a file. Review every activity before opening it.</p>
     <div className="designer-json-drop" data-testid="json-drop" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (!busy) void readFile(e.dataTransfer.files); }}>
       <FileUp size={27} aria-hidden="true" /><div><strong>Drag a .json file here</strong><span>Portable session format v1.0 · maximum 2 MB</span></div>
@@ -57,5 +60,5 @@ export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocume
     </section>}
   </section><aside className="designer-import-help"><p className="calendar-eyebrow">One plan. Fully portable.</p><h2>From JSON to the training ground.</h2><ol><li><strong>Import & review</strong><span>Choose the activities you actually supplied. Nothing is filled in for you.</span></li><li><strong>Make it yours</strong><span>Edit the sequence, timings and coaching detail. Add a crest and club colours.</span></li><li><strong>Take it with you</strong><span>Download the complete JSON or print a branded coaching plan.</span></li></ol>
     <div className="designer-contract-link"><h3>Start with the format</h3><p>Use a simple versioned contract with optional branding. No organisation or account IDs.</p><a href="/samples/session-designer-possession.json" download>Download five-activity sample JSON</a><a href="/samples/session-designer-recovery.json" download>Download recovery-session example</a><a href="/samples/session-designer-contract.txt" target="_blank" rel="noreferrer">Read the JSON format</a></div>
-  </aside></div>;
+  </aside></div></div>{mode === "package" && <PackageImporter onBusyChange={setPackageBusy} />}</>;
 }
