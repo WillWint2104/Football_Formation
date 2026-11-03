@@ -3,6 +3,7 @@ import { Inter, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { CoachingProvider } from "@/components/coaching/CoachingProvider";
+import { LocalHistoryGuard } from "@/components/designer/LocalHistoryGuard";
 import "./globals.css";
 
 const inter = Inter({
@@ -38,6 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${hanken.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="application-shell min-h-screen flex bg-background text-on-background font-sans">
+        <LocalHistoryGuard />
         <a
           href="#main-content"
           className="fixed top-2 left-2 z-50 -translate-y-20 rounded bg-primary px-4 py-2 text-on-primary focus:translate-y-0"

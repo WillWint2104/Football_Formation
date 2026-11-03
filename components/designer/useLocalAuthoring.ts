@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { TacticalScene } from "@/lib/domain/tactical-scene";
 import { sameDocument } from "@/lib/designer/attachments";
 import { browserCompanionRepository } from "@/lib/designer/companion-indexeddb";
+import { registerLocalHistoryGuard } from "@/lib/designer/local-history-guard";
 import type { SessionPackage } from "@/lib/designer/package";
 import { AUTHORING_QUERY, acceptedLocalPackage, beginLocalAuthoring, candidatePackage, checkCurrentDocument, decodeAuthoringContext, encodeAuthoringContext,
   exactSnapshot, snapshotRef, verifyLocalCandidate, type LocalAuthoringContext } from "@/lib/designer/local-authoring";
@@ -36,16 +37,26 @@ export function useLocalAuthoring(draft: ReturnType<typeof useDesignerDraft>, di
   }, [ready]);
   useEffect(() => {
     if (!work || !dirty) return;
+    const editorUrl = window.location.href, editorState = window.history.state;
+    const confirmDiscard = () => window.confirm("Leave local editing and discard unsaved diagram changes? Any saved candidate remains in Saved local plans.");
     const guard = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    const traverse = (e: PopStateEvent) => {
+      if (confirmDiscard()) return;
+      // popstate cannot be cancelled. The early root listener runs before router/association
+      // listeners, so restoring this entry retains the mounted editor and its live edits.
+      e.stopImmediatePropagation();
+      window.history.pushState(editorState, "", editorUrl);
+    };
     const navigate = (e: MouseEvent) => {
       const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
       if (!link || link.target === "_blank" || link.download || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
       const destination = new URL(link.href, window.location.href);
       if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
-      if (!window.confirm("Leave local editing and discard unsaved diagram changes? Any saved candidate remains in Saved local plans.")) { e.preventDefault(); e.stopPropagation(); }
+      if (!confirmDiscard()) { e.preventDefault(); e.stopPropagation(); }
     };
+    const releaseHistoryGuard = registerLocalHistoryGuard(traverse);
     window.addEventListener("beforeunload", guard); document.addEventListener("click", navigate, true);
-    return () => { window.removeEventListener("beforeunload", guard); document.removeEventListener("click", navigate, true); };
+    return () => { releaseHistoryGuard(); window.removeEventListener("beforeunload", guard); document.removeEventListener("click", navigate, true); };
   }, [work, dirty]);
   async function unchanged(context: LocalAuthoringContext) {
     if (!isDraftCurrent()) throw new Error("Another tab changed the browser text draft. Cancel and choose deliberate recovery; no text was overwritten.");

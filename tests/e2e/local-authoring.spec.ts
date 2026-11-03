@@ -193,3 +193,50 @@ test("undo after a local save still warns before discarding newer editor state",
   await save(page); await review(page);
   await expect(host(page).locator(".scene-diagram")).toHaveAttribute("data-revision", "2");
 });
+
+for (const direction of ["back", "forward"] as const) test(`declining browser ${direction} preserves the exact unsaved local editor`, async ({ page }) => {
+  if (direction === "back") {
+    await page.goto("/tactical-renderer");
+    await page.getByRole("link", { name: "Session Designer", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Edit session", exact: true })).toBeEnabled();
+  }
+  const origin = await open(page), originalUrl = page.url();
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.name)).toBe(origin.package.document.session.name);
+  if (direction === "forward") {
+    await page.evaluate(() => { const url = new URL(location.href); url.searchParams.set("history-test", "future"); history.pushState(null, "", url); });
+    await page.goBack(); await expect(page).toHaveURL(originalUrl); await page.reload();
+    await expect(status(page)).toContainText("Complete local plan recovered");
+    await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  }
+  await edit(page); await page.getByRole("button", { name: "Layout", exact: true }).click();
+  await page.getByRole("button", { name: "● Player", exact: true }).click();
+  await page.getByRole("button", { name: "Insert at centre", exact: true }).click();
+  const editorUrl = page.url(), entities = await host(page).locator("g[data-entity-id]").evaluateAll(nodes => nodes.map(n => n.getAttribute("data-entity-id")));
+  const confirmations: string[] = [];
+  page.once("dialog", async dialog => { confirmations.push(dialog.message()); await dialog.dismiss(); });
+  await page.evaluate(direction => { if (direction === "back") history.back(); else history.forward(); }, direction);
+  await expect.poll(() => confirmations).toEqual(["Leave local editing and discard unsaved diagram changes? Any saved candidate remains in Saved local plans."]);
+  await expect(page).toHaveURL(editorUrl);
+  await expect(host(page).getByRole("button", { name: "Save Local Copy", exact: true })).toBeVisible();
+  expect(await host(page).locator("g[data-entity-id]").evaluateAll(nodes => nodes.map(n => n.getAttribute("data-entity-id")))).toEqual(entities);
+  expect(await read(page, origin.documentId)).toEqual(origin);
+  await save(page); await review(page);
+  await host(page).getByRole("button", { name: "Accept Diagram", exact: true }).click(); await expect(host(page)).toHaveCount(0);
+  expect((await read(page, origin.documentId)).package.scenes.at(-1)!.entities.length).toBe(origin.package.scenes[0].entities.length + 1);
+});
+
+for (const saved of [false, true]) test(`browser Back ${saved ? "after a saved copy needs no prompt" : "discards unsaved work only after confirmation"}`, async ({ page }) => {
+  await page.goto("/tactical-renderer");
+  await page.getByRole("link", { name: "Session Designer", exact: true }).click();
+  const origin = await open(page); await edit(page);
+  await page.getByRole("button", { name: "Layout", exact: true }).click();
+  await page.getByRole("button", { name: "● Player", exact: true }).click();
+  await page.getByRole("button", { name: "Insert at centre", exact: true }).click();
+  if (saved) await save(page);
+  const candidate = context(page).candidate, confirmations: string[] = [];
+  page.on("dialog", async dialog => { confirmations.push(dialog.message()); await dialog.accept(); });
+  await page.evaluate(() => history.back()); await expect(page).toHaveURL(/\/tactical-renderer$/);
+  expect(confirmations).toHaveLength(saved ? 0 : 1);
+  expect(await read(page, origin.documentId)).toEqual(origin);
+  if (saved) expect((await read(page, candidate.id)).package.scenes.at(-1)!.entities.length).toBe(origin.package.scenes[0].entities.length + 1);
+});
