@@ -1,5 +1,8 @@
 import { test, expect, type Page, type BrowserContext } from "@playwright/test";
 import { buildSync } from "esbuild";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import type { CompanionRecord } from "../../lib/designer/companion";
 import type {} from "../fixtures/companion-browser";
 
@@ -54,16 +57,26 @@ test("real IndexedDB complete package survives refresh and a new page without to
   expect(await page.evaluate(() => [localStorage.getItem("unrelated"), localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY)])).toEqual(["Keep me", "existing legacy bytes"]);
 });
 test("closing and reopening a persistent browser profile retains exact owner and diagram references", async ({ browser, baseURL }, info) => {
-  const profile = info.outputPath("persistent-profile"), options = { headless: true, channel: process.env.PLAYWRIGHT_CHANNEL };
-  const context = await browser.browserType().launchPersistentContext(profile, options); await prepare(context);
-  const page = await context.newPage(); await page.goto(`${baseURL}/__companion-b2`); const first = await create(page);
-  await context.close();
-  const reopened = await browser.browserType().launchPersistentContext(profile, options); await prepare(reopened);
-  const other = await reopened.newPage(); await other.goto(`${baseURL}/__companion-b2`); const r = await read(other, first.id);
-  expect(r.ok).toBe(true); if (!r.ok || r.value.status !== "ready") throw Error(JSON.stringify(r));
-  const pin = await other.evaluate((pkg) => window.companionTest.resolvePackageDiagram(pkg, "activity-1", 0), r.value.snapshot.package);
-  expect(pin.ok).toBe(true); if (pin.ok) { expect(pin.value.scene.revision).toBe(1); expect(pin.value.representativeSeconds).toBe(1); expect(pin.value.namespace).toBe("file-namespace"); }
-  await info.attach("reopened-owner.json", { body: JSON.stringify({ documentId: first.id, ownerVersion: r.value.snapshot.ownerVersion, pin }), contentType: "application/json" }); await reopened.close();
+  const tempRoot = await realpath(tmpdir()), profile = await mkdtemp(join(tempRoot, "ff-"));
+  const options = { headless: true, channel: process.env.PLAYWRIGHT_CHANNEL };
+  let context: BrowserContext | undefined;
+  try {
+    context = await browser.browserType().launchPersistentContext(profile, options); await prepare(context);
+    const page = await context.newPage(); await page.goto(`${baseURL}/__companion-b2`); const first = await create(page);
+    await context.close(); context = undefined;
+    context = await browser.browserType().launchPersistentContext(profile, options); await prepare(context);
+    const other = await context.newPage(); await other.goto(`${baseURL}/__companion-b2`); const r = await read(other, first.id);
+    expect(r.ok).toBe(true); if (!r.ok || r.value.status !== "ready") throw Error(JSON.stringify(r));
+    const pin = await other.evaluate((pkg) => window.companionTest.resolvePackageDiagram(pkg, "activity-1", 0), r.value.snapshot.package);
+    expect(pin.ok).toBe(true); if (pin.ok) { expect(pin.value.scene.revision).toBe(1); expect(pin.value.representativeSeconds).toBe(1); expect(pin.value.namespace).toBe("file-namespace"); }
+    await info.attach("reopened-owner.json", { body: JSON.stringify({ documentId: first.id, ownerVersion: r.value.snapshot.ownerVersion, pin }), contentType: "application/json" });
+  } finally {
+    try { await context?.close(); }
+    finally {
+      if (dirname(await realpath(profile)) !== tempRoot) throw Error("Unexpected test profile cleanup target");
+      await rm(profile, { recursive: true, force: true });
+    }
+  }
 });
 test("incompatible and missing companions differ and corrupted newest data offers its older complete package", async ({ page }) => {
   expect(await read(page, "absent")).toEqual({ ok: true, value: { status: "missing", documentId: "absent" } });
