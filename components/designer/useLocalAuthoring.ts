@@ -37,7 +37,15 @@ export function useLocalAuthoring(draft: ReturnType<typeof useDesignerDraft>, di
   useEffect(() => {
     if (!work || !dirty) return;
     const guard = (e: BeforeUnloadEvent) => { e.preventDefault(); };
-    window.addEventListener("beforeunload", guard); return () => window.removeEventListener("beforeunload", guard);
+    const navigate = (e: MouseEvent) => {
+      const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (!link || link.target === "_blank" || link.download || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      const destination = new URL(link.href, window.location.href);
+      if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+      if (!window.confirm("Leave local editing and discard unsaved diagram changes? Any saved candidate remains in Saved local plans.")) { e.preventDefault(); e.stopPropagation(); }
+    };
+    window.addEventListener("beforeunload", guard); document.addEventListener("click", navigate, true);
+    return () => { window.removeEventListener("beforeunload", guard); document.removeEventListener("click", navigate, true); };
   }, [work, dirty]);
   async function unchanged(context: LocalAuthoringContext) {
     if (!isDraftCurrent()) throw new Error("Another tab changed the browser text draft. Cancel and choose deliberate recovery; no text was overwritten.");

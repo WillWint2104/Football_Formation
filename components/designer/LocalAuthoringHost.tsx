@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { TacticalEditor } from "@/components/tactical/TacticalEditor";
 import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import { coachingExerciseArea } from "@/lib/tactical/coaching-view";
 import { sceneDuration } from "@/lib/tactical/evaluate";
 import type { LocalAuthoringController } from "./useLocalAuthoring";
 import { downloadDiagramPackage } from "./useActivityDiagrams";
@@ -27,8 +28,8 @@ export function LocalAuthoringHost({ controller: c }: { controller: LocalAuthori
     <p className="local-authoring-message" role={c.failed ? "alert" : undefined} aria-live="polite">{c.message}</p>
     {c.failed && work.context.candidate && <button type="button" disabled={c.busy} onClick={() => void c.review()}>Recover Saved Candidate</button>}
     {c.failed && c.backup && <button type="button" onClick={() => downloadDiagramPackage(c.backup!, "local-copy-recovery")}>Download local copy for recovery</button>}
-    {work.view === "editor" ? <TacticalEditor key={work.context.operation} initial={scene} readOnly={c.busy || c.failed} onDirty={c.setDirty} onSave={c.save} canSave={!c.busy && !c.failed} saveLabel={c.busy ? "Saving local copy…" : "Save Local Copy"} />
-      : <div className="local-candidate-review"><div className="local-candidate-canvas">{timeValid ? <SceneDiagram scene={scene} title="Saved local candidate" options={{ fit: "exercise", seconds, paths: "stage", labels: true }} /> : <p>Choose a valid representative time to preview this exact revision.</p>}</div>
+    {work.view === "editor" ? <TacticalEditor presentation="coaching" key={work.context.operation} initial={scene} readOnly={c.busy || c.failed} onDirty={c.setDirty} onSave={c.save} canSave={!c.busy && !c.failed} saveLabel={c.busy ? "Saving local copy…" : "Save Local Copy"} />
+      : <div className="local-candidate-review"><div className="local-candidate-canvas">{timeValid ? <SceneDiagram scene={scene} title="Saved local candidate" options={{ fit: "exercise", paint: "coaching-light", exerciseArea: coachingExerciseArea(scene), seconds, paths: "stage", labels: true }} /> : <p>Choose a valid representative time to preview this exact revision.</p>}</div>
         <aside><h2>Saved local copy</h2><p>The source activity is unchanged. Accept this exact revision to attach it.</p><p><strong>{scene.id} · r{scene.revision}</strong></p><p>{scene.field.length} × {scene.field.width} m · animation {duration} s</p><label>Representative time (seconds)<input type="number" min="0" max={duration} step="any" value={c.seconds} onChange={(e) => c.setSeconds(e.target.value)} /></label>
           <p>{timeValid ? `Preview and attachment: ${seconds} s` : `Choose a time from 0 to ${duration} s. The previous representative time is unavailable; it has not been reset or clamped.`}</p>
           <button type="button" className="calendar-primary" disabled={!timeValid || c.busy || c.failed} onClick={() => void c.accept()}>Accept Diagram</button>

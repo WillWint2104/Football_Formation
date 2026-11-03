@@ -2,13 +2,13 @@ import type { TacticalScene, TrainingArea } from "../domain/tactical-scene";
 import { evaluateScene, prepareScene, type Point } from "./evaluate";
 import { fitViewport, metricGrid, worldToScreen, equipmentFootprint, screenRectangle, type FitMode, type Camera, type Projection, type Rotation } from "./viewport";
 import { contextArea } from "./context";
-import { tacticalPalette as c } from "./palette";
+import { tacticalPalette as defaultPaint, coachingLightPalette, type TacticalPaint } from "./palette";
 import { posePreview } from "./animation";
 
 export const TACTICAL_RENDERER_VERSION = "svg-2d/1.2.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
-export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; contextMask?: boolean; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[] };
+export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; contextMask?: boolean; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[]; paint?: "coaching-light" };
 export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
 const line = (a: Point, b: Point, attrs: SvgNode["attrs"]) => node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
@@ -18,6 +18,7 @@ const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && a.x + a.w > b.x && a.y <
 
 /** One portable drawing tree drives React, standalone SVG and later illustrated exports. No persisted geometry is changed. */
 export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing {
+  const c = options.paint === "coaching-light" ? coachingLightPalette : defaultPaint;
   const scene = prepareScene(input), seconds = options.seconds ?? 0, evaluated = evaluateScene(options.poseStageId ? posePreview(scene, options.poseStageId, seconds) : scene, seconds);
   const view = fitViewport(scene, { ...options, fit: options.fit ?? "exercise" });
   const p = (point: Point) => worldToScreen(point, view), nodes: SvgNode[] = [];
@@ -38,7 +39,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
   const mark = { stroke: c.line, strokeWidth: 1.4, fill: "none", opacity: 0.9 };
   if (options.markings !== "none") {
     if (!neutral || scene.context?.kind === "neutral" && scene.context.boundary) nodes.push(rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { ...mark, "data-field-marking": neutral ? "training-boundary" : "touchlines" }));
-    if (!neutral && (options.markings === "football" || (options.markings !== "boundary" && scene.field.length >= 70 && scene.field.width >= 45))) footballMarkings(scene, view).forEach((n) => nodes.push(n));
+    if (!neutral && (options.markings === "football" || (options.markings !== "boundary" && scene.field.length >= 70 && scene.field.width >= 45))) footballMarkings(scene, view, c).forEach((n) => nodes.push(n));
     if (scene.context?.kind === "pitch") for (const right of [false, true]) {
       const anchor = { x: right ? scene.field.length : 0, y: scene.field.width / 2 };
       if (scene.entities.some((e) => e.kind === "equipment" && e.equipment === "goal" && Math.hypot(e.position.x - anchor.x, e.position.y - anchor.y) < 0.1)) continue;
@@ -75,7 +76,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       const at = p(a.area.origin), value = shorten(a.label, 35), w = Math.min(view.width - 6, value.length * 6.2 + 12);
       const box = place([at.y + 4, at.y - 42, at.y + a.area.width * view.scale - 23, at.y + 24, at.y + a.area.width * view.scale - 46, 4, view.height - 24].flatMap((y) => [at.x + 7, at.x + a.area.length * view.scale - w - 7, at.x + (a.area.length * view.scale - w) / 2].map((x) => ({ x, y, w, h: 17 }))));
       labels.push(node("g", {}, undefined, [node("rect", { x: box.x, y: box.y, width: w, height: 17, rx: 3, fill: c.outline, fillOpacity: 0.9 }), text({ x: box.x + 5, y: box.y + 12 }, value, { fontSize: 10 }), title(a.label)]));
-    } else if (a.kind === "arrow" && options.paths !== "none") overlays.push(node("g", { "data-annotation-id": track.id }, undefined, [node("polyline", { points: [p(a.from), p(a.to)].map((q) => `${q.x},${q.y}`).join(" "), fill: "none", stroke: c.outline, strokeOpacity: 0, strokeWidth: 12, pointerEvents: "stroke" }), ...arrow([p(a.from), p(a.to)], a.movement)]));
+    } else if (a.kind === "arrow" && options.paths !== "none") overlays.push(node("g", { "data-annotation-id": track.id }, undefined, [node("polyline", { points: [p(a.from), p(a.to)].map((q) => `${q.x},${q.y}`).join(" "), fill: "none", stroke: c.outline, strokeOpacity: 0, strokeWidth: 12, pointerEvents: "stroke" }), ...arrow([p(a.from), p(a.to)], a.movement, c)]));
     else if (a.kind === "note") {
       const at = p(a.position); if (at.x < 0 || at.x > view.width || at.y < 0 || at.y > view.height) continue;
       const content = shorten(a.text, Math.min(45, Math.floor((view.width - 22) / 6.2))), w = Math.min(view.width - 6, content.length * 6.2 + 16);
@@ -83,7 +84,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       labels.push(node("g", { "data-annotation-id": track.id }, undefined, [node("rect", { x: box.x, y: box.y, width: w, height: 23, rx: 4, fill: c.ink, fillOpacity: 0.9 }), text({ x: box.x + 8, y: box.y + 15 }, content), title(a.text)]));
     }
   }
-  if (options.paths !== "none") for (const path of evaluated.paths) if (!evaluated.hiddenEntityIds.includes(path.entityId) && (options.paths !== "active" || path.active)) overlays.push(...arrow(path.points.map(p), path.movement));
+  if (options.paths !== "none") for (const path of evaluated.paths) if (!evaluated.hiddenEntityIds.includes(path.entityId) && (options.paths !== "active" || path.active)) overlays.push(...arrow(path.points.map(p), path.movement, c));
   for (const ghost of options.ghosts ?? []) {
     const at = p(ghost.position);
     if (at.x < 0 || at.x > view.width || at.y < 0 || at.y > view.height) continue;
@@ -131,15 +132,16 @@ function lerp(a: Point, b: Point, t: number): Point { return { x: a.x + (b.x - a
 /** Bound visible text while the enclosing SVG title retains its complete accessible value. */
 function shorten(value: string, limit: number) { return value.length > limit ? `${value.slice(0, limit - 1)}…` : value; }
 /** Draw the authored polyline and its final nonzero-segment arrowhead using movement-specific styling. */
-function arrow(points: Point[], movement: "pass" | "run" | "rotation" | "press" | "dribble"): SvgNode[] {
+function arrow(points: Point[], movement: "pass" | "run" | "rotation" | "press" | "dribble", c: TacticalPaint): SvgNode[] {
   const colour = c[movement], dash = { pass: "", run: "9 5", rotation: "8 4 2 4", press: "4 4", dribble: "2 4" }[movement];
   const end = points.at(-1)!, previous = points.findLast((q) => Math.hypot(q.x - end.x, q.y - end.y) > 0.01);
   if (!previous) return [];
   const angle = Math.atan2(end.y - previous.y, end.x - previous.x);
-  return [node("polyline", { points: points.map((q) => `${q.x},${q.y}`).join(" "), fill: "none", stroke: colour, strokeWidth: 2, strokeDasharray: dash, strokeLinejoin: "round" }), node("polygon", { points: [end, { x: end.x - 9 * Math.cos(angle - 0.45), y: end.y - 9 * Math.sin(angle - 0.45) }, { x: end.x - 9 * Math.cos(angle + 0.45), y: end.y - 9 * Math.sin(angle + 0.45) }].map((q) => `${q.x},${q.y}`).join(" "), fill: colour })];
+  const pointsText = points.map((q) => `${q.x},${q.y}`).join(" ");
+  return [...(c === coachingLightPalette ? [node("polyline", { points: pointsText, fill: "none", stroke: movement === "run" || movement === "dribble" ? c.outline : c.line, strokeWidth: 4, strokeDasharray: dash, strokeLinejoin: "round", pointerEvents: "none" })] : []), node("polyline", { points: pointsText, fill: "none", stroke: colour, strokeWidth: 2, strokeDasharray: dash, strokeLinejoin: "round" }), node("polygon", { points: [end, { x: end.x - 9 * Math.cos(angle - 0.45), y: end.y - 9 * Math.sin(angle - 0.45) }, { x: end.x - 9 * Math.cos(angle + 0.45), y: end.y - 9 * Math.sin(angle + 0.45) }].map((q) => `${q.x},${q.y}`).join(" "), fill: colour, ...(c === coachingLightPalette ? { stroke: c.outline, strokeWidth: .7 } : {}) })];
 }
 /** Project metric centre, penalty and goal-area markings with fixed readable screen strokes. */
-function footballMarkings(scene: TacticalScene, view: Projection): SvgNode[] {
+function footballMarkings(scene: TacticalScene, view: Projection, c: TacticalPaint): SvgNode[] {
   const { length: l, width: w } = scene.field, p = (x: number, y: number) => worldToScreen({ x, y }, view), style = { fill: "none", stroke: c.line, strokeWidth: 1.3, opacity: 0.85 };
   const center = p(l / 2, w / 2), result = [line(p(l / 2, 0), p(l / 2, w), { ...style, "data-field-marking": "halfway" }), node("circle", { cx: center.x, cy: center.y, r: 9.15 * view.scale, ...style, "data-field-marking": "centre-circle" }), node("circle", { cx: center.x, cy: center.y, r: 2, fill: c.line })];
   for (const right of [false, true]) {

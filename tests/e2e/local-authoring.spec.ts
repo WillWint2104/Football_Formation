@@ -9,6 +9,8 @@ const host = (p: Page) => p.getByRole("region", { name: "Local tactical editor",
 const panel = (p: Page) => p.getByRole("region", { name: "Activity tactical diagrams", exact: true });
 const status = (p: Page) => p.getByRole("region", { name: "Local diagram workspace", exact: true });
 const context = (p: Page) => JSON.parse(new URL(p.url()).searchParams.get("localAuthoring")!);
+async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
+
 async function read(p: Page, id: string) {
   const r = await p.evaluate((id) => window.companionTest.browserCompanionRepository().read(id), id);
   if (!r.ok || r.value.status !== "ready") throw new Error(JSON.stringify(r)); return r.value.snapshot;
@@ -25,7 +27,7 @@ async function open(p: Page, noDiagrams = false) {
   await expect(panel(p)).toBeVisible();
   return read(p, new URL(p.url()).searchParams.get("localPlan")!);
 }
-async function edit(p: Page) { await panel(p).getByRole("button", { name: "Edit Diagram", exact: true }).click(); await expect(host(p)).toBeVisible(); }
+async function edit(p: Page) { await panel(p).getByRole("button", { name: "Edit Diagram", exact: true }).click(); await expect(host(p)).toBeVisible(); await host(p).getByRole("button", { name: "Properties", exact: true }).click(); }
 async function save(p: Page) { const previous = context(p).candidate?.version ?? 0; await host(p).getByRole("button", { name: "Save Local Copy", exact: true }).click(); await expect.poll(() => context(p).candidate?.version ?? 0).toBe(previous + 1); await expect(host(p).getByRole("button", { name: "Save Local Copy", exact: true })).toBeEnabled(); await expect(host(p).locator(".local-authoring-message")).toContainText("Local copy saved"); }
 async function review(p: Page) { await host(p).getByRole("button", { name: "Return to Activity", exact: true }).click(); await expect(host(p).getByRole("heading", { name: "Review local diagram", exact: true })).toBeFocused(); }
 async function shot(p: Page, info: TestInfo, name: string) { await p.evaluate(() => scrollTo(0, 0)); const path = info.outputPath(`${name}-${info.project.name}.png`); await p.screenshot({ path }); await info.attach(name, { path, contentType: "image/png" }); }
@@ -168,7 +170,7 @@ test("legacy text-only import can create its first complete local plan without a
   expect((await read(page, ctx.origin.id)).package.document.session.activities[0].diagrams[0].scene.id).toBe(ctx.sceneId);
 });
 test("incomplete activity text stays editable and prevents starting a candidate", async ({ page }) => {
-  const origin = await open(page); await page.getByLabel("Activity name", { exact: true }).fill("");
+  const origin = await open(page); await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("");
   await panel(page).getByRole("button", { name: "Edit Diagram", exact: true }).click();
   await expect(page.getByRole("region", { name: "Local copy recovery" }).getByRole("alert")).toBeVisible();
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue(""); expect(await read(page, origin.documentId)).toEqual(origin);

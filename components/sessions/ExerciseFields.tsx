@@ -3,7 +3,7 @@
 import type { ExerciseContent } from "@/lib/domain/session";
 
 /** Edit structured exercise content without authoring diagrams or altering their pinned references. */
-export function ExerciseFields({ content, onChange, editDiagramReferences = false, focused = false }: { content: ExerciseContent; onChange: (value: ExerciseContent) => void; editDiagramReferences?: boolean; focused?: boolean }) {
+export function ExerciseFields({ content, onChange, editDiagramReferences = false, focused = false, contextual = false }: { content: ExerciseContent; onChange: (value: ExerciseContent) => void; editDiagramReferences?: boolean; focused?: boolean; contextual?: boolean }) {
   const update = <K extends keyof ExerciseContent>(key: K, value: ExerciseContent[K]) => onChange({ ...content, [key]: value });
   const identity = <>
     <label>Activity name<input required maxLength={200} value={content.title} onChange={(e) => update("title", e.target.value)} /></label>
@@ -41,6 +41,14 @@ export function ExerciseFields({ content, onChange, editDiagramReferences = fals
         <button type="button" aria-label={`Remove diagram reference ${index + 1}`} onClick={() => update("diagrams", content.diagrams.filter((_, i) => i !== index))}>Remove</button>
       </div>)}</section> : !!content.diagrams.length && <p className="coaching-notice">{content.diagrams.length} diagram references are retained at their saved revisions. Diagram authoring is a later milestone.</p>}
   </>;
+  if (contextual) return <div className="coaching-fields designer-contextual-fields">
+    <details open><summary>Setup &amp; Equipment</summary>{identity}{equipment}</details>
+    <details open><summary>Organisation &amp; Delivery</summary>{textFields(["instructions"])}</details>
+    <details open><summary>Coaching points</summary>{textFields(["coachingPoints"])}</details>
+    <details open><summary>Progressions &amp; Variations</summary>{textFields(["progressions", "regressions", "variations"])}</details>
+    <details><summary>Notes</summary><p>Use the diagram editor’s Note tool for on-board cues. Add activity delivery notes under Organisation &amp; Delivery.</p></details>
+    <details><summary>Exact diagram references</summary>{diagrams}</details>
+  </div>;
   return <div className={`coaching-fields${focused ? " designer-grouped-fields" : ""}`}>
     {focused ? <><section className="designer-setup-group"><h3>Setup &amp; Equipment</h3>{identity}{equipment}</section>
       <section className="designer-delivery-group"><h3>Delivery</h3>{textFields(["instructions"])}</section>

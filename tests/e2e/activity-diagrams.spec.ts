@@ -11,6 +11,8 @@ const bundle = buildSync({ entryPoints: ["tests/fixtures/companion-browser.ts"],
 const workspace = (page: Page) => page.getByRole("region", { name: "Local diagram workspace", exact: true });
 const panel = (page: Page) => page.getByRole("region", { name: "Activity tactical diagrams", exact: true });
 const diagram = (page: Page) => panel(page).locator(".scene-diagram");
+async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
+
 async function seed(page: Page) {
   const p = attachmentExample();
   const result = await page.evaluate((p) => window.companionTest.browserCompanionRepository().create(p), p);
@@ -47,7 +49,7 @@ async function expandCapture(page: Page, info: TestInfo, name: string) {
   await panel(page).getByRole("button", { name: "Expand diagram", exact: true }).click();
   const modal = page.getByRole("dialog", { name: "Expanded activity diagram", exact: true });
   await expect(modal).toBeVisible(); await expect(modal.getByRole("button", { name: "Close diagram · Esc", exact: true })).toBeFocused();
-  await page.keyboard.press("Tab"); await expect(modal.getByRole("button")).toBeFocused();
+  await page.keyboard.press("Tab"); await expect(modal.locator("summary")).toBeFocused(); await page.keyboard.press("Tab"); await expect(modal.getByRole("button")).toBeFocused();
   const after = await modal.locator("g[data-entity-id]").evaluateAll((nodes) => nodes.map((n) => [n.getAttribute("data-entity-id"), n.getAttribute("data-world-x"), n.getAttribute("data-world-y")])); expect(after).toEqual(before);
   await expect(modal.locator(".scene-diagram")).toHaveAttribute("data-clipped", "0");
   const path = info.outputPath(`${name}-${info.project.name}.png`); await page.screenshot({ path }); await info.attach(name, { path, contentType: "image/png" });
@@ -97,7 +99,7 @@ test("activity switching and refresh retain stable attachment identities and ful
   expect(Number(await pitch.getAttribute("width")) / Number(await pitch.getAttribute("height"))).toBeCloseTo(105 / 68, 6);
   await capture(page, info, "full-pitch-attached");
   await expandCapture(page, info, "full-pitch-expanded");
-  await page.getByRole("button", { name: "Move activity up", exact: true }).click(); await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
+  await coaching(page); await page.getByRole("button", { name: "Move activity up", exact: true }).click(); await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].id)).toBe("activity-2");
   await page.reload(); await expect(workspace(page)).toContainText("Complete local plan recovered"); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-11v11");
   expect(new URL(page.url()).searchParams.get("localPlan")).toBe(id);
@@ -148,7 +150,7 @@ test("corrupt current snapshot offers verified previous copy without repairing t
 
 test("newer text draft versus complete snapshot requires a deliberate choice without automatic merging", async ({ page }) => {
   const source = await seed(page), id = await openPlan(page, source.documentId);
-  await page.getByLabel("Activity name", { exact: true }).fill("Unsaved text revision");
+  await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Unsaved text revision");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Unsaved text revision");
   await page.reload(); await expect(workspace(page)).toContainText("linked package version or text draft differs");
   expect((await download(page, "Download JSON"))).toContain("Unsaved text revision");
@@ -161,7 +163,7 @@ test("newer text draft versus complete snapshot requires a deliberate choice wit
 });
 
 test("concurrent complete-owner save requires deliberate recovery and cannot overwrite a newer owner", async ({ page, context }) => {
-  const source = await seed(page), id = await openPlan(page, source.documentId); await page.getByLabel("Activity name", { exact: true }).fill("Draft A");
+  const source = await seed(page), id = await openPlan(page, source.documentId); await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Draft A");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Draft A");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
   const second = await context.newPage(); await second.goto(page.url()); await expect(workspace(second)).toContainText("Complete local plan recovered");
@@ -175,7 +177,7 @@ test("a concurrent text edit blocks attachment without changing either the draft
   await expect(page.getByRole("status").filter({ hasText: "Draft saved in this browser" })).toBeVisible();
   const second = await context.newPage(); await second.goto(page.url()); await expect(workspace(second)).toContainText("Complete local plan recovered");
   await second.getByRole("button", { name: "Edit session", exact: true }).click();
-  await second.getByLabel("Activity name", { exact: true }).fill("Another coach's text");
+  await coaching(second); await second.getByLabel("Activity name", { exact: true }).fill("Another coach's text");
   await expect.poll(() => second.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Another coach's text");
   await browse(page, source.documentId); await panel(page).getByRole("button", { name: "Attach as diagram 2", exact: true }).click();
   await expect(workspace(page).getByRole("alert")).toContainText("Another tab changed the text draft");
@@ -210,10 +212,10 @@ test("text changed during IDB commit preserves both versions and never applies p
 
 test("unfinished text stays editable and previewable while complete saving remains strict", async ({ page }) => {
   const source = await seed(page), id = await openPlan(page, source.documentId), before = await stored(page, id);
-  await page.getByLabel("Activity name", { exact: true }).fill(""); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-rondo");
+  await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill(""); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-rondo");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("Too small");
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue(""); expect(await stored(page, id)).toEqual(before);
-  await page.getByLabel("Activity name", { exact: true }).fill("Completed coaching title");
+  await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Completed coaching title");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
 });
 

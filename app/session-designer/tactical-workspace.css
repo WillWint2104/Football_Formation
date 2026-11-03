@@ -1,0 +1,113 @@
+/* B4b: local coaching workspace only. Neither scene geometry nor other routes are themed here. */
+@media screen {
+  /* Desktop already has permanent navigation and a session title; retain the existing narrow-screen menu. */
+  @media (min-width:1024px) { .application-shell:has(.designer-tactical-workspace) > div > header { display:none; } }
+  #main-content:has(.designer-tactical-workspace), #main-content:has(.local-authoring-host) { padding:12px 18px; }
+  .session-designer.designer-tactical-workspace .designer-heading { margin-bottom:4px; align-items:center; }
+  .session-designer.designer-tactical-workspace .designer-heading h1 { font-size:22px; line-height:1.3; }
+  .session-designer.designer-tactical-workspace .designer-heading .calendar-eyebrow,
+  .session-designer.designer-tactical-workspace .designer-heading > div > p:last-child,
+  .session-designer.designer-tactical-workspace .designer-draft-status small { display:none; }
+  .session-designer.designer-tactical-workspace .designer-draft-status { margin-bottom:4px; padding:2px 10px; }
+  .session-designer.designer-tactical-workspace .designer-draft-status p { font-size:14px; }
+  .session-designer.designer-tactical-workspace .designer-draft-status { padding:0; border:0; background:none; min-height:22px; gap:10px; }
+  .session-designer.designer-tactical-workspace .designer-local-label { font-family:inherit; border:0; padding:0; background:none; font-size:14px; font-weight:600; }
+  .session-designer.designer-tactical-workspace .designer-toolbar { padding:4px 0; margin-bottom:4px; }
+  .session-designer.designer-tactical-workspace .designer-diagram-status { position:relative; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:5px 10px; margin-bottom:8px; }
+  .session-designer.designer-tactical-workspace .diagram-status-heading { flex:1; gap:8px; }
+  .session-designer.designer-tactical-workspace .diagram-status-heading strong { font-size:14px; font-weight:500; }
+  .session-designer.designer-tactical-workspace .diagram-status-heading > div:last-child { gap:6px; }
+  .session-designer.designer-tactical-workspace .diagram-plan-list { margin:0; }
+  .session-designer.designer-tactical-workspace .diagram-plan-list[open] { flex-basis:100%; }
+  .session-designer.designer-tactical-workspace .designer-diagram-status > :is(p,.diagram-recovery) { flex-basis:100%; }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-layout { grid-template-columns:210px minmax(0,1fr); gap:12px; height:calc(100dvh - 264px); min-height:440px; max-height:none; }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-layout[data-activities-hidden=true] { grid-template-columns:minmax(0,1fr); }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-detail { display:flex; flex-direction:column; gap:8px; overflow:visible; padding:0; min-height:0; scrollbar-gutter:auto; }
+  .session-designer.designer-tactical-workspace .designer-selected-heading { flex-shrink:0; padding-bottom:4px; margin:0; }
+  .session-designer.designer-tactical-workspace .designer-selected-heading p { margin:0; font-size:14px; }
+  .session-designer.designer-tactical-workspace .designer-selected-heading h2 { font-size:22px; line-height:1.3; margin:0; }
+  .session-designer.designer-tactical-workspace .designer-activity-panel-toggle { display:flex; gap:6px; }
+  .session-designer.designer-tactical-workspace .designer-practice-layout { display:grid; grid-template-columns:minmax(0,1fr); flex:1; min-height:0; gap:12px; }
+  .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] { grid-template-columns:minmax(0,1fr) 340px; }
+  .session-designer.designer-tactical-workspace .designer-coaching-panel { overflow:auto; min-width:0; min-height:0; padding:12px; background:white; border:1px solid #cbd8e0; border-radius:7px; scroll-padding:12px; scrollbar-gutter:stable; }
+  .session-designer.designer-tactical-workspace .designer-coaching-panel .coaching-inline-controls { gap:6px; }
+  .session-designer.designer-tactical-workspace .designer-coaching-panel .coaching-form-row { grid-template-columns:1fr 1fr; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields { display:flex; flex-direction:column; gap:20px; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields > details { border-top:2px solid #b8cbd5; padding-top:12px; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields > details > summary { font-size:17px; font-weight:650; cursor:pointer; margin-bottom:12px; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields label { display:flex; flex-direction:column; gap:6px; margin:12px 0; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields .coaching-checkbox { flex-direction:row; align-items:center; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields textarea { font-size:15px; line-height:1.6; min-height:120px; }
+  .session-designer.designer-tactical-workspace .designer-contextual-fields p { font-size:14px; }
+  .session-designer.designer-tactical-workspace .activity-diagrams { display:grid; grid-template-columns:auto minmax(0,1fr); grid-template-rows:auto auto minmax(0,1fr) auto; gap:6px 12px; min-height:0; padding:8px; margin:0; }
+  .session-designer.designer-tactical-workspace .activity-diagrams > header { grid-column:1/-1; margin:0; gap:8px; }
+  .session-designer.designer-tactical-workspace .activity-diagrams h3 { font-size:17px; margin:0; }
+  .session-designer.designer-tactical-workspace .activity-diagrams { padding:8px; }
+  .session-designer.designer-tactical-workspace .activity-diagrams button { padding:5px 8px; min-height:30px; }
+  .session-designer.designer-tactical-workspace .diagram-tabs { grid-column:1; margin:0; gap:5px; flex-wrap:nowrap; overflow-x:auto; max-width:260px; }
+  .session-designer.designer-tactical-workspace .diagram-tabs button { white-space:nowrap; padding:6px 10px; }
+  .session-designer.designer-tactical-workspace .diagram-canvas-toolbar { grid-column:2; justify-content:flex-end; margin:0; gap:6px; flex-wrap:wrap; }
+  .session-designer.designer-tactical-workspace .diagram-canvas-toolbar strong { display:none; }
+  .session-designer.designer-tactical-workspace .diagram-canvas-toolbar select { max-width:148px; padding:6px; }
+  .session-designer.designer-tactical-workspace .activity-diagram-canvas { grid-column:1/-1; grid-row:3; height:100%; min-height:180px; border:1px solid #618a5d; background:#80ad79; }
+  .session-designer.designer-tactical-workspace .diagram-attachment-actions { grid-column:2; justify-content:flex-end; margin:0; gap:6px; }
+  .session-designer.designer-tactical-workspace .diagram-pin-details { grid-column:1; grid-row:4; align-self:center; font-size:14px; }
+  .session-designer.designer-tactical-workspace .diagram-pin-details[open] { grid-column:1/-1; }
+  .session-designer.designer-tactical-workspace .diagram-pin-details[open] ~ .diagram-attachment-actions { grid-column:1/-1; }
+  .designer-light .diagram-pin-accessible { position:absolute; width:1px; height:1px; clip-path:inset(50%); overflow:hidden; }
+  .session-designer.designer-tactical-workspace .diagram-source-browser { grid-column:1/-1; max-height:300px; overflow:auto; }
+  .session-designer.designer-tactical-workspace .activity-diagrams:has(.diagram-source-browser) { overflow:auto; grid-template-rows:auto auto 240px auto auto; }
+  .session-designer.designer-tactical-workspace .designer-activity-footer { flex-shrink:0; margin:0; padding:4px 0 0; gap:8px; }
+  .session-designer.designer-tactical-workspace .designer-session-details { margin-top:12px; }
+  .session-designer.designer-tactical-workspace .coaching-activity-list button { min-height:96px; }
+  .designer-light .expanded-diagram-layout { position:relative; display:flex; flex:1; min-height:0; gap:16px; }
+  .designer-light .expanded-diagram-canvas { min-width:0; border:1px solid #618a5d; }
+  .designer-light .expanded-coaching-guidance { font-size:15px; width:180px; flex-shrink:0; }
+  .designer-light .expanded-coaching-guidance:not([open]) { position:absolute; right:10px; top:10px; width:auto; padding:6px 10px; border:1px solid #b6c8d3; border-radius:5px; background:#fff; }
+  .designer-light .expanded-coaching-guidance[open] { width:320px; display:flex; flex-direction:column; }
+  .designer-light .expanded-coaching-guidance > div { overflow:auto; max-height:calc(100dvh - 190px); padding:12px; background:white; }
+  .designer-light .expanded-coaching-guidance h4 { font-size:17px; font-weight:650; margin:16px 0 8px; }
+  .designer-light .expanded-coaching-guidance :is(ol,ul) { padding-left:20px; }
+  .designer-light .expanded-coaching-guidance li { margin:8px 0; }
+  .designer-light .activity-diagram-expanded > p { font-size:14px; margin:8px 0 0; }
+  .designer-light .local-authoring-host { height:calc(100dvh - 26px); min-height:620px; display:flex; flex-direction:column; gap:6px; }
+  .designer-light .local-authoring-host > header { margin:0; }
+  .designer-light .local-authoring-host h1 { font-size:22px; }
+  .designer-light .local-authoring-host > header p { font-size:14px; margin:0; }
+  .designer-light .local-authoring-host > header p:first-child { display:none; }
+  .designer-light .local-authoring-message { padding:6px 10px; margin:0; }
+  .designer-light .editor-coaching { display:flex; flex-direction:column; flex:1; min-height:0; }
+  .designer-light .editor-coaching .editor-topbar { padding:6px; margin:0; gap:6px; }
+  .session-designer .editor-coaching .editor-topbar label { flex-direction:row; gap:6px; align-items:center; }
+  .designer-light .editor-coaching .editor-layout { display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); flex:1; min-height:0; align-items:stretch; }
+  .designer-light .editor-coaching[data-properties-open=true] .editor-layout { grid-template-columns:minmax(0,1fr) 300px; }
+  .designer-light .editor-coaching .editor-canvas-column { display:flex; flex-direction:column; min-height:0; height:100%; }
+  .designer-light .editor-coaching .editor-surface { flex:1; height:auto; min-height:200px; border-color:#618a5d; }
+  .designer-light .editor-coaching :is(.editor-tools,.editor-viewbar) { gap:4px; padding:5px; }
+  .designer-light .editor-coaching .editor-tools button { padding:5px 8px; font-size:14px; }
+  .designer-light .editor-coaching .editor-viewbar label { flex-direction:row; align-items:center; gap:6px; }
+  .designer-light .editor-coaching .editor-status { font-size:14px; gap:8px; padding:4px 8px; }
+  .designer-light .editor-coaching .editor-feedback { font-size:14px; margin:2px 0; }
+  .designer-light .editor-coaching .editor-object-list { margin:0; max-height:180px; overflow:auto; }
+  .designer-light .editor-coaching .editor-inspector { overflow:auto; height:100%; min-height:0; scrollbar-gutter:stable; }
+  .designer-light .editor-coaching :is(button,input,select,.editor-topbar label,.editor-viewbar label) { font-size:14px; }
+  .designer-light .editor-coaching .animation-timeline { flex-shrink:0; padding:6px; margin:4px 0 0; }
+  .designer-light .editor-coaching .animation-hint { font-size:14px; }
+  .session-designer .editor-coaching .animation-transport label { flex-direction:row; align-items:center; gap:6px; }
+  .session-designer .editor-coaching .animation-stages button { padding:5px 8px; min-height:38px; font-size:14px; }
+  .session-designer .editor-coaching .animation-hint { display:none; }
+  .designer-light .editor-coaching .editor-inspector[hidden] { display:none; }
+  .designer-light .editor-coaching.editor-expanded { position:fixed; height:calc(100dvh - 24px); min-height:0; }
+  .designer-light .local-candidate-review { flex:1; min-height:0; }
+  .designer-light .local-candidate-canvas { height:100%; min-height:300px; }
+  .designer-light .local-candidate-review aside { overflow:auto; }
+  @media (max-width:1450px) {
+    .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] { grid-template-columns:minmax(0,1fr) 310px; }
+    .session-designer.designer-tactical-workspace .diagram-canvas-toolbar label { gap:4px; }
+    .session-designer.designer-tactical-workspace .diagram-tabs { max-width:190px; }
+    .session-designer.designer-tactical-workspace .designer-activity-panel-toggle button { padding:6px 8px; }
+    .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] .activity-diagrams { grid-template-columns:minmax(0,1fr); overflow:auto; }
+    .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] .activity-diagrams > * { grid-column:1; grid-row:auto; }
+    .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] .activity-diagram-canvas { min-height:240px; }
+  }
+}

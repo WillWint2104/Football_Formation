@@ -6,6 +6,8 @@ import type {} from "../fixtures/companion-browser";
 const bundle = buildSync({ entryPoints: ["tests/fixtures/companion-browser.ts"], bundle: true, write: false, format: "iife", platform: "browser", target: "es2022" }).outputFiles[0].text;
 const phase = process.env.B4_EVIDENCE_PHASE ?? "after";
 const rail = (p: Page) => p.getByRole("navigation", { name: "Session activities", exact: true });
+async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
+
 async function openPlan(p: Page) {
   const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), attachmentExample());
   if (!r.ok) throw new Error(r.error.message);
@@ -46,7 +48,7 @@ test("scoped light navigation resets on client route changes and does not recolo
   await expect(shell).toHaveCSS("--color-shell", "#f3f6f7");
 });
 test("activity panel can collapse independently without changing selection, text, diagram pins or B2 snapshots", async ({ page }, info) => {
-  await openPlan(page); const planId = new URL(page.url()).searchParams.get("localPlan")!;
+  await openPlan(page); await coaching(page); const planId = new URL(page.url()).searchParams.get("localPlan")!;
   const before = await page.evaluate((id) => window.companionTest.browserCompanionRepository().read(id), planId);
   const detail = page.getByLabel("Selected activity editing area", { exact: true }), beforeWidth = (await detail.boundingBox())!.width;
   await page.getByRole("button", { name: "Hide activities", exact: true }).click(); await expect(rail(page)).toBeHidden();
@@ -76,7 +78,7 @@ test("readable cards and primary controls meet measured text contrast and remain
   const railBox = (await rail(page).boundingBox())!; expect(railBox.y + railBox.height).toBeLessThanOrEqual((await page.viewportSize())!.height + 1);
 });
 test("removing the last activity with navigation hidden leaves Add activity available", async ({ page }) => {
-  await openPlan(page); await page.getByRole("button", { name: "Hide activities", exact: true }).click();
+  await openPlan(page); await coaching(page); await page.getByRole("button", { name: "Hide activities", exact: true }).click();
   await page.getByRole("button", { name: "Remove activity", exact: true }).click(); await page.getByRole("button", { name: "Remove activity", exact: true }).click();
   await expect(rail(page)).toBeVisible(); await rail(page).getByRole("button", { name: "Add activity", exact: true }).click();
   await expect(page.getByLabel("Activity name", { exact: true })).toBeVisible();
