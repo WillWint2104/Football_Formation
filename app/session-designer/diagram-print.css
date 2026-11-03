@@ -1,0 +1,25 @@
+/* B5a activity sheets only. Session overview, branding controls and portable data remain C2/B4. */
+.designer-print .designer-plan-diagrams { display:block; }
+.designer-print .designer-plan-diagram { margin:0 0 20px; break-inside:avoid-page; }
+.designer-print .designer-plan-diagram figcaption { display:flex; flex-direction:column; gap:3px; padding:8px 0; break-after:avoid; overflow-wrap:anywhere; }
+.designer-print .designer-plan-diagram figcaption strong { font-size:16px; color:var(--plan-secondary); }
+.designer-print .designer-plan-diagram figcaption span { font-size:12px; color:#53657a; }
+.designer-print .designer-print-scene { display:block; width:100%; height:auto; border:1px solid #64855e; background:#80ad79; }
+.designer-print .designer-plan-diagram-scale { color:#53657a; font-size:12px; margin:4px 0 0; }
+.designer-print .designer-print-unavailable { border:1px solid #b98434; border-left:4px solid #b98434; background:#fff8e9; padding:16px; }
+.designer-print .designer-print-unavailable strong { font-size:16px; }
+.designer-print .designer-print-unavailable p { margin-top:8px; }
+@media print {
+  .designer-print .designer-plan-illustrated { break-before:page; break-inside:auto; margin-top:0; padding-top:0; }
+  .designer-print .designer-plan-illustrated > header { break-after:avoid; }
+  .designer-print .designer-plan-diagram { margin:0 0 3mm; break-inside:avoid-page; }
+  .designer-print .designer-plan-diagram figcaption { padding:1.5mm 0; }
+  .designer-print .designer-plan-diagram figcaption strong { font-size:10.5pt; }
+  .designer-print .designer-plan-diagram figcaption span { font-size:8pt; }
+  .designer-print .designer-plan-diagram-scale { font-size:8pt; margin:1mm 0 0; }
+  .designer-print .designer-print-unavailable { padding:3mm; font-size:9.5pt; }
+  .designer-print .designer-print-unavailable strong { font-size:11pt; }
+  .designer-print .designer-plan-illustrated .designer-plan-section { break-inside:auto; }
+  .designer-print .designer-plan-illustrated .designer-plan-coaching .designer-plan-section { margin-bottom:0; }
+  .designer-print .designer-plan-illustrated li { break-inside:auto; overflow-wrap:anywhere; }
+}

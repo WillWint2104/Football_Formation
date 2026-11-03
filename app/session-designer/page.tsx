@@ -10,6 +10,7 @@ import "../tactical-editor/editor.css";
 import "./local-authoring.css";
 import "./light-foundation.css";
 import "./tactical-workspace.css";
+import "./diagram-print.css";
 
 export const metadata: Metadata = { title: "Session Designer | Football Formation" };
 

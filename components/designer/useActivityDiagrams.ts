@@ -206,6 +206,19 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
   }
   const dirty = active !== null && !sameDocument(draft.document, active.package.document);
   const canRecoverText = blocked && recovery !== null && typeof window !== "undefined" && new URL(window.location.href).searchParams.get("localPlan") === recovery.documentId;
-  return { active, entries, source, recovery, backup, blocked, busy, message, dirty, canRecoverText, browse, selectSource, inspect, openRecovery, detach, save, recheck, downloadCurrent, prepareAuthoring, adoptLocalSave, reviewAuthoringOrigin };
+  /** Read-only verification for print. Never accepts a newer owner, repairs data or opens a recovery snapshot. */
+  async function preparePrintSource(): Promise<{ library: SessionPackage | null; unavailable?: string }> {
+    const owner = activeRef.current, epoch = generation.current;
+    if (blocked || busy) return { library: null, unavailable: "The local plan needs review or is being saved. Review the diagram workspace and refresh this preview." };
+    if (!owner) return { library: null };
+    const read = await repository.read(owner.documentId);
+    if (epoch !== generation.current || activeRef.current !== owner) throw new Error("The local plan association changed while preparing the document. Review it and try again.");
+    if (!read.ok) return { library: null, unavailable: "Local diagram storage could not be read. The requested references are retained below." };
+    if (read.value.status !== "ready") return { library: null, unavailable: "The associated local diagram package is missing or invalid. Recover it explicitly in the diagram workspace; no recovery version was substituted." };
+    if (read.value.snapshot.ownerVersion !== owner.ownerVersion || read.value.snapshot.sha256 !== owner.sha256)
+      return { library: null, unavailable: "The complete local plan changed in another tab. Reopen the reviewed plan before printing its diagrams." };
+    return { library: read.value.snapshot.package };
+  }
+  return { active, entries, source, recovery, backup, blocked, busy, message, dirty, canRecoverText, browse, selectSource, inspect, openRecovery, detach, save, recheck, downloadCurrent, prepareAuthoring, adoptLocalSave, reviewAuthoringOrigin, preparePrintSource };
 }
 export type ActivityDiagramsController = ReturnType<typeof useActivityDiagrams>;
