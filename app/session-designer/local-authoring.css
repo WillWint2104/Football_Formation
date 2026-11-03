@@ -1,0 +1,19 @@
+.local-authoring-host { color: var(--color-shell-text); }
+.session-designer .diagram-authoring-controls { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.local-authoring-host > header { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-bottom:12px; }
+.local-authoring-host h1 { font-size:24px; font-weight:700; }
+.local-authoring-host header p { margin:4px 0; }
+.local-authoring-host header > div:last-child { display:flex; gap:8px; }
+.local-authoring-host button, .local-authoring-notice button { cursor:pointer; border:1px solid var(--color-shell-edge); border-radius:5px; padding:8px 12px; }
+.local-authoring-host .calendar-primary:hover { background:var(--color-shell-accent); color:var(--color-shell); }
+.local-authoring-host button:disabled { opacity:.5; cursor:default; }
+.local-authoring-host :focus-visible, .local-authoring-notice :focus-visible { outline:3px solid var(--color-shell-accent); outline-offset:3px; }
+.local-authoring-message, .local-authoring-notice { padding:12px; margin-bottom:12px; border:1px solid var(--color-shell-edge); border-radius:6px; font-size:14px; }
+.local-authoring-message[role=alert] { border-color:#f08e86; }
+.local-candidate-review { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; }
+.local-candidate-canvas { min-height:400px; height:calc(100dvh - 280px); background:#245c3a; border:1px solid #638470; }
+.local-candidate-canvas .scene-diagram { height:100%; }
+.local-candidate-review aside { font-size:15px; overflow-wrap:anywhere; }
+.local-candidate-review aside p { margin:12px 0; }
+.local-candidate-review h2 { font-size:20px; font-weight:700; }
+.local-candidate-review input { display:block; width:100%; border:1px solid var(--color-shell-edge); padding:8px; margin-top:8px; }

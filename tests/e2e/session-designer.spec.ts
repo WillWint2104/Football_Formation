@@ -6,6 +6,8 @@ import { parseSessionJson } from "../../lib/designer/contract";
 import { DESIGNER_DRAFT_KEY } from "../../lib/designer/drafts";
 
 const samplePath = "public/samples/session-designer-possession.json";
+async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
+
 async function open(page: Page) {
   await page.goto("/session-designer", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("button", { name: "Edit session", exact: true })).toBeEnabled();
@@ -13,7 +15,7 @@ async function open(page: Page) {
 async function acceptFile(page: Page, path = samplePath) {
   await page.getByLabel("Choose session JSON").setInputFiles(path);
   await expect(page.getByRole("region", { name: "Import preview" })).toBeVisible();
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click();
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
   await expect(page.getByRole("region", { name: "Local session editor" })).toBeVisible();
 }
 async function branding(page: Page, visible = true) {
@@ -48,7 +50,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await expect(page.getByRole("region", { name: "Import preview" }).locator("li")).toHaveCount(5);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("designer-importer.png") });
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click();
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
   const editor = page.getByRole("region", { name: "Local session editor" });
   await editor.locator(".designer-session-details > summary").click();
   await editor.getByLabel("Session title").fill("Build Through Pressure — Edited");
@@ -99,13 +101,13 @@ test("five activities → edit → dropped transparent crest → brand → print
   expect(pixels.info.channels).toBe(4); expect(pixels.data[3]).toBe(0);
   expect(exported).not.toContain("organizationId");
   await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("status")).toContainText("Draft recovered from this browser");
-  await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await coaching(page);
   await expect(editor.getByLabel("Session title")).toHaveValue(portable.session.name);
   await expect(editor.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("12");
   await expect(page.getByAltText("Club logo preview")).toHaveAttribute("src", portable.branding.logo!.dataUrl);
   await page.getByRole("button", { name: "Import JSON", exact: true }).click();
   await page.getByLabel("Choose session JSON").setInputFiles({ name: "round-trip.json", mimeType: "application/json", buffer: Buffer.from(exported) });
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click();
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
   const roundTripEvent = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
   expect(parseSessionJson(await readFile((await (await roundTripEvent).path())!, "utf8"))).toEqual(portable);
   expect(apiRequests).toEqual([]); expect(errors).toEqual([]);
@@ -116,7 +118,7 @@ test("JSON drop accepts a different session without branding, diagrams or invent
   await open(page);
   await drop(page, '[data-testid="json-drop"]', "recovery.json", "application/json", await readFile("public/samples/session-designer-recovery.json"));
   await expect(page.getByRole("region", { name: "Import preview" })).toContainText("2 activities");
-  await page.getByRole("button", { name: "Open imported session" }).click();
+  await page.getByRole("button", { name: "Open imported session" }).click(); await coaching(page);
   await expect(page.getByLabel("Session type", { exact: true })).toHaveValue("recovery");
   await expect(page.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Participants", { exact: true })).toHaveValue("");
@@ -134,7 +136,7 @@ test("shared activity editor adds, reorders and removes independent activities a
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("8");
   await page.getByRole("button", { name: "Move activity up", exact: true }).click();
   await expect(page.locator(".coaching-activity-list li").nth(4)).toContainText("Extra decision game");
-  await page.getByRole("button", { name: "Add diagram reference", exact: true }).click();
+  await page.getByText("Exact diagram references", { exact: true }).click(); await page.getByRole("button", { name: "Add diagram reference", exact: true }).click();
   await page.getByLabel("Scene ID 1", { exact: true }).fill("custom-scene");
   await page.getByLabel("Revision 1", { exact: true }).fill("3");
   await page.getByLabel("Preview seconds 1", { exact: true }).fill("2.5");
@@ -193,7 +195,7 @@ test("incomplete drafts recover, and another tab's draft is never silently overw
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("0");
   await expect(page.getByRole("status")).toContainText("Draft saved in this browser");
   await page.reload(); await expect(page.getByRole("status")).toContainText("Draft recovered");
-  await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await coaching(page);
   await expect(page.getByLabel("Session title")).toHaveValue("");
   await expect(page.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("0");
   const stored = await page.evaluate((key) => { const existing = localStorage.getItem(key)!; const draft = JSON.parse(existing); draft.document.session.name = "Other tab work"; const text = JSON.stringify(draft); localStorage.setItem(key, text); return text; }, DESIGNER_DRAFT_KEY);
@@ -246,7 +248,8 @@ test("a delayed sample response cannot replace newer pasted JSON", async ({ page
   await page.getByLabel("Session JSON", { exact: true }).fill(newer);
   release(); await pendingRequest.response();
   await page.getByRole("button", { name: "Validate & preview import" }).click();
-  await expect(page.getByLabel("Session JSON", { exact: true })).toHaveValue(newer);
+  // Textarea values use LF even when the checked-out fixture uses Windows CRLF.
+  await expect(page.getByLabel("Session JSON", { exact: true })).toHaveValue(newer.replace(/\r\n?/g, "\n"));
   await expect(page.getByRole("region", { name: "Import preview" })).toContainText("Recovery & Mobility");
 });
 
@@ -279,13 +282,15 @@ test("C2 keyboard rail navigation, reorder and deletion keep the stable selected
 
 test("C2 editor scroll keeps the activity rail available and keyboard users can reach lower guidance and advanced coordinates", async ({ page }) => {
   await open(page); await acceptFile(page);
-  const detail = page.getByLabel("Selected activity editing area", { exact: true });
+  const detail = page.getByRole("region", { name: "Activity coaching information", exact: true });
   const rail = page.getByRole("navigation", { name: "Session activities", exact: true });
   await page.evaluate(() => window.scrollTo(0, 0));
   const before = await rail.boundingBox();
   await detail.focus();
-  await page.getByLabel("Variations", { exact: true }).focus();
+  await page.getByText("Exact diagram references", { exact: true }).click(); await page.getByLabel("Variations", { exact: true }).focus();
   await page.keyboard.press("Tab");
+  await expect(page.getByText("Notes", { exact: true })).toBeFocused();
+  await page.keyboard.press("Tab"); await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: "Add diagram reference", exact: true })).toBeFocused();
   expect(await detail.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
   expect(Math.abs((await rail.boundingBox())!.y - before!.y)).toBeLessThan(4);
@@ -317,7 +322,7 @@ test("C2 long sessions and instructions retain accessible navigation, real print
   const input = JSON.parse(await readFile(samplePath, "utf8"));
   input.session.activities = Array.from({ length: 24 }, (_, i) => ({ ...input.session.activities[0], id: `long-${i}`, name: `Practice ${i + 1} with a longer descriptive coaching title`, instructions: i === 23 ? Array.from({ length: 45 }, (_, n) => `Delivery step ${n + 1}: Keep scanning and maintain a useful passing angle while the next receiver moves into space.`) : input.session.activities[0].instructions }));
   await open(page); await page.getByLabel("Choose session JSON").setInputFiles({ name: "long.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(input)) });
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click();
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
   const rail = page.getByRole("navigation", { name: "Session activities", exact: true });
   await rail.getByRole("button").first().focus(); await page.keyboard.press("End");
   await expect(rail.locator('[aria-current="step"]')).toContainText("Practice 24");

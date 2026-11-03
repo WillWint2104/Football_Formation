@@ -10,6 +10,7 @@ import { addAnnotation, addEntity, arrangeObjects, moveObjects, recordEdit, remo
 import { editorExamples } from "@/lib/tactical/editor-examples";
 import { contextArea } from "@/lib/tactical/context";
 import { actionFrame } from "@/lib/tactical/framing";
+import { coachingExerciseArea } from "@/lib/tactical/coaching-view";
 import { SceneDiagram } from "./SceneDiagram";
 import { EditorProperties } from "./EditorProperties";
 import { AnimationTimeline } from "./AnimationTimeline";
@@ -22,7 +23,8 @@ const tools: [Tool, string][] = [["select", "↖ Select"], ["pan", "✥ Pan"], [
 function startingRotation(scene: TacticalScene): Rotation { const area = contextArea(scene); return scene.context?.kind === "pitch" && area.width > area.length ? 270 : 0; }
 
 /** Production authoring surface uses the same world projection/drawing primitives as saved coaching guides. */
-export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, saveLabel }: { initial: TacticalScene; readOnly: boolean; onDirty: (dirty: boolean) => void; onSave: (scene: TacticalScene) => Promise<void>; canSave: boolean; saveLabel: string }) {
+export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, saveLabel, presentation, dirtyBaseline }: { initial: TacticalScene; readOnly: boolean; onDirty: (dirty: boolean) => void; onSave: (scene: TacticalScene) => Promise<void>; canSave: boolean; saveLabel: string; presentation?: "coaching"; dirtyBaseline?: TacticalScene }) {
+  const coaching = presentation === "coaching", [propertiesOpen, setPropertiesOpen] = useState(false);
   const [history, setHistory] = useState<History>(() => ({ past: [], present: initial, future: [] }));
   const scene = history.present, [selected, setSelected] = useState<string[]>([]), [tool, setTool] = useState<Tool>("select");
   const [animation, setAnimation] = useState(() => initial.stages.length > 1 || initial.stages.some((s) => s.durationSeconds !== 1 || s.hiddenEntityIds?.length || s.tracks.some((t) => t.kind !== "annotation" || t.visibleFrom > 0 || t.visibleUntil < s.durationSeconds)));
@@ -36,15 +38,18 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   const previewEntities = evaluateScene(previewScene, time).entities;
   const clock = useRef(0);
   const [team, setTeam] = useState<"a" | "b" | "neutral">("a"), [equipment, setEquipment] = useState<TacticalEntityEquipment>("cone");
-  const [grid, setGrid] = useState(5), [showGrid, setShowGrid] = useState(true), [guides, setGuides] = useState(false), [snap, setSnap] = useState(true), [objects, setObjects] = useState(false);
-  const [fit, setFit] = useState<FitMode>("context"), [camera, setCamera] = useState<Camera>(), [rotation, setRotation] = useState<Rotation>(() => startingRotation(initial)), [focus, setFocus] = useState<"delivery" | "box">("delivery");
+  const [grid, setGrid] = useState(() => coaching && coachingExerciseArea(initial).length < 40 ? 1 : 5), [showGrid, setShowGrid] = useState(true), [guides, setGuides] = useState(false), [snap, setSnap] = useState(true), [objects, setObjects] = useState(false);
+  const [fit, setFit] = useState<FitMode>(coaching ? "exercise" : "context"), [camera, setCamera] = useState<Camera>(), [rotation, setRotation] = useState<Rotation>(() => startingRotation(initial)), [focus, setFocus] = useState<"delivery" | "box">("delivery");
   const [customArea, setCustomArea] = useState<TrainingArea>(), [framing, setFraming] = useState("Overview");
+  // Hold the overview while authoring; moving an outer anchor must not change the pointer projection mid-drag.
+  const [exerciseArea, setExerciseArea] = useState(() => coaching ? coachingExerciseArea(initial) : undefined);
   const padding = customArea ? 32 : 24;
   const [example, setExample] = useState("full"), [message, setMessage] = useState("Select objects; Shift adds to selection. Drag to move. Wheel zooms around the pointer."), [expanded, setExpanded] = useState(false), [canvasHeight, setCanvasHeight] = useState(360);
   const surface = useRef<HTMLDivElement>(null), root = useRef<HTMLDivElement>(null), expandButton = useRef<HTMLButtonElement>(null), gesture = useRef<Gesture | null>(null);
-  const live = useRef({ scene, fit, camera, rotation, focus, customArea, padding });
-  useEffect(() => { live.current = { scene, fit, camera, rotation, focus, customArea, padding }; }, [scene, fit, camera, rotation, focus, customArea, padding]);
-  useEffect(() => { onDirty(JSON.stringify(scene) !== JSON.stringify(initial)); }, [scene, initial, onDirty]);
+  const live = useRef({ scene, fit, camera, rotation, focus, customArea, padding, exerciseArea });
+  useEffect(() => { live.current = { scene, fit, camera, rotation, focus, customArea, padding, exerciseArea }; }, [scene, fit, camera, rotation, focus, customArea, padding, exerciseArea]);
+  // A local acknowledged save changes the warning baseline without resetting undo history.
+  useEffect(() => { onDirty(JSON.stringify(scene) !== JSON.stringify(dirtyBaseline ?? initial)); }, [scene, initial, dirtyBaseline, onDirty]);
   /** Validate and commit one undoable edit; rejected geometry leaves the last valid scene intact. */
   const edit = (next: TacticalScene, before?: TacticalScene) => {
     try { const valid = prepareScene(next); setPlaying(false); syncStageTime(valid); setHistory((h) => recordEdit(h, valid, before)); setMessage("Diagram updated · geometry retained in metres."); }
@@ -80,7 +85,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
     return moveObjects(next, ids.filter((id) => id.startsWith("annotation:")), dx, dy, poseStage);
   }
   /** Reset only the view camera when choosing a fit target. */
-  const frame = (value: FitMode) => { setFit(value); setCamera(undefined); setCustomArea(undefined); setFraming(value === "all" ? "All content" : value === "pitch" ? "Field overview" : "Overview"); };
+  const frame = (value: FitMode, source = scene) => { setFit(coaching && value === "context" ? "exercise" : value); if (coaching) setExerciseArea(coachingExerciseArea(source)); setCamera(undefined); setCustomArea(undefined); setFraming(value === "all" ? "All content" : value === "pitch" ? "Field overview" : "Overview"); };
   /** Snapshot the selected stage's complete action, not each animation frame. Refit is always explicit. */
   function frameAction(detail = false, source = scene, id = stage?.id ?? "", orientExample = false) {
     const target = actionFrame(source, id, detail ? selected : undefined);
@@ -100,13 +105,13 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   /** Resolve the live measured SVG projection for pointer picking and keyboard camera commands. */
   function projection() {
     const el = surface.current?.querySelector(".scene-diagram"), rect = el?.getBoundingClientRect();
-    return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: live.current.padding, fit: live.current.fit, customArea: live.current.customArea, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus }) : null;
+    return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus }) : null;
   }
   /** Keep the world point beneath the pointer stationary while clamping view-only zoom. */
   function zoom(factor: number, anchor?: Point) {
     const view = projection(); if (!view) return;
     const point = anchor ?? { x: view.width / 2, y: view.height / 2 }, before = screenToWorld(point, view), zoom = Math.max(.1, Math.min(8, (live.current.camera?.zoom ?? 1) * factor));
-    const projected = fitViewport(live.current.scene, { width: view.width, height: view.height, padding: live.current.padding, fit: live.current.fit, customArea: live.current.customArea, rotation: live.current.rotation, setPieceFocus: live.current.focus, camera: { center: view.center, zoom } });
+    const projected = fitViewport(live.current.scene, { width: view.width, height: view.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, rotation: live.current.rotation, setPieceFocus: live.current.focus, camera: { center: view.center, zoom } });
     const after = screenToWorld(point, projected);
     const next = { center: { x: view.center.x + before.x - after.x, y: view.center.y + before.y - after.y }, zoom };
     if (Math.abs(next.center.x) <= 20_000 && Math.abs(next.center.y) <= 20_000) { live.current.camera = next; setCamera(next); }
@@ -224,11 +229,11 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
     const entity = ghostStarts.find((e) => `entity:${e.id}` === id), track = stage.tracks.find((t) => t.kind !== "annotation" && `entity:${t.entityId}` === id);
     return entity ? [{ id: `${entity.id}-start`, position: entity.position, label: "Start" }, ...(track && track.kind !== "annotation" ? [{ id: `${entity.id}-end`, position: track.keyframes.at(-1)!.position, label: "End" }] : [])] : [];
   }) : [];
-  return <div ref={root} className={`tactical-editor${animation ? " editor-animation" : ""}${expanded ? " editor-expanded" : ""}`} tabIndex={0} role={expanded ? "dialog" : "region"} aria-modal={expanded || undefined} aria-label="Tactical diagram editor" onKeyDown={keyboard}>
+  return <div ref={root} className={`tactical-editor${coaching ? " editor-coaching" : ""}${animation ? " editor-animation" : ""}${expanded ? " editor-expanded" : ""}`} data-properties-open={coaching && propertiesOpen ? "true" : undefined} tabIndex={0} role={expanded ? "dialog" : "region"} aria-modal={expanded || undefined} aria-label="Tactical diagram editor" onKeyDown={keyboard}>
     <div className="editor-topbar"><div className="editor-mode" aria-label="Authoring mode"><button aria-pressed={!animation} onClick={() => { setPlaying(false); setAnimation(false); setSeconds(0); clock.current = 0; }}>Layout</button><button aria-pressed={animation} onClick={() => { setPlaying(false); setAnimation(true); setTool("select"); if (!scene.stages.length && !readOnly) operate(() => appendStage(scene)); }}>Animation</button></div>
       <label>Example setup<select aria-label="Example setup" value={example} disabled={readOnly} onChange={(e) => setExample(e.target.value)}><optgroup label="Static diagrams">{editorExamples.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</optgroup><optgroup label="Animation examples">{animationExamples.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</optgroup></select></label>
-      <button disabled={readOnly} onClick={() => { const e = [...editorExamples, ...animationExamples].find((e) => e.id === example)!; edit({ ...structuredClone(e.scene), id: scene.id, revision: scene.revision, organizationId: scene.organizationId }); setSelected([]); setStageId(e.scene.stages[0]?.id ?? ""); setSeconds(0); clock.current = 0; setAnimation(example.startsWith("animation-")); frame("context"); setRotation(startingRotation(e.scene)); if (example.startsWith("animation-") && example !== "animation-full") frameAction(false, e.scene, e.scene.stages[0].id, true); }}>Apply setup</button>
-      <span className="editor-spacer" /><button disabled={readOnly || !history.past.length} onClick={() => historyStep("undo")}>↶ Undo</button><button disabled={readOnly || !history.future.length} onClick={() => historyStep("redo")}>↷ Redo</button>
+      <button disabled={readOnly} onClick={() => { const e = [...editorExamples, ...animationExamples].find((e) => e.id === example)!; edit({ ...structuredClone(e.scene), id: scene.id, revision: scene.revision, organizationId: scene.organizationId }); setSelected([]); setStageId(e.scene.stages[0]?.id ?? ""); setSeconds(0); clock.current = 0; setAnimation(example.startsWith("animation-")); frame("context", e.scene); setRotation(startingRotation(e.scene)); if (example.startsWith("animation-") && example !== "animation-full") frameAction(false, e.scene, e.scene.stages[0].id, true); }}>Apply setup</button>
+      {coaching && <button type="button" aria-expanded={propertiesOpen} aria-controls="local-editor-properties" onClick={() => setPropertiesOpen(open => !open)}>{propertiesOpen ? "Hide properties" : "Properties"}</button>}<span className="editor-spacer" /><button disabled={readOnly || !history.past.length} onClick={() => historyStep("undo")}>↶ Undo</button><button disabled={readOnly || !history.future.length} onClick={() => historyStep("redo")}>↷ Redo</button>
       <button className="calendar-primary" disabled={!canSave} onClick={() => { setPlaying(false); void onSave(scene); }}>{saveLabel}</button></div>
     <div className="editor-layout"><section className="editor-canvas-column" aria-label="Drawing workspace">
       <div className="editor-tools" role="toolbar" aria-label="Drawing tools">{tools.map(([id, label]) => <button key={id} aria-pressed={tool === id} disabled={readOnly && !["select", "pan"].includes(id) || animation && ["player", "ball", "equipment"].includes(id)} onClick={() => setTool(id)}>{label}</button>)}</div>
@@ -236,14 +241,14 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
         <label>Camera rotation<select aria-label="Camera rotation" value={rotation} onChange={(e) => { setRotation(Number(e.target.value) as Rotation); setCamera(undefined); }}>{[0, 90, 180, 270].map((v) => <option key={v} value={v}>{v}°</option>)}</select></label>
         {scene.context?.kind === "pitch" && scene.context.region === "set-piece" && <label>Focus<select aria-label="Set-piece focus" value={focus} onChange={(e) => { setFocus(e.target.value as typeof focus); frame("context"); }}><option value="delivery">Delivery + box</option><option value="box">Penalty box</option></select></label>}
         <span className="editor-spacer" /><button onClick={() => zoom(.8)} aria-label="Zoom out">−</button><button onClick={() => zoom(1.25)} aria-label="Zoom in">+</button><button ref={expandButton} onClick={() => setExpanded(!expanded)}>{expanded ? "Exit board" : "Expand board"}</button></div>
-      <div ref={surface} className={`editor-surface editor-tool-${tool}`} style={{ height: canvasHeight }}>
-        <SceneDiagram scene={scene} title="Editable tactical diagram" options={{ padding, fit, customArea, camera, rotation, setPieceFocus: focus, seconds: time, poseStageId: animation && !playing ? stage?.id : undefined, gridMetres: showGrid ? grid : undefined, guides, labels: true, paths: animation ? paths : "stage", selectedIds: selected, ghosts: ghostPositions }} interaction={{ down, move, up, cancel }} />
+      <div ref={surface} className={`editor-surface editor-tool-${tool}`} style={coaching ? undefined : { height: canvasHeight }}>
+        <SceneDiagram scene={scene} title="Editable tactical diagram" options={{ padding, fit, paint: coaching ? "coaching-light" : undefined, exerciseArea, customArea, camera, rotation, setPieceFocus: focus, seconds: time, poseStageId: animation && !playing ? stage?.id : undefined, gridMetres: showGrid ? grid : undefined, guides, labels: true, paths: animation ? paths : "stage", selectedIds: selected, ghosts: ghostPositions }} interaction={{ down, move, up, cancel }} />
       </div>
       <div className="editor-status"><span>{animation ? `${framing}${camera ? " · manual" : ""}` : "Blue / red · yellow neutral"}</span><span>→ Pass · ⇢ Run · Press · ↝ Rotation</span><span>{scene.entities.length} objects · {selected.length} selected · {Math.round((camera?.zoom ?? 1) * 100)}% · {rotation}°</span></div>
       {animation && <AnimationTimeline scene={scene} selected={stage?.id ?? ""} seconds={time} playing={playing} speed={speed} disabled={readOnly} onSeek={seek} onStage={(id) => { const r = stageRanges(scene).find((s) => s.stage.id === id)!; seek(r.start, false); setStageId(id); }} onPlay={() => { if (playing) setPlaying(false); else { clock.current = time >= duration ? 0 : time; setSeconds(clock.current); setPlaying(true); } }} onRestart={() => seek(0)} onSpeed={setSpeed} onAdd={() => { try { const next = appendStage(scene); edit(next); const r = stageRanges(next).at(-1)!; setStageId(r.stage.id); clock.current = r.start; setSeconds(r.start); } catch { setMessage("Stage limit reached."); } }} />}
       <p role="status" className="editor-feedback">{message}</p>
       <details className="editor-object-list"><summary>Objects & keyboard selection · {scene.entities.length} anchors</summary><div>{previewEntities.map((e) => <button key={e.id} data-object-id={e.id} aria-pressed={selected.includes(`entity:${e.id}`)} onClick={(event) => setSelected(event.shiftKey ? [...new Set([...selected, `entity:${e.id}`])] : [`entity:${e.id}`])}>{e.kind === "player" ? `${e.team.toUpperCase()} #${e.number}` : e.kind === "equipment" ? e.equipment : "Ball"} · {e.position.x.toFixed(1)}, {e.position.y.toFixed(1)} m</button>)}{(animation ? stage : scene.stages[0])?.tracks.filter((t) => t.kind === "annotation").map((t) => t.kind === "annotation" && <button key={t.id} aria-pressed={selected.includes(`annotation:${t.id}`)} onClick={() => setSelected([`annotation:${t.id}`])}>{t.annotation.kind === "arrow" ? `${t.annotation.movement} route` : t.annotation.kind === "area" ? t.annotation.label : t.annotation.text}</button>)}</div></details>
-    </section><aside className="editor-inspector" aria-label="Contextual properties">
+    </section><aside id={coaching ? "local-editor-properties" : undefined} hidden={coaching && !propertiesOpen} className="editor-inspector" aria-label="Contextual properties">
       <fieldset disabled={readOnly || playing}>{animation && <AnimationProperties scene={scene} stageId={stage?.id ?? ""} selected={selected} seconds={time} onSeekPose={(value) => seek(value, false)} operate={operate} />}<section><h2>Object tools</h2><div className="editor-row"><label>New team<select aria-label="New player team" value={team} disabled={animation} onChange={(e) => setTeam(e.target.value as typeof team)}><option value="a">Blue</option><option value="b">Red</option><option value="neutral">Neutral</option></select></label><label>Equipment<select aria-label="Equipment kind" value={equipment} disabled={animation} onChange={(e) => setEquipment(e.target.value as TacticalEntityEquipment)}>{["cone", "pole", "goal", "mannequin", "marker", "ladder"].map((k) => <option key={k}>{k}</option>)}</select></label></div>
         <button disabled={["select", "pan"].includes(tool)} onClick={() => { const view = projection(); if (view) addAt(snapped(view.center, view)); }}>Insert at centre</button>
         <button disabled={!selected.length} onClick={() => { operate(() => removeObjects(scene, selected, animation ? stage?.id : undefined)); setSelected([]); }}>Delete selected</button>{animation && <p className="calendar-muted">Use Layout to add players, balls and equipment. Overlays belong to the selected stage.</p>}</section>

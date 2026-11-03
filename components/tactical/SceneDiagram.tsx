@@ -1,12 +1,11 @@
 "use client";
 
-import { createElement, useEffect, useId, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
 import type { Projection } from "@/lib/tactical/viewport";
-import { drawScene, type DrawingOptions, type SvgNode, type SceneDrawing } from "@/lib/tactical/drawing";
+import { drawScene, type DrawingOptions, type SceneDrawing } from "@/lib/tactical/drawing";
+import { renderDrawingNode } from "./DrawingNodes";
 import type { TacticalScene } from "@/lib/domain/tactical-scene";
 
-/** Adapt the controlled drawing primitives to React SVG elements without interpreting label text as markup. */
-function renderNode(n: SvgNode, key: number): React.ReactNode { return createElement(n.tag, { ...n.attrs, key }, n.text ?? n.children?.map(renderNode)); }
 
 /** Read-only adapter. ResizeObserver changes projection only; scene IDs, revisions and metre positions remain untouched. */
 export type DiagramPointer = (event: PointerEvent<HTMLDivElement>, view: Projection) => void;
@@ -27,7 +26,7 @@ export function SceneDiagram({ scene, title, options = {}, interaction }: { scen
     {drawing ? <>
     <svg role="img" aria-labelledby={`${id}-title ${id}-desc`} width="100%" height="100%" viewBox={`0 0 ${size.width} ${size.height}`} overflow="hidden">
       <title id={`${id}-title`}>{title}</title><desc id={`${id}-desc`}>Scene {scene.id}, revision {scene.revision}. Metres. {scene.field.length} by {scene.field.width}. Snapshot {drawing.seconds} seconds. {drawing.stage ?? "Static scene"}. {drawing.clippedEntities} cropped markers. {drawing.outsideField} anchors outside pitch. {drawing.labelCollisions} label overlaps.</desc>
-      {drawing.nodes.map(renderNode)}
+      {drawing.nodes.map(renderDrawingNode)}
     </svg>
     <span className="scene-diagram-caption">{scene.field.length} × {scene.field.width} m · {drawing.gridSpacing ? `${drawing.gridSpacing} m grid` : "Grid off"} · {drawing.clippedEntities} cropped · r{scene.revision}</span>
     </> : <div className="scene-diagram-error" role="alert">Diagram unavailable: {errorMessage}</div>}

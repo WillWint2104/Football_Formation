@@ -4,8 +4,15 @@ import "../calendar/calendar.css";
 import "../sessions/sessions.css";
 import "./designer.css";
 import "./refinement.css";
+import "./package-import.css";
+import "./activity-diagrams.css";
+import "../tactical-editor/editor.css";
+import "./local-authoring.css";
+import "./light-foundation.css";
+import "./tactical-workspace.css";
+import "./diagram-print.css";
 
-export const metadata: Metadata = { title: "JSON Session Designer | Football Formation" };
+export const metadata: Metadata = { title: "Session Designer | Football Formation" };
 
 /** Portable authoring has no authenticated API, organisation or hosted-service dependency. */
 export default function SessionDesignerPage() { return <SessionDesigner />; }

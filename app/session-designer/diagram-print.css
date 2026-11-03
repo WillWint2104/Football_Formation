@@ -1,0 +1,78 @@
+/* B5b: only the existing Session Designer document. No editor or application theme changes. */
+.designer-print .designer-plan-header > div:last-of-type { flex:1; min-width:0; }
+.designer-print .designer-plan-document-label { font-size:11px; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0; }
+.designer-print .designer-plan-overview-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:24px; }
+.designer-print .designer-plan-equipment-summary { padding-top:24px; }
+.designer-print .designer-plan-equipment-summary ul { display:flex; flex-wrap:wrap; gap:3px 16px; list-style:none; padding:0; }
+.designer-print .designer-plan-equipment-summary li { margin:0; }
+.designer-print .designer-plan-equipment-summary .designer-plan-muted { margin-top:7px; }
+.designer-print .designer-plan-activity { break-inside:auto; }
+.designer-print .designer-plan-practice-grid { display:block; }
+.designer-print .designer-plan-split .designer-plan-practice-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:20px; align-items:start; }
+.designer-print .designer-plan-split .designer-plan-setup { display:block; margin-top:25px; padding:14px; }
+.designer-print .designer-plan-split .designer-plan-setup section + section { margin-top:16px; }
+.designer-print .designer-plan-split .designer-plan-setup dl { display:block; }
+.designer-print .designer-plan-split .designer-plan-setup dd { margin:0 0 7px; }
+.designer-print .designer-plan-balanced .designer-plan-practice-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.designer-print .designer-plan-balanced .designer-plan-setup dl { display:grid; grid-template-columns:1fr 1fr; }
+.designer-print .designer-plan-setup-supplements { grid-template-columns:1fr 1fr 1.2fr; }
+.designer-print .designer-plan-diagram-row { margin-bottom:16px; break-inside:avoid-page; }
+.designer-print .designer-plan-diagram-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.designer-print .designer-plan-diagram-pair > .designer-plan-setup { display:block; align-self:start; margin-top:25px; }
+.designer-print .designer-plan-diagram-pair > .designer-plan-setup section + section { margin-top:16px; }
+.designer-print .designer-plan-diagram { margin:0; min-width:0; break-inside:avoid-page; }
+.designer-print .designer-plan-diagram figcaption { padding:0 0 7px; break-after:avoid; font-size:14px; color:#1e3042; }
+.designer-print .designer-print-scene { display:block; width:100%; height:auto; border:1px solid #64855e; background:#80ad79; }
+.designer-print .designer-plan-diagram-scale,.designer-print .designer-plan-trace { color:#53657a; font-size:11px; line-height:1.4; margin:4px 0 0; overflow-wrap:anywhere; }
+.designer-print .designer-print-unavailable { border:1px solid #b98434; border-left:4px solid #b98434; background:#fff8e9; padding:14px; }
+.designer-print .designer-print-unavailable strong { font-size:14px; }
+.designer-print .designer-print-unavailable p { margin-top:8px; }
+/* Native Chromium margin boxes: same browser print flow, no second pagination engine. */
+@page designer-plan {
+  size:A4;
+  margin:12mm 13mm 18mm;
+  @bottom-left { content:"FOOTBALL FORMATION  /  COACHING PLAN"; font-family:Arial,sans-serif; font-size:7.5pt; color:#53657a; border-top:.5pt solid #c7d2db; padding-top:2.5mm; vertical-align:top; width:70%; }
+  @bottom-right { content:"Page " counter(page) " of " counter(pages); font-family:Arial,sans-serif; font-size:8pt; color:#1e3042; border-top:.5pt solid #c7d2db; padding-top:2.5mm; vertical-align:top; width:30%; text-align:right; }
+}
+@media print {
+  .designer-print .designer-plan-header { padding:3mm 4mm; gap:3mm; border-bottom-width:.7mm; }
+  .designer-print .designer-plan-header h1 { font-size:18pt; margin:1mm 0; }
+  .designer-print .designer-plan-document-label { font-size:7.5pt; }
+  .designer-print .designer-plan-body { padding-top:3mm; }
+  .designer-print .designer-plan-overview-grid { gap:5mm; }
+  .designer-print .designer-plan-objectives,.designer-print .designer-plan-equipment-summary,.designer-print .designer-plan-sequence { padding-top:2.5mm; }
+  .designer-print .designer-plan-overview-grid h2,.designer-print .designer-plan-sequence h2 { font-size:11pt; margin-bottom:1.5mm; }
+  .designer-print .designer-plan-facts { padding-bottom:2mm; gap:3mm; }
+  .designer-print .designer-plan-facts strong { font-size:9.5pt; }
+  .designer-print .designer-plan-overview-grid li { margin:.5mm 0; }
+  .designer-print .designer-plan-equipment-summary .designer-plan-muted { font-size:7.5pt; line-height:1.3; margin-top:1.5mm; }
+  .designer-print .designer-plan-sequence table { font-size:8.5pt; }
+  .designer-print .designer-plan-sequence :is(th,td) { padding:1mm; }
+  .designer-print .designer-plan-activity,.designer-print .designer-plan-illustrated { break-before:auto; break-inside:auto; margin-top:4mm; padding-top:3mm; border-top:1.2pt solid #17324d; }
+  .designer-print .designer-plan-activity > header { break-after:avoid-page; padding-bottom:2.5mm; }
+  .designer-print .designer-plan-activity > header h2 { font-size:14pt; }
+  .designer-print .designer-plan-activity > header > strong { font-size:10.5pt; }
+  .designer-print .designer-plan-number { width:6.5mm; height:6.5mm; }
+  .designer-print .designer-plan-split .designer-plan-practice-grid { gap:4mm; break-inside:avoid-page; }
+  .designer-print .designer-plan-split .designer-plan-setup { margin-top:6mm; padding:2.5mm; }
+  .designer-print .designer-plan-split .designer-plan-setup section + section { margin-top:3mm; }
+  .designer-print .designer-plan-split .designer-plan-setup dd { margin:0 0 1.5mm; }
+  .designer-print .designer-plan-diagram-pair > .designer-plan-setup { margin-top:6mm; }
+  .designer-print .designer-plan-diagram-pair > .designer-plan-setup section + section { margin-top:3mm; }
+  .designer-print .designer-plan-diagram-row { margin-bottom:3mm; }
+  .designer-print .designer-plan-diagram-pair { gap:4mm; }
+  .designer-print .designer-plan-diagram figcaption { padding:0 0 1.5mm; font-size:9.5pt; }
+  .designer-print .designer-plan-diagram-scale,.designer-print .designer-plan-trace { font-size:7.5pt; margin:1mm 0 0; }
+  .designer-print .designer-plan-setup { break-inside:avoid-page; padding:2mm 3mm; margin-bottom:3mm; }
+  .designer-print .designer-plan-setup-long { display:block; break-inside:auto; }
+  .designer-print .designer-plan-setup dl,.designer-print .designer-plan-setup li { font-size:9pt; }
+  .designer-print .designer-print-unavailable { padding:2.5mm; font-size:9.5pt; }
+  .designer-print .designer-print-unavailable strong { font-size:10pt; }
+  .designer-print .designer-plan-section { break-inside:auto; margin-bottom:2.5mm; }
+  .designer-print .designer-plan-section h3 { break-after:avoid-page; font-size:10.5pt; }
+  .designer-print .designer-plan-section li { break-inside:avoid-page; orphans:2; widows:2; margin:1mm 0; }
+  .designer-print .designer-plan-delivery:not(.designer-plan-long),.designer-print .designer-plan-coaching:not(.designer-plan-long) { break-inside:avoid-page; }
+  .designer-print .designer-plan-long { display:block; }
+  .designer-print .designer-plan-coaching .designer-plan-section { margin-bottom:0; }
+  .designer-print .designer-plan-footer { display:none; }
+}

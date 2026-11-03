@@ -1,0 +1,37 @@
+.session-designer .designer-import-modes{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.session-designer .designer-import-modes button[aria-pressed=true]{border-color:var(--color-shell-accent);color:var(--color-shell-accent);background:var(--color-shell-active)}
+.session-designer .designer-package-workflow{border:1px solid var(--color-shell-edge);border-radius:5px;padding:24px;background:var(--color-shell);font-size:15px;line-height:1.6}
+.session-designer .designer-package-workflow>header{margin-bottom:20px;max-width:920px}
+.session-designer .designer-package-workflow h2{font-size:24px;font-weight:750;margin-bottom:6px}
+.session-designer .designer-package-workflow h3{font-size:20px;font-weight:700;overflow-wrap:anywhere}
+.session-designer .designer-package-workflow h4{font-size:16px;font-weight:700}
+.session-designer .designer-package-workflow p{font-size:14px;margin:8px 0;overflow-wrap:anywhere}
+.session-designer .designer-package-workflow>header p{color:var(--color-shell-muted)}
+.session-designer .designer-package-workflow>p[role=status]{border-left:3px solid var(--color-shell-accent);padding:10px 14px;background:var(--color-shell-panel);margin-bottom:20px}
+.session-designer .designer-package-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.session-designer .designer-package-main{min-width:0}
+.session-designer .designer-package-workflow .designer-import-preview{margin-top:0}
+.session-designer .designer-package-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.session-designer .designer-package-metrics>div{border:1px solid var(--color-shell-edge);border-radius:4px;padding:12px}
+.session-designer .designer-package-metrics dt{font-size:14px;color:var(--color-shell-muted)}
+.session-designer .designer-package-metrics dd{font-size:25px;font-weight:750;color:var(--color-shell-accent)}
+.session-designer .designer-package-namespace code,.session-designer .designer-package-receipt code{overflow-wrap:anywhere}
+.session-designer .designer-package-workflow details{margin:16px 0;border-top:1px solid var(--color-shell-edge);border-bottom:1px solid var(--color-shell-edge);padding:12px 0}
+.session-designer .designer-package-workflow summary{cursor:pointer;font-weight:650}
+.session-designer .designer-package-table{max-height:280px;overflow:auto;margin-top:12px}
+.session-designer .designer-package-table table{width:100%;border-collapse:collapse;font-size:14px}
+.session-designer .designer-package-table :is(th,td){text-align:left;vertical-align:top;padding:8px;border-bottom:1px solid var(--color-shell-edge);overflow-wrap:anywhere}
+.session-designer .designer-package-confirm{display:flex;flex-direction:row;align-items:flex-start;gap:10px;font-size:15px;margin:20px 0}
+.session-designer .designer-package-confirm input{width:18px;height:18px;flex-shrink:0;margin-top:4px;accent-color:var(--color-shell-accent)}
+.session-designer .designer-package-library{padding:18px;border:1px solid var(--color-shell-edge);border-radius:5px;background:var(--color-shell-panel);min-width:0}
+.session-designer .designer-package-library>ul{list-style:none;max-height:280px;overflow:auto;margin:12px 0}
+.session-designer .designer-package-library li{margin:8px 0}
+.session-designer .designer-package-library li button{width:100%;display:flex;flex-direction:column;text-align:left;gap:5px}
+.session-designer .designer-package-library code{font-size:13px;overflow-wrap:anywhere;white-space:normal}
+.session-designer .designer-package-library li span{font-size:14px;color:var(--color-shell-muted)}
+.session-designer .designer-package-library section{border-top:1px solid var(--color-shell-edge);padding-top:16px;margin-top:16px}
+.session-designer .designer-package-library section button{margin-top:8px;width:100%}
+.session-designer .designer-package-receipt{margin-top:24px;border:1px solid var(--color-shell-accent);padding:20px;border-radius:5px;background:var(--color-shell-panel)}
+.session-designer .designer-package-recovery{padding:14px;border-left:3px solid var(--color-shell-accent);background:var(--color-shell);margin-top:16px}
+.session-designer .designer-package-recovery button{margin:8px 8px 0 0}
+@media(min-width:1024px) and (max-width:1500px){.session-designer .designer-package-layout{grid-template-columns:minmax(0,1fr) 260px;gap:18px}.session-designer .designer-package-workflow{padding:18px}.session-designer .designer-package-metrics{gap:8px}.session-designer .designer-package-metrics>div{padding:10px}}
