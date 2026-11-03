@@ -23,7 +23,7 @@ const tools: [Tool, string][] = [["select", "↖ Select"], ["pan", "✥ Pan"], [
 function startingRotation(scene: TacticalScene): Rotation { const area = contextArea(scene); return scene.context?.kind === "pitch" && area.width > area.length ? 270 : 0; }
 
 /** Production authoring surface uses the same world projection/drawing primitives as saved coaching guides. */
-export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, saveLabel, presentation }: { initial: TacticalScene; readOnly: boolean; onDirty: (dirty: boolean) => void; onSave: (scene: TacticalScene) => Promise<void>; canSave: boolean; saveLabel: string; presentation?: "coaching" }) {
+export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, saveLabel, presentation, dirtyBaseline }: { initial: TacticalScene; readOnly: boolean; onDirty: (dirty: boolean) => void; onSave: (scene: TacticalScene) => Promise<void>; canSave: boolean; saveLabel: string; presentation?: "coaching"; dirtyBaseline?: TacticalScene }) {
   const coaching = presentation === "coaching", [propertiesOpen, setPropertiesOpen] = useState(false);
   const [history, setHistory] = useState<History>(() => ({ past: [], present: initial, future: [] }));
   const scene = history.present, [selected, setSelected] = useState<string[]>([]), [tool, setTool] = useState<Tool>("select");
@@ -48,7 +48,8 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   const surface = useRef<HTMLDivElement>(null), root = useRef<HTMLDivElement>(null), expandButton = useRef<HTMLButtonElement>(null), gesture = useRef<Gesture | null>(null);
   const live = useRef({ scene, fit, camera, rotation, focus, customArea, padding, exerciseArea });
   useEffect(() => { live.current = { scene, fit, camera, rotation, focus, customArea, padding, exerciseArea }; }, [scene, fit, camera, rotation, focus, customArea, padding, exerciseArea]);
-  useEffect(() => { onDirty(JSON.stringify(scene) !== JSON.stringify(initial)); }, [scene, initial, onDirty]);
+  // A local acknowledged save changes the warning baseline without resetting undo history.
+  useEffect(() => { onDirty(JSON.stringify(scene) !== JSON.stringify(dirtyBaseline ?? initial)); }, [scene, initial, dirtyBaseline, onDirty]);
   /** Validate and commit one undoable edit; rejected geometry leaves the last valid scene intact. */
   const edit = (next: TacticalScene, before?: TacticalScene) => {
     try { const valid = prepareScene(next); setPlaying(false); syncStageTime(valid); setHistory((h) => recordEdit(h, valid, before)); setMessage("Diagram updated · geometry retained in metres."); }

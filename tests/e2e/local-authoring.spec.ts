@@ -176,3 +176,20 @@ test("incomplete activity text stays editable and prevents starting a candidate"
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue(""); expect(await read(page, origin.documentId)).toEqual(origin);
   expect(new URL(page.url()).searchParams.has("localAuthoring")).toBe(false);
 });
+
+test("undo after a local save still warns before discarding newer editor state", async ({ page }) => {
+  const origin = await open(page); await edit(page);
+  await page.getByRole("button", { name: "Layout", exact: true }).click();
+  await page.getByRole("button", { name: "● Player", exact: true }).click();
+  await page.getByRole("button", { name: "Insert at centre", exact: true }).click();
+  await save(page);
+  await page.getByRole("button", { name: "↶ Undo", exact: true }).click();
+  const confirmations: string[] = [];
+  page.once("dialog", async dialog => { confirmations.push(dialog.message()); await dialog.dismiss(); });
+  await host(page).getByRole("button", { name: "Return to Activity", exact: true }).click();
+  expect(confirmations).toEqual(["Return to the last saved local copy? Unsaved editor changes will be discarded; the activity is unchanged."]);
+  await expect(host(page).getByRole("button", { name: "Save Local Copy", exact: true })).toBeVisible();
+  expect(await read(page, origin.documentId)).toEqual(origin);
+  await save(page); await review(page);
+  await expect(host(page).locator(".scene-diagram")).toHaveAttribute("data-revision", "2");
+});

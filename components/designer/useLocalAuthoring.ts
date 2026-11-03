@@ -10,7 +10,7 @@ import { AUTHORING_QUERY, acceptedLocalPackage, beginLocalAuthoring, candidatePa
 import type { useDesignerDraft } from "./useDesignerDraft";
 import type { ActivityDiagramsController } from "./useActivityDiagrams";
 
-type Work = { context: LocalAuthoringContext; initial: TacticalScene; base: SessionPackage; view: "editor" | "review" };
+type Work = { context: LocalAuthoringContext; initial: TacticalScene; dirtyBaseline?: TacticalScene; base: SessionPackage; view: "editor" | "review" };
 function returnReference(context: LocalAuthoringContext | null) {
   const url = new URL(window.location.href);
   if (context) url.searchParams.set(AUTHORING_QUERY, encodeAuthoringContext(context)); else url.searchParams.delete(AUTHORING_QUERY);
@@ -80,7 +80,7 @@ export function useLocalAuthoring(draft: ReturnType<typeof useDesignerDraft>, di
       if (!result.ok) throw new Error(`${result.error.message} Saving is paused. A missing acknowledgement may still leave a discoverable saved plan; do not retry blindly.`);
       const context = { ...captured.context, candidate: snapshotRef(result.value) };
       // Keep acknowledged identity even if a late source conflict prevents returning. No source write here.
-      live(token); returnReference(context); setWork({ ...captured, context }); setRecover(context);
+      live(token); returnReference(context); setWork({ ...captured, context, dirtyBaseline: structuredClone(scene) }); setRecover(context);
       await unchanged(context); await verifyLocalCandidate(repository, context);
       setBackup(null); setDirty(false); setMessage(`Local copy saved · revision ${result.value.package.scenes.filter((s) => s.id === context.sceneId).length}. The activity attachment is unchanged. Return to review it.`);
     });
