@@ -41,4 +41,4 @@ The selected activity uses the existing `SceneDiagram`, responsive metre project
 
 Light working panels and contextual controls are scoped to B3a. The existing shell, branding, activity rail, legacy authoring controls and printed documents remain compatible. Saved-plan snapshots and text drafts have separate status messages, with a visible warning when text differs from the complete snapshot.
 
-PDF diagrams, Tactical Editor save-and-return, the full light theme, Figma work and hosted infrastructure remain outside this checkpoint. PDF output still contains reference information rather than embedded tactical diagrams.
+The subsequent C3 checkpoints add local Tactical Editor save-and-return, the light coaching workspace and A4 printing through the shared renderer. Printed diagrams come from a verified complete local plan at their exact saved revisions and representative times. Unavailable pins retain their reference details with an explicit notice; no alternate scene is substituted. Hosted infrastructure remains separate.

@@ -13,6 +13,41 @@ const panel = (page: Page) => page.getByRole("region", { name: "Activity tactica
 const diagram = (page: Page) => panel(page).locator(".scene-diagram");
 async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
 
+test("normalized complete plans recover without discarding raw whitespace in the text draft", async ({ page }) => {
+  const source = await seed(page), id = await openPlan(page, source.documentId);
+  await coaching(page);
+  await page.getByLabel("Activity name", { exact: true }).fill("5v2 Rondo  ");
+  await page.getByLabel("Setup & delivery instructions", { exact: true }).fill("Keep possession.\nRotate defenders.\n\n");
+  await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click();
+  await expect(workspace(page)).toContainText("Complete local plan saved");
+  await expect(workspace(page).locator(".diagram-dirty")).toHaveCount(0);
+  const snapshot = await stored(page, id);
+  expect(snapshot.ok && snapshot.value.status === "ready" && snapshot.value.snapshot.package.document.session.activities[0].name).toBe("5v2 Rondo");
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("5v2 Rondo  ");
+  await page.reload(); await expect(workspace(page)).toContainText("Complete local plan recovered");
+  await expect(page.getByRole("region", { name: "Diagram recovery", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await coaching(page);
+  await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("5v2 Rondo  ");
+  await expect(diagram(page)).toHaveAttribute("data-revision", "1");
+  await expect(workspace(page).getByRole("button", { name: "Save complete plan", exact: true })).toBeEnabled();
+  expect(await stored(page, source.documentId)).toEqual({ ok: true, value: { status: "ready", snapshot: source } });
+});
+
+test("opening the source browser keeps attached-preview labels until a candidate is chosen", async ({ page }) => {
+  const source = await seed(page); await openPlan(page, source.documentId);
+  await panel(page).getByRole("button", { name: "Add / replace diagram", exact: true }).click();
+  await expect(panel(page).locator(".diagram-canvas-toolbar strong")).toHaveText("Attached diagram 1");
+  await expect(diagram(page).locator("svg>title")).toHaveText("Attached diagram: 5v2 Rondo");
+  await panel(page).getByRole("button", { name: "Expand diagram", exact: true }).click();
+  const expanded = page.getByRole("dialog", { name: "Expanded activity diagram", exact: true });
+  await expect(expanded).not.toContainText("Source preview"); await page.keyboard.press("Escape");
+  await page.getByLabel("Local scene package", { exact: true }).selectOption(source.documentId);
+  await page.getByLabel("Scene revision", { exact: true }).selectOption("1");
+  await page.getByLabel("Representative seconds", { exact: true }).fill("4");
+  await expect(panel(page).locator(".diagram-canvas-toolbar strong")).toHaveText("Source preview · not yet attached");
+  await expect(diagram(page)).toHaveAttribute("data-revision", "2");
+});
+
 async function seed(page: Page) {
   const p = attachmentExample();
   const result = await page.evaluate((p) => window.companionTest.browserCompanionRepository().create(p), p);

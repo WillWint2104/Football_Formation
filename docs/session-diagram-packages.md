@@ -1,10 +1,11 @@
 # C3 B1 - Optional plan-and-diagrams package
 
-B1 is a pure contract module in `lib/designer/package.ts`. It is deliberately not
-connected to the Session Designer import/download buttons, drafts, browser
-storage, Tactical Editor, authenticated services or PDF rendering. The existing
-`football-formation-session` v1, native TacticalScene v1 and legacy draft formats
-remain unchanged. B2 persistence needs separate approval.
+B1 is a pure contract module in `lib/designer/package.ts`. The integrated C3
+workflow reuses it for explicit Session Designer package import/export, B2 local
+storage, exact activity attachments, local Tactical Editor save-and-return and
+verified A4 diagram rendering. It does not access authenticated services. The
+existing `football-formation-session` v1, native TacticalScene v1 and legacy draft
+formats remain unchanged.
 
 ## Public API
 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { browserCompanionRepository } from "@/lib/designer/companion-indexeddb";
 import type { CompanionEntry, RecoveredCompanion } from "@/lib/designer/companion";
 import { attachmentCandidate, sameDocument, type AttachmentEdit } from "@/lib/designer/attachments";
-import { designerErrors, type DesignerDocument } from "@/lib/designer/contract";
+import { cleanDocument, designerErrors, type DesignerDocument } from "@/lib/designer/contract";
 import { serializeSessionPackageJson, type SessionPackage } from "@/lib/designer/package";
 import type { useDesignerDraft } from "./useDesignerDraft";
 
@@ -47,7 +47,7 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
       if (!alive || version !== generation.current) return;
       if (result.ok && result.value.status === "ready") {
         const saved = result.value.snapshot;
-        if (Number.isSafeInteger(expected) && expected === saved.ownerVersion && sameDocument(getCurrent(), saved.package.document)) {
+        if (Number.isSafeInteger(expected) && expected === saved.ownerVersion && sameDocument(cleanDocument(getCurrent()), saved.package.document)) {
           activeRef.current = saved; setActive(saved); setMessage(`Complete local plan recovered · owner v${saved.ownerVersion}.`); return;
         }
         setRecovery(saved); setMessage("The linked package version or text draft differs. Neither has been overwritten. Choose a recovery action.");
@@ -204,7 +204,7 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
       throw new Error("The source association changed. Review the saved local plan before recovery.");
     bind(origin); setRecovery(null); setBlocked(false);
   }
-  const dirty = active !== null && !sameDocument(draft.document, active.package.document);
+  const dirty = active !== null && !sameDocument(cleanDocument(draft.document), active.package.document);
   const canRecoverText = blocked && recovery !== null && typeof window !== "undefined" && new URL(window.location.href).searchParams.get("localPlan") === recovery.documentId;
   /** Read-only verification for print. Never accepts a newer owner, repairs data or opens a recovery snapshot. */
   async function preparePrintSource(): Promise<{ library: SessionPackage | null; unavailable?: string }> {
