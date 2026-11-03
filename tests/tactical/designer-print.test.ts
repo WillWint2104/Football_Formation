@@ -50,3 +50,39 @@ test("print drawing escapes authored labels and retains football proportions in 
   assert.ok(Math.abs(Number(field.attrs.width)/Number(field.attrs.height)-105/68)<1e-8);
   const svg=serializeDrawing(d.drawing,'<script>alert("no")</script>');assert.ok(!svg.includes("<script>"));assert.ok(svg.includes("&lt;script&gt;"));
 });
+
+test("print composition pairs adjacent readable small diagrams without changing world poses or attachment order",()=>{
+  const p=attachmentExample(),a=p.document.session.activities[0];
+  a.diagrams=[0,4,8].map(representativeSeconds=>({scene:{id:"example-rondo",revision:1},representativeSeconds}));
+  const before=structuredClone(p),output=composePrintActivities(p.document,p)[0];
+  assert.deepEqual(output.diagrams.map(d=>d.layout),["compact","compact","compact"]);
+  assert.deepEqual(output.diagrams.map(d=>d.pin.representativeSeconds),[0,4,8]);
+  for(const d of output.diagrams)if(d.status==="ready"){
+    assert.deepEqual(d.drawing.anchors.map(a=>a.world),evaluateScene(d.resolved.scene,d.pin.representativeSeconds).entities.map(e=>e.position));
+    assert.equal(d.drawing.clippedEntities,0);assert.equal(d.drawing.labelCollisions,0);
+  }
+  assert.deepEqual(p,before);
+});
+
+test("full-pitch, missing and crowded scenes stay wide; a long equipment list never becomes an unbreakable sidebar",()=>{
+  const p=attachmentExample(),full=p.document.session.activities[1];full.diagrams.push(structuredClone(full.diagrams[0]));
+  assert.ok(composePrintActivities(p.document,p)[1].diagrams.every(d=>d.layout==="wide"));
+  const small=p.document.session.activities[0];small.equipment=Array.from({length:20},(_,i)=>({name:`Equipment ${i}`,quantity:null}));
+  assert.equal(composePrintActivities(p.document,p)[0].presentation,"wide");
+  small.equipment=[];small.diagrams.push(structuredClone(small.diagrams[0]));
+  const scene=p.scenes[0],players=scene.entities.filter(e=>e.kind==="player");players[1].position={...players[0].position};
+  // The base-pose collision must prevent pairing at the representative time.
+  small.diagrams.forEach(d=>d.representativeSeconds=0);
+  const output=composePrintActivities(p.document,p)[0];assert.ok(output.diagrams.every(d=>d.layout==="wide"));
+});
+
+test("twenty small attachments keep every ordered pin while using bounded readable pairs",()=>{
+  const p=attachmentExample(),a=p.document.session.activities[0];a.diagrams=Array.from({length:20},(_,i)=>({scene:{id:"example-rondo",revision:1},representativeSeconds:i%5}));
+  const output=composePrintActivities(p.document,p)[0];assert.equal(output.diagrams.length,20);
+  assert.deepEqual(output.diagrams.map(d=>d.pin),a.diagrams);assert.ok(output.diagrams.every(d=>d.layout==="compact"&&d.status==="ready"));
+});
+
+test("a longer running order uses a balanced first practice without changing later activity layouts or source data",()=>{
+  const p=attachmentExample();p.document.session.activities.push(...Array.from({length:3},(_,i)=>({...structuredClone(p.document.session.activities[0]),id:`extra-${i}`})));
+  const before=structuredClone(p),output=composePrintActivities(p.document,p);assert.equal(output[0].presentation,"balanced");assert.equal(output[2].presentation,"split");assert.deepEqual(p,before);
+});
