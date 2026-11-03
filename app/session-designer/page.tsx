@@ -8,8 +8,9 @@ import "./package-import.css";
 import "./activity-diagrams.css";
 import "../tactical-editor/editor.css";
 import "./local-authoring.css";
+import "./light-foundation.css";
 
-export const metadata: Metadata = { title: "JSON Session Designer | Football Formation" };
+export const metadata: Metadata = { title: "Session Designer | Football Formation" };
 
 /** Portable authoring has no authenticated API, organisation or hosted-service dependency. */
 export default function SessionDesignerPage() { return <SessionDesigner />; }

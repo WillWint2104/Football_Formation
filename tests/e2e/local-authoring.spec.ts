@@ -48,7 +48,7 @@ test("edit imported scene using real tools, append native revisions, explicitly 
   expect(await read(page, origin.documentId)).toEqual(origin); expect(first.package.document).toEqual(origin.package.document);
   expect(first.package.scenes.at(-1)!.id).not.toBe(origin.package.scenes[0].id); expect(first.package.scenes.at(-1)!.entities.length).toBe(origin.package.scenes[0].entities.length + 1);
   const saveButton = host(page).getByRole("button", { name: "Save Local Copy", exact: true }); await saveButton.hover();
-  await expect(saveButton).toHaveCSS("background-color", "rgb(215, 180, 106)");
+  await expect(saveButton).toHaveCSS("background-color", "rgb(18, 84, 155)");
   await shot(page, info, "local-editor");
   await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); await save(page);
   const saved = await read(page, firstContext.candidate.id); expect(saved.package.scenes.slice(0, first.package.scenes.length)).toEqual(first.package.scenes); expect(saved.package.scenes.at(-1)!.revision).toBe(2);

@@ -1,0 +1,73 @@
+/* B4a: route-scoped working surfaces and navigation. No renderer paint or print changes.
+ * :has follows the mounted workspace, including client navigation; there is no global theme toggle. */
+@media screen {
+  .application-shell:has(.designer-light) {
+    color-scheme: light;
+    --color-shell: #f3f6f7;
+    --color-shell-panel: #ffffff;
+    --color-shell-edge: #cbd8e0;
+    --color-shell-text: #18334b;
+    --color-shell-muted: #4d6577;
+    --color-shell-accent: #1763b6;
+    --color-shell-active: #e7f0fa;
+    --designer-navigation: #edf2f4;
+    --designer-field-surface: #f8fafb;
+    background: var(--color-shell);
+    color: var(--color-shell-text);
+  }
+  .application-shell:has(.designer-light) > aside { width:196px; background:var(--designer-navigation); }
+  .application-shell:has(.designer-light) > aside > div:first-child { padding:20px 16px; gap:10px; }
+  .application-shell:has(.designer-light) > aside > div:first-child > svg { width:28px; color:#987021; }
+  .application-shell:has(.designer-light) > aside > div:first-child > div { font-size:16px; }
+  .application-shell:has(.designer-light) > aside > p { padding-left:16px; padding-right:16px; font-size:13px; }
+  .application-shell:has(.designer-light) > aside nav { padding:12px 10px; gap:4px; }
+  .application-shell:has(.designer-light) > aside nav :is(a,[aria-disabled=true]) { min-height:44px; padding:10px; font-size:14px; gap:9px; }
+  .application-shell:has(.designer-light) > aside nav [aria-current=page] { background:var(--color-shell-accent); color:white; font-weight:600; }
+  .application-shell:has(.designer-light) > aside nav a[aria-current=page]:hover { background:#12549b; }
+  .application-shell:has(.designer-light) > aside nav a:not([aria-current]):hover { background:white; }
+  .application-shell:has(.designer-light) > aside nav [aria-disabled=true] { color:#4d6577; opacity:1; }
+  .application-shell:has(.designer-light) > div > header { background:white; }
+  .application-shell:has(.designer-light) > div > header > div { min-height:60px; }
+  #main-content:has(.designer-light) { max-width:none; padding:20px 24px; }
+  .designer-light :is(button,input,textarea,select) { font-size:14px; }
+  .designer-light :is(button,a,input,textarea,select,summary,[tabindex]):focus-visible { outline:3px solid #087a77; outline-offset:3px; }
+  .application-shell:has(.designer-light) > aside a:focus-visible { outline:3px solid #087a77; outline-offset:2px; }
+  .designer-light .calendar-primary { color:white; background:var(--color-shell-accent); }
+  .designer-light .calendar-primary:hover:not(:disabled) { color:white; background:#12549b; }
+  .designer-light .designer-heading { margin-bottom:12px; }
+  .designer-light .designer-heading h1 { font-size:28px; }
+  .designer-light .calendar-eyebrow { color:var(--color-shell-muted); font-size:12px; }
+  .designer-light .designer-draft-status { background:white; border-radius:6px; }
+  .designer-light .designer-toolbar { background:var(--color-shell); gap:10px; }
+  .designer-light .designer-toolbar nav { gap:6px; }
+  .designer-light .designer-toolbar button[aria-pressed=true] { color:white; background:var(--color-shell-accent); border-color:var(--color-shell-accent); }
+  .designer-light .designer-local-label { background:#e8f1fa; }
+  .designer-light :is(.designer-session-details,.designer-import-card,.designer-import-aside,.designer-brand-drawer,.designer-activity-nav) { background:white; border-radius:7px; }
+  .designer-light :is(.designer-json-input,.coaching-fields input,.coaching-fields textarea,.coaching-fields select,.designer-meta-fields input) { background:var(--designer-field-surface); }
+  .designer-light .designer-focused-sequence .coaching-activity-layout { grid-template-columns:240px minmax(0,1fr); gap:20px; }
+  .designer-light .designer-focused-sequence .coaching-activity-layout[data-activities-hidden=true] { grid-template-columns:minmax(0,1fr); }
+  .designer-light .designer-activity-nav { padding:12px; border-color:var(--color-shell-edge); background:var(--designer-navigation); }
+  .designer-light .designer-activity-nav > h3 { font-size:17px; }
+  .designer-light .coaching-activity-list { gap:10px; }
+  .designer-light .coaching-activity-list button { display:grid; grid-template-columns:28px minmax(0,1fr); gap:5px 10px; padding:12px 10px; min-height:104px; border:1px solid var(--color-shell-edge); border-left:4px solid transparent; background:white; color:var(--color-shell-text); text-align:left; align-content:start; }
+  .designer-light .coaching-activity-list button > span:first-child { grid-row:1 / span 3; background:#edf3f8; color:#355b76; border:1px solid #c9d9e4; border-radius:5px; width:28px; text-align:center; padding:2px 0; font-size:14px; }
+  .designer-light .coaching-activity-list button strong { font-size:15px; font-weight:600; line-height:1.4; }
+  .designer-light .coaching-activity-list button small { color:var(--color-shell-muted); font-size:14px; }
+  .designer-light .coaching-activity-list button[aria-current=step] { background:#e8f1fb; border:1px solid #6296c8; border-left:4px solid var(--color-shell-accent); color:var(--color-shell-text); }
+  .designer-light .coaching-activity-list button[aria-current=step] > span:first-child { color:white; background:var(--color-shell-accent); border-color:var(--color-shell-accent); }
+  .designer-light .designer-activity-diagram-count { grid-column:2; font-family:var(--font-inter),sans-serif; font-size:14px; color:#086c60; }
+  .designer-light .designer-activity-panel-toggle { grid-column:2; grid-row:1 / span 2; align-self:center; }
+  .designer-light .designer-selected-heading { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:12px; border-bottom:1px solid var(--color-shell-edge); margin-bottom:4px; padding-bottom:0; }
+  .designer-light .designer-selected-heading :is(p,h2) { grid-column:1; }
+  .designer-light .designer-selected-heading h2 { font-size:24px; }
+  .designer-light .designer-overview-facts { background:white; border:1px solid var(--color-shell-edge); border-radius:7px; }
+  .designer-light .designer-running-order > button { background:white; border-radius:6px; }
+  .designer-light .designer-running-order > button:hover { border-color:var(--color-shell-accent); background:#edf5fc; }
+  .designer-light .designer-running-order > button > span:first-child { border-radius:5px; background:#e7f0fa; color:var(--color-shell-accent); }
+  .designer-light :is(.designer-overview-equipment,.designer-overview-staff) { padding:18px; border:1px solid var(--color-shell-edge); border-radius:7px; background:white; }
+  .designer-light .designer-overview-warning { color:#795315; background:#fff7df; border-color:#c59d45; }
+  .designer-light :is(.designer-error,.designer-error-list) { color:#992e27; }
+  .designer-light .designer-error-list { background:#fff2ef; border-color:#b3473d; }
+  .designer-light .local-authoring-message[role=alert] { color:#992e27; background:#fff2ef; }
+  .designer-light .local-authoring-host .calendar-primary:hover { color:white; background:#12549b; }
+}
