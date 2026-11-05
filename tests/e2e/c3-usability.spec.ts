@@ -100,3 +100,23 @@ test("U03 name and duration are direct controls; known dimensions require confir
   await expect(host).toContainText("Independent Training Area");
   await page.screenshot({ path: info.outputPath("u03-confirmed-training-area.png") });
 });
+
+test("U04 drawing guidance follows the selected tool without changing the original scene", async ({ page }, info) => {
+  await importPlan(page);
+  await diagrams(page).getByRole("button", { name: "Edit Diagram", exact: true }).click();
+  const host = page.getByRole("region", { name: "Local tactical editor", exact: true });
+  await expect(host).toBeVisible();
+  const guidance = host.getByRole("status", { name: "Drawing guidance", exact: true });
+  await expect(guidance).toContainText("Drag a player");
+  await host.getByRole("button", { name: "→ Pass", exact: true }).click();
+  await expect(guidance).toContainText("Drag from passer to receiver");
+  await expect(guidance).toContainText("single click creates");
+  await host.getByRole("button", { name: "⇢ Run", exact: true }).click();
+  await expect(guidance).toContainText("end of the run");
+  await host.getByRole("button", { name: "▧ Zone", exact: true }).click();
+  await expect(guidance).toContainText("opposite corners");
+  await expect(guidance).toContainText("Esc cancels");
+  await page.screenshot({ path: info.outputPath("u04-tool-guidance.png") });
+  await host.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect(diagrams(page).locator(".scene-diagram")).toHaveAttribute("data-scene-id", attachmentExample().scenes[0].id);
+});

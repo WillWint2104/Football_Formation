@@ -1,4 +1,5 @@
 .local-authoring-host { color: var(--color-shell-text); }
+.local-authoring-host .editor-gesture-guidance { font-size:14px; line-height:1.45; padding:5px 8px; margin:0; color:#294b63; background:#edf4f7; border-bottom:1px solid #cbd8e0; }
 .session-designer .diagram-authoring-controls { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .local-authoring-host > header { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-bottom:12px; }
 .local-authoring-host h1 { font-size:24px; font-weight:700; }
