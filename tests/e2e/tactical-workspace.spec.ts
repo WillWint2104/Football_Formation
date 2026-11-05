@@ -42,7 +42,7 @@ test("diagram selection survives activity navigation; coaching panels scroll ind
   await expect(attached(page)).toHaveAttribute("data-time","4"); await expect(attached(page)).toHaveAttribute("data-revision","2");
   await page.getByRole("button",{name:"Coaching information",exact:true}).focus();await page.keyboard.press("Enter");
   const guidance=page.getByRole("region",{name:"Activity coaching information",exact:true});
-  await guidance.getByLabel("Activity name",{exact:true}).fill("Rondo · unsaved coaching text");
+  await page.getByLabel("Activity name",{exact:true}).fill("Rondo · unsaved coaching text");
   await guidance.getByLabel("Setup & delivery instructions",{exact:true}).fill(Array.from({length:60},(_,i)=>`Coaching instruction ${i+1}`).join("\n"));
   const canvasBefore=(await attached(page).boundingBox())!;
   await guidance.getByText("Notes",{exact:true}).focus(); await page.keyboard.press("Enter");
@@ -51,7 +51,7 @@ test("diagram selection survives activity navigation; coaching panels scroll ind
   await page.getByRole("button",{name:"Hide coaching information",exact:true}).click();await expect(guidance).toBeHidden();
   await page.getByRole("button",{name:"Hide activities",exact:true}).click();await expect(rail).toBeHidden();
   const toggle=page.getByRole("button",{name:"Show activities",exact:true});await toggle.focus();await page.keyboard.press("Enter");await expect(rail).toBeVisible();
-  await page.getByRole("button",{name:"Coaching information",exact:true}).click();await expect(guidance.getByLabel("Activity name",{exact:true})).toHaveValue("Rondo · unsaved coaching text");
+  await page.getByRole("button",{name:"Coaching information",exact:true}).click();await expect(page.getByLabel("Activity name",{exact:true})).toHaveValue("Rondo · unsaved coaching text");
   await expect(guidance.getByLabel("Setup & delivery instructions",{exact:true})).toHaveValue(/Coaching instruction 60/);
   expect(await page.evaluate(id=>window.companionTest.browserCompanionRepository().read(id),planId)).toEqual(before);
   await capture(page,info,"coaching-panel");

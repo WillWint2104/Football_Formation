@@ -70,3 +70,33 @@ test("U01 imported plan opens through explicit review and complete backup retain
   await expect(diagrams(page).locator(".diagram-exact-pin")).toContainText(pkg.scenes[0].id);
   await page.screenshot({ path: info.outputPath("u01-after.png") });
 });
+
+test("U03 name and duration are direct controls; known dimensions require confirmation before new authoring", async ({ page }, info) => {
+  page.once("dialog", d => d.accept());
+  await page.getByRole("button", { name: "New session", exact: true }).click();
+  await page.getByRole("button", { name: "Add activity", exact: true }).click();
+  await expect(page.getByLabel("Activity name", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Duration (minutes)", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Activity coaching information" })).toBeHidden();
+  await page.getByLabel("Activity name", { exact: true }).fill("Support in a 12 x 15 grid");
+  await page.getByLabel("Duration (minutes)", { exact: true }).fill("15");
+  await expect(diagrams(page)).toContainText("Choose Create Diagram");
+  await page.getByRole("button", { name: "Coaching information", exact: true }).click();
+  await page.getByLabel("Specify field dimensions").check();
+  await page.getByLabel("Length (m)", { exact: true }).fill("12");
+  await page.getByLabel("Width (m)", { exact: true }).fill("15");
+  page.once("dialog", async d => { expect(d.message()).toContain("12 × 15 m"); await d.dismiss(); });
+  await diagrams(page).getByRole("button", { name: "Create Diagram", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Local tactical editor", exact: true })).toHaveCount(0);
+  expect(new URL(page.url()).searchParams.has("localPlan")).toBe(false);
+  await page.screenshot({ path: info.outputPath("u03-quick-activity.png") });
+  page.once("dialog", d => d.accept());
+  await diagrams(page).getByRole("button", { name: "Create Diagram", exact: true }).click();
+  const host = page.getByRole("region", { name: "Local tactical editor", exact: true });
+  await expect(host).toBeVisible();
+  await host.getByRole("button", { name: "Properties", exact: true }).click();
+  await expect(host.getByLabel("Area length (m)")).toHaveValue("12");
+  await expect(host.getByLabel("Area width (m)")).toHaveValue("15");
+  await expect(host).toContainText("Independent Training Area");
+  await page.screenshot({ path: info.outputPath("u03-confirmed-training-area.png") });
+});

@@ -40,7 +40,7 @@ export async function exactSnapshot(repository: CompanionRepository, expected: L
   if (s.ownerVersion !== expected.version || s.sha256 !== expected.digest) throw new Error("A local plan changed in another tab. Cancel and review its saved version; no automatic merge was attempted.");
   return s;
 }
-export async function beginLocalAuthoring(origin: RecoveredCompanion, document: DesignerDocument, activityId: string, index: number | null) {
+export async function beginLocalAuthoring(origin: RecoveredCompanion, document: DesignerDocument, activityId: string, index: number | null, confirmedSize?: { length: number; width: number }) {
   const pkg = attachmentCandidate(document, origin.package), activity = pkg.document.session.activities.find((a) => a.id === activityId);
   if (!activity) throw new Error("The selected activity no longer exists.");
   if (index !== null && (!Number.isInteger(index) || !activity.diagrams[index])) throw new Error("The selected attachment no longer exists.");
@@ -50,8 +50,8 @@ export async function beginLocalAuthoring(origin: RecoveredCompanion, document: 
   const imported = original ? pkg.scenes.find((s) => s.id === original.scene.id && s.revision === original.scene.revision) : undefined;
   if (original && !imported) throw new Error("The exact original scene is missing.");
   const initial: TacticalScene = imported ? { ...structuredClone(imported), id: sceneId, revision: 1 } : {
-    schemaVersion: "1.0", id: sceneId, organizationId: namespace, revision: 1, units: "metres", field: { length: 105, width: 68 },
-    context: { kind: "pitch", region: "full", attack: "positive-x" }, entities: [], stages: [] };
+    schemaVersion: "1.0", id: sceneId, organizationId: namespace, revision: 1, units: "metres", field: confirmedSize ? { ...confirmedSize } : { length: 105, width: 68 },
+    context: confirmedSize ? { kind: "neutral", boundary: true } : { kind: "pitch", region: "full", attack: "positive-x" }, entities: [], stages: [] };
   const context: LocalAuthoringContext = { version: 1, operation, origin: snapshotRef(origin), candidate: null,
     activityId, index, original: structuredClone(original), draftDigest: await contentDigest(document),
     documentDigest: await contentDigest(pkg.document), sceneId, namespace, seconds: original?.representativeSeconds ?? 0 };

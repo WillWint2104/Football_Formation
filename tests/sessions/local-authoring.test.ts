@@ -5,6 +5,20 @@ import { CompanionRepository, CompanionStorageError, type CompanionRecord, type 
 import { attachmentExample } from "../fixtures/attachments";
 
 function value<T>(r: CompanionResult<T>): T { assert.ok(r.ok, JSON.stringify(r)); return r.value; }
+
+test("confirmed activity dimensions initialize only a new independent scene; editing never resizes existing geometry", async () => {
+  const repository = new CompanionRepository(new Storage()), pkg = attachmentExample(), origin = value(await repository.create(pkg));
+  const created = await beginLocalAuthoring(origin, pkg.document, "activity-1", null, { length: 12, width: 15 });
+  assert.deepEqual(created.initial.field, { length: 12, width: 15 });
+  assert.deepEqual(created.initial.context, { kind: "neutral", boundary: true });
+  assert.deepEqual(created.package, origin.package);
+  const edited = await beginLocalAuthoring(origin, pkg.document, "activity-1", 0, { length: 1, width: 1 });
+  assert.deepEqual(edited.initial.field, pkg.scenes[0].field);
+  assert.deepEqual(edited.initial.entities, pkg.scenes[0].entities);
+  const unknown = await beginLocalAuthoring(origin, pkg.document, "activity-1", null);
+  assert.deepEqual(unknown.initial.field, { length: 105, width: 68 });
+  assert.deepEqual(unknown.initial.context, { kind: "pitch", region: "full", attack: "positive-x" });
+});
 class Storage implements CompanionStorage {
   records: CompanionRecord[] = [];
   fault: "quota" | "interrupted" | "ack" | null = null;
