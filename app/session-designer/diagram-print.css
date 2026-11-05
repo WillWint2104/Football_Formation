@@ -34,7 +34,7 @@
 .designer-print .designer-plan-compact .designer-plan-activity-content { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.8fr); gap:0 20px; }
 .designer-print .designer-plan-compact .designer-plan-setup { display:block; }
 .designer-print .designer-plan-compact .designer-plan-setup section + section { margin-top:10px; }
-.designer-print .designer-plan-compact .designer-plan-delivery { display:block; }
+.designer-print .designer-plan-compact .designer-plan-delivery { display:grid; grid-template-columns:1.5fr 1fr; gap:16px; }
 .designer-print .designer-plan-compact .designer-plan-coaching { grid-column:1/-1; }
 .designer-print .designer-plan-continuation table { font:inherit; }
 .designer-print .designer-plan-continuation :is(th,td) { padding:0; border:0; white-space:normal; }

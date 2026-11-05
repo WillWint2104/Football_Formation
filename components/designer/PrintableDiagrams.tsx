@@ -28,7 +28,7 @@ export function PrintableDiagrams({ diagrams, activityTitle, setup }: { diagrams
 export function DiagramTraceability({ activities }: { activities: (PrintActivity & { title: string })[] }) {
   const illustrated = activities.filter(a => a.diagrams.length);
   if (!illustrated.length) return null;
-  return <section className="designer-plan-sources" aria-label="Diagram source details"><h2>Diagram source details</h2>
+  return <section className="designer-plan-sources" aria-label="Diagram source details"><h2>Diagram source details{illustrated.length === 1 ? ` · ${illustrated[0].title}` : ""}</h2>
     {illustrated.map(a => <div key={a.activityId} className="designer-plan-source-group">{illustrated.length > 1 && <h3>{a.title}</h3>}{a.diagrams.map(d => <p key={d.index} className="designer-plan-trace"><strong>Diagram {d.index + 1}</strong> · Scene {d.pin.scene.id} · revision {d.pin.scene.revision} · {d.pin.representativeSeconds} seconds · Namespace: {d.namespace ?? "not verified"}</p>)}</div>)}
   </section>;
 }

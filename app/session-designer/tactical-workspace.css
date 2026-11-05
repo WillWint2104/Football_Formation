@@ -106,6 +106,9 @@
   .designer-light .local-candidate-canvas { height:100%; min-height:300px; }
   .designer-light .local-candidate-review aside { overflow:auto; }
   @media (max-width:1450px) {
+    .session-designer.designer-tactical-workspace .designer-heading .designer-actions { max-width:none; flex-wrap:nowrap; }
+    .session-designer.designer-tactical-workspace .designer-quick-fields label { flex-direction:row; align-items:center; gap:6px; }
+    .session-designer.designer-tactical-workspace .designer-quick-fields input { flex:1; width:0; min-width:60px; }
     .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] { grid-template-columns:minmax(0,1fr) 310px; }
     .session-designer.designer-tactical-workspace .diagram-canvas-toolbar label { gap:4px; }
     .session-designer.designer-tactical-workspace .diagram-tabs { max-width:190px; }
