@@ -26,14 +26,14 @@ export function DiagramWorkspaceStatus({ controller: c }: { controller: Activity
   </section>;
 }
 
-export function ActivityDiagrams({ activity, controller: c, authoring, selectionMemory }: { activity: SessionActivity; controller: ActivityDiagramsController; authoring?: LocalAuthoringController; selectionMemory?: Map<string, number> }) {
+export function ActivityDiagrams({ activity, controller: c, authoring, selectionMemory, onSelectionChange }: { activity: SessionActivity; controller: ActivityDiagramsController; authoring?: LocalAuthoringController; selectionMemory?: Map<string, number>; onSelectionChange?: () => void }) {
   const pins = activity.content.diagrams;
   const memoryKey = `${c.active?.documentId ?? "draft"}:${activity.id}`;
   const [selected, setSelected] = useState(() => selectionMemory?.get(memoryKey) ?? 0), [choosing, setChoosing] = useState(false);
   const [expanded, setExpanded] = useState(false), dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => { if (expanded) dialog.current?.showModal(); }, [expanded]);
   const [sceneIndex, setSceneIndex] = useState(""), [seconds, setSeconds] = useState("0"), [fit, setFit] = useState<"exercise" | "pitch" | "all">("exercise");
-  const index = Math.min(selected, Math.max(0, pins.length - 1)), pin = pins[index];
+  const index = Math.min(selectionMemory?.get(memoryKey) ?? selected, Math.max(0, pins.length - 1)), pin = pins[index];
   const scene = sceneIndex === "" ? undefined : c.source?.package.scenes[Number(sceneIndex)];
   const candidate: DiagramPin | null = scene ? { scene: { id: scene.id, revision: scene.revision }, representativeSeconds: seconds.trim() === "" ? NaN : Number(seconds) } : null;
   const preview = choosing && candidate && c.source ? previewAttachment(c.source.package, activity.id, candidate)
@@ -51,7 +51,7 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
     <header><div><h3>Tactical diagrams <span>{pins.length}/20</span></h3></div><div className="diagram-authoring-controls">
       {authoring && <><button type="button" disabled={disabled || authoring.busy || !!authoring.recover || pins.length >= 20} onClick={() => void authoring.start(activity.id, null)}>Create Diagram</button><button type="button" disabled={disabled || authoring.busy || !!authoring.recover || !pin || !c.active || !resolved || choosing} onClick={() => void authoring.start(activity.id, index)}>Edit Diagram</button></>}
       <button type="button" aria-expanded={choosing} onClick={() => { setChoosing(!choosing); if (!choosing) void c.browse(); }}> {choosing ? "Close scene browser" : "Add / replace diagram"}</button></div></header>
-    {!!pins.length && <nav className="diagram-tabs" aria-label="Attached diagrams">{pins.map((p, i) => <button type="button" key={i} aria-pressed={!choosing && index === i} onClick={() => { setSelected(i); selectionMemory?.set(memoryKey, i); setChoosing(false); }}>Diagram {i + 1}<small className="diagram-pin-accessible">{p.scene.id || "Missing ID"} · r{p.scene.revision} · {p.representativeSeconds} s</small></button>)}</nav>}
+    {!!pins.length && <nav className="diagram-tabs" aria-label="Attached diagrams">{pins.map((p, i) => <button type="button" key={i} aria-pressed={!choosing && index === i} onClick={() => { setSelected(i); selectionMemory?.set(memoryKey, i); onSelectionChange?.(); setChoosing(false); }}>Diagram {i + 1}<small className="diagram-pin-accessible">{p.scene.id || "Missing ID"} · r{p.scene.revision} · {p.representativeSeconds} s</small></button>)}</nav>}
     <div className="diagram-canvas-toolbar"><strong>{showingCandidate ? "Source preview · not yet attached" : pin ? `Attached diagram ${index + 1}` : "No diagram attached"}</strong><label>Frame<select aria-label="Diagram framing" value={fit} onChange={(e) => setFit(e.target.value as typeof fit)}><option value="exercise">Fit exercise</option><option value="pitch">Fit pitch</option><option value="all">Fit all content</option></select></label><button type="button" disabled={!resolved} onClick={() => setExpanded(true)}>Expand diagram</button></div>
     <div className="activity-diagram-canvas">{resolved ? <SceneDiagram scene={resolved.scene} title={`${showingCandidate ? "Source preview" : "Attached diagram"}: ${activity.content.title}`} options={{ fit, padding: 24, paint: "coaching-light", exerciseArea: coachingExerciseArea(resolved.scene), seconds: resolved.representativeSeconds, paths: "stage", gridMetres: coachingExerciseArea(resolved.scene).length > 40 ? 5 : 1, labels: true }} />
       : <div className="diagram-empty"><strong>{preview && !preview.ok ? "Exact diagram unavailable" : pin ? "Reference-only diagram" : "Build a visual coaching plan"}</strong><p>{preview && !preview.ok ? preview.diagnostics.slice(0, 3).map((d) => d.message).join(" ") : pin ? "Open the matching complete local plan to resolve this reference. No namespace or revision is inferred." : "Import a session package, then choose a saved scene for this activity. Setup and progression diagrams can sit together."}</p></div>}</div>

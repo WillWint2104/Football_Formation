@@ -32,6 +32,7 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
   const [entries, setEntries] = useState<(CompanionEntry & { name?: string; namespace?: string | null })[]>([]), [source, setSource] = useState<RecoveredCompanion | null>(null);
   const [recovery, setRecovery] = useState<RecoveredCompanion | null>(null), [backup, setBackup] = useState<SessionPackage | null>(null);
   const [blocked, setBlocked] = useState(false), [busy, setBusy] = useState(false), [message, setMessage] = useState("");
+  const [checking, setChecking] = useState(true);
   const generation = useRef(0), sourceRequest = useRef(0), catalogRequest = useRef(0), activeRef = useRef<RecoveredCompanion | null>(null);
   const { ready, getCurrent, isDraftCurrent } = draft;
   const browse = useCallback(async () => {
@@ -68,7 +69,8 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
         setRecovery(result.value.recoverable ?? null); setMessage(`Linked package is invalid. ${result.value.messages.join(" ")} A verified previous snapshot, if available, can be downloaded or opened as a new copy.`);
       } else setMessage(result.ok ? "The linked local package is missing. The reference-only text draft is preserved; no replacement scene was selected." : result.error.message);
       setBlocked(true);
-    })();
+    })().catch(error => { if (alive) { setBlocked(true); setMessage(designerErrors(error).join(" ")); } }).finally(() => { if (alive) setChecking(false); });
+    else queueMicrotask(() => { if (alive) setChecking(false); });
     const moved = () => { generation.current++; activeRef.current = null; setActive(null); setRecovery(null); setBlocked(true); setMessage("Browser history changed the plan association. Keep this text draft or reload to inspect the linked version. Nothing was replaced."); };
     window.addEventListener("popstate", moved);
     return () => { alive = false; window.removeEventListener("popstate", moved); };
@@ -222,6 +224,6 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
       return { library: null, unavailable: "The complete local plan changed in another tab. Reopen the reviewed plan before printing its diagrams." };
     return { library: read.value.snapshot.package };
   }
-  return { active, entries, source, recovery, backup, blocked, busy, message, dirty, canRecoverText, browse, selectSource, inspect, openRecovery, detach, save, recheck, downloadCurrent, prepareAuthoring, adoptLocalSave, reviewAuthoringOrigin, preparePrintSource };
+  return { active, entries, source, recovery, backup, blocked, checking, busy, message, dirty, canRecoverText, browse, selectSource, inspect, openRecovery, detach, save, recheck, downloadCurrent, prepareAuthoring, adoptLocalSave, reviewAuthoringOrigin, preparePrintSource };
 }
 export type ActivityDiagramsController = ReturnType<typeof useActivityDiagrams>;

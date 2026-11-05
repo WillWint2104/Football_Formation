@@ -5,8 +5,7 @@ import { parseSessionPackageJson } from "../../lib/designer/package";
 
 const workspace = (page: Page) => page.getByRole("region", { name: "Local diagram workspace", exact: true });
 const diagrams = (page: Page) => page.getByRole("region", { name: "Activity tactical diagrams", exact: true });
-async function importPlan(page: Page) {
-  const pkg = attachmentExample();
+async function importPlan(page: Page, pkg = attachmentExample()) {
   await page.getByRole("button", { name: "Import JSON", exact: true }).click();
   await page.getByRole("button", { name: "Import Session & Diagrams", exact: true }).click();
   await page.getByLabel("Choose session and diagrams package").setInputFiles({ name: "rondo-package.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(pkg)) });
@@ -24,6 +23,32 @@ test.beforeEach(async ({ page, context }) => {
   await context.route("**/*", r => ["localhost", "127.0.0.1"].includes(new URL(r.request().url()).hostname) && !new URL(r.request().url()).pathname.startsWith("/api/") ? r.continue() : r.abort());
   await page.goto("/session-designer");
   await expect(page.getByRole("button", { name: "New session", exact: true })).toBeEnabled();
+});
+
+test("U02 refresh resumes overview, selected activity and exact diagram; stale preferences cannot restore content", async ({ page }, info) => {
+  const pkg = attachmentExample();
+  pkg.document.session.activities[0].diagrams.push({ scene: { id: pkg.scenes[0].id, revision: 2 }, representativeSeconds: 4 });
+  await importPlan(page, pkg);
+  const rail = page.getByRole("navigation", { name: "Session activities", exact: true });
+  await rail.getByRole("button", { name: /11v11 Team Shape/ }).click();
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  const key = "football-formation.session-designer.navigation.v1";
+  await expect.poll(() => page.evaluate(key => JSON.parse(sessionStorage.getItem(key) ?? "{}").view, key)).toBe("overview");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Overview", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  await expect(page.locator(".designer-selected-heading h2")).toHaveText("11v11 Team Shape");
+  await rail.getByRole("button", { name: /5v2 Rondo/ }).click();
+  await diagrams(page).getByRole("button", { name: /^Diagram 2 / }).click();
+  await expect.poll(() => page.evaluate(key => JSON.parse(sessionStorage.getItem(key) ?? "{}").diagrams?.[0]?.revision, key)).toBe(2);
+  await page.reload();
+  await expect(page.locator(".designer-selected-heading h2")).toHaveText("5v2 Rondo");
+  await expect(diagrams(page).getByRole("button", { name: /^Diagram 2 / })).toHaveAttribute("aria-pressed", "true");
+  await page.screenshot({ path: info.outputPath("u02-after-refresh.png") });
+  await page.evaluate(key => { const value = JSON.parse(sessionStorage.getItem(key)!); value.digest = "0".repeat(64); sessionStorage.setItem(key, JSON.stringify(value)); }, key);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Import JSON", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(workspace(page)).toContainText("Complete local plan recovered");
 });
 
 test("U01 imported plan opens through explicit review and complete backup retains exact scenes", async ({ page }, info) => {

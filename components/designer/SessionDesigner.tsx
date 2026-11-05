@@ -9,6 +9,7 @@ import { sameDocument } from "@/lib/designer/attachments";
 import { composePrintActivities } from "@/lib/designer/print-composition";
 import type { SessionPackage } from "@/lib/designer/package";
 import { useDesignerDraft } from "./useDesignerDraft";
+import { useDesignerNavigation } from "./useDesignerNavigation";
 import { JsonImporter } from "./JsonImporter";
 import { BrandingPanel } from "./BrandingPanel";
 import { DesignerPreview } from "./DesignerPreview";
@@ -29,9 +30,12 @@ export function SessionDesigner() {
   const [verifiedPrint, setVerifiedPrint] = useState<{ document: DesignerDocument; library: SessionPackage | null; unavailable?: string; ownerId: string | null; ownerVersion: number | null } | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const diagramSelection = useRef(new Map<string, number>());
+  const [selectionVersion, setSelectionVersion] = useState(0);
   const editorRef = useRef<HTMLElement>(null), brandButton = useRef<HTMLButtonElement>(null);
   const diagrams = useActivityDiagrams(draft, () => { setEpoch((n) => n + 1); setSelected(""); setView("edit"); });
   const authoring = useLocalAuthoring(draft, diagrams);
+  useDesignerNavigation({ ready, checking: diagrams.checking, blocked: diagrams.blocked, document, ownerId: diagrams.active?.documentId ?? null, ownerVersion: diagrams.active?.ownerVersion ?? null,
+    view, setView, selected, setSelected, selection: diagramSelection, selectionVersion });
   const content = toSessionContent(document), totals = activityTotals(content.activities);
   const hasDiagrams = content.activities.some(a => a.content.diagrams.length > 0);
   const printActivities = useMemo(() => {
@@ -94,7 +98,7 @@ export function SessionDesigner() {
     {view === "overview" && <SessionOverview document={document} onActivity={(id) => { setSelected(id); setView("edit"); }} onDetails={() => { setView("edit"); requestAnimationFrame(() => { const details = editorRef.current?.querySelector<HTMLDetailsElement>(".designer-session-details"); if (details) { details.open = true; details.querySelector("input")?.focus(); } }); }} />}
     <div className={`designer-edit-layout ${view === "preview" ? "designer-preview-layout" : ""}`} hidden={view === "import" || view === "overview"}>
       <section ref={editorRef} className="designer-editor" aria-label="Local session editor" hidden={view !== "edit"} data-no-print>
-        <div className="coaching-editor" key={epoch}><SessionContentFields workspaceNavigation activityVisual={(activity) => <ActivityDiagrams key={activity.id} activity={activity} controller={diagrams} authoring={authoring} selectionMemory={diagramSelection.current} />} content={content} exercises={[]} focused selection={{ id: selected, onChange: setSelected }} localAuthoring collapsibleDetails metadataFields={<div className="designer-meta-fields"><label>Team or age group<input maxLength={200} placeholder="Not specified" value={document.session.team ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, team: e.target.value || null } })} /></label>
+        <div className="coaching-editor" key={epoch}><SessionContentFields workspaceNavigation activityVisual={(activity) => <ActivityDiagrams key={activity.id} activity={activity} controller={diagrams} authoring={authoring} selectionMemory={diagramSelection.current} onSelectionChange={() => setSelectionVersion(n => n + 1)} />} content={content} exercises={[]} focused selection={{ id: selected, onChange: setSelected }} localAuthoring collapsibleDetails metadataFields={<div className="designer-meta-fields"><label>Team or age group<input maxLength={200} placeholder="Not specified" value={document.session.team ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, team: e.target.value || null } })} /></label>
           <label>Planned duration (minutes)<input type="number" min="0.01" step="any" placeholder="Unknown" value={document.session.durationMinutes ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, durationMinutes: e.target.value === "" ? null : Number(e.target.value) } })} /></label>
           <label>Session participants<input type="number" min="1" step="1" placeholder="Unknown" value={document.session.playerCount ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, playerCount: e.target.value === "" ? null : Number(e.target.value) } })} /></label></div>} typeSelection={{ value: document.session.type, onChange: (type) => update({ ...document, session: { ...document.session, type } }) }} onChange={(next) => update(applySessionContent(document, next))} /></div>
       </section>
