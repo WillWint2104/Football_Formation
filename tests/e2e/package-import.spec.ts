@@ -42,7 +42,7 @@ test("validate → preview → confirm → store → export preserves exact revi
   await expect(page.getByRole("button", { name: "Confirm & store locally", exact: true })).toBeDisabled();
   await preview(page).scrollIntoViewIfNeeded(); await capture(page, info, "import-preview");
   await confirmation(page).check(); await page.getByRole("button", { name: "Confirm & store locally", exact: true }).click();
-  const success = page.getByRole("region", { name: "Package import success" }); await expect(success).toContainText("owner v1"); await success.scrollIntoViewIfNeeded(); await capture(page, info, "import-success");
+  const success = page.getByRole("region", { name: "Package import success" }); await expect(success).toContainText("version 1"); await success.scrollIntoViewIfNeeded(); await capture(page, info, "import-success");
   const download = page.waitForEvent("download"); await success.getByRole("button", { name: "Download stored package", exact: true }).click();
   const exported = parseSessionPackageJson(await readFile((await (await download).path())!, "utf8")); expect(exported.ok).toBe(true);
   if (exported.ok) { expect(exported.value.sceneNamespace).toBe("file-namespace"); expect(exported.value.document.session.activities[0].diagrams[0]).toEqual({ scene: { id: "movement", revision: 1 }, representativeSeconds: 1 }); expect(exported.value.scenes.map((s) => s.revision)).toEqual([1, 2]); }

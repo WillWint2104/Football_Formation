@@ -92,7 +92,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await page.screenshot({ path: info.outputPath("designer-print-preview.png"), fullPage: true });
   await page.emulateMedia({ media: "screen" });
   const downloadEvent = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const download = await downloadEvent, exported = await readFile((await download.path())!, "utf8"), portable = parseSessionJson(exported);
   await download.saveAs(info.outputPath("branded-session-round-trip.json"));
   expect(portable.session.activities[0].durationMinutes).toBe(12);
@@ -108,7 +108,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await page.getByRole("button", { name: "Import JSON", exact: true }).click();
   await page.getByLabel("Choose session JSON").setInputFiles({ name: "round-trip.json", mimeType: "application/json", buffer: Buffer.from(exported) });
   await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
-  const roundTripEvent = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  const roundTripEvent = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   expect(parseSessionJson(await readFile((await (await roundTripEvent).path())!, "utf8"))).toEqual(portable);
   expect(apiRequests).toEqual([]); expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -140,7 +140,7 @@ test("shared activity editor adds, reorders and removes independent activities a
   await page.getByLabel("Scene ID 1", { exact: true }).fill("custom-scene");
   await page.getByLabel("Revision 1", { exact: true }).fill("3");
   await page.getByLabel("Preview seconds 1", { exact: true }).fill("2.5");
-  const event = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const result = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(result.session.activities[4].diagrams[0]).toEqual({ scene: { id: "custom-scene", revision: 3 }, representativeSeconds: 2.5 });
   await page.getByRole("button", { name: "Remove activity", exact: true }).click();
@@ -184,7 +184,7 @@ test("storage quota denial leaves export usable and does not claim a browser sav
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException("Quota exceeded", "QuotaExceededError"); }; });
   await open(page); await acceptFile(page);
   await expect(page.getByRole("status")).toContainText("Draft not saved");
-  const download = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  const download = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   expect((await download).suggestedFilename()).toBe("Build-Through-Pressure.json");
 });
 
@@ -228,7 +228,7 @@ test("preview and print omit blank coaching lines exactly as JSON export does", 
   const plan = page.getByLabel("Branded session plan", { exact: true });
   await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
   await expect(plan.locator("article").first().locator(".designer-plan-section").first().locator("li")).toHaveCount(2);
-  const event = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const exported = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(exported.session.objectives).toEqual(["First objective", "Second objective"]);
   expect(exported.session.activities[0].instructions).toEqual(["Instruction one", "Instruction two"]);
@@ -333,7 +333,7 @@ test("C2 long sessions and instructions retain accessible navigation, real print
   const bytes = await page.pdf({ path: info.outputPath("long-session-plan.pdf"), preferCSSPageSize: true, printBackground: true });
   expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(3);
   await expect(page.getByLabel("Branded session plan", { exact: true })).toContainText("Delivery step 45:");
-  const event = page.waitForEvent("download"); await page.getByRole("button", { name: "Download JSON", exact: true }).click();
+  const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const result = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(result.session.activities[23].instructions).toEqual(input.session.activities[23].instructions);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

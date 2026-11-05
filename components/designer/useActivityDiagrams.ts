@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { browserCompanionRepository } from "@/lib/designer/companion-indexeddb";
 import type { CompanionEntry, RecoveredCompanion } from "@/lib/designer/companion";
 import { attachmentCandidate, sameDocument, type AttachmentEdit } from "@/lib/designer/attachments";
@@ -32,14 +32,27 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
   const [entries, setEntries] = useState<(CompanionEntry & { name?: string; namespace?: string | null })[]>([]), [source, setSource] = useState<RecoveredCompanion | null>(null);
   const [recovery, setRecovery] = useState<RecoveredCompanion | null>(null), [backup, setBackup] = useState<SessionPackage | null>(null);
   const [blocked, setBlocked] = useState(false), [busy, setBusy] = useState(false), [message, setMessage] = useState("");
-  const generation = useRef(0), sourceRequest = useRef(0), activeRef = useRef<RecoveredCompanion | null>(null);
+  const generation = useRef(0), sourceRequest = useRef(0), catalogRequest = useRef(0), activeRef = useRef<RecoveredCompanion | null>(null);
   const { ready, getCurrent, isDraftCurrent } = draft;
-  function bind(value: RecoveredCompanion | null) { activeRef.current = value; setActive(value); association(value); }
+  const browse = useCallback(async () => {
+    const request = ++catalogRequest.current;
+    const result = await repository.list();
+    if (request !== catalogRequest.current) return;
+    if (!result.ok) { setMessage(result.error.message); return; }
+    const catalog = await Promise.all(result.value.map(async (entry) => {
+      if (entry.status !== "ready") return entry;
+      const read = await repository.read(entry.documentId);
+      return read.ok && read.value.status === "ready" ? { ...entry, name: read.value.snapshot.package.document.session.name, namespace: read.value.snapshot.package.sceneNamespace } : entry;
+    }));
+    if (request === catalogRequest.current) setEntries(catalog);
+  }, [repository]);
+  function bind(value: RecoveredCompanion | null) { activeRef.current = value; setActive(value); association(value); if (value) void browse(); }
   function fail(error: unknown) { setMessage(designerErrors(error).join(" ")); }
 
   useEffect(() => {
     if (!ready) return;
     let alive = true;
+    queueMicrotask(() => { if (alive) void browse(); });
     const version = generation.current;
     const url = new URL(window.location.href), id = url.searchParams.get("localPlan"), expected = Number(url.searchParams.get("localVersion"));
     if (id) void (async () => {
@@ -59,21 +72,11 @@ export function useActivityDiagrams(draft: Draft, onOpen: () => void) {
     const moved = () => { generation.current++; activeRef.current = null; setActive(null); setRecovery(null); setBlocked(true); setMessage("Browser history changed the plan association. Keep this text draft or reload to inspect the linked version. Nothing was replaced."); };
     window.addEventListener("popstate", moved);
     return () => { alive = false; window.removeEventListener("popstate", moved); };
-  }, [ready, repository, getCurrent]);
+  }, [ready, repository, getCurrent, browse]);
 
   function detach(silent = false) {
     generation.current++; sourceRequest.current++; bind(null); setSource(null); setRecovery(null); setBackup(null); setBlocked(false);
     setMessage(silent ? "" : "Reference-only draft retained. Complete packages in the repository are unchanged.");
-  }
-  async function browse() {
-    const result = await repository.list();
-    if (!result.ok) { fail(new Error(result.error.message)); return; }
-    const catalog = await Promise.all(result.value.map(async (entry) => {
-      if (entry.status !== "ready") return entry;
-      const read = await repository.read(entry.documentId);
-      return read.ok && read.value.status === "ready" ? { ...entry, name: read.value.snapshot.package.document.session.name, namespace: read.value.snapshot.package.sceneNamespace } : entry;
-    }));
-    setEntries(catalog);
   }
   async function selectSource(id: string) {
     const request = ++sourceRequest.current; setSource(null);

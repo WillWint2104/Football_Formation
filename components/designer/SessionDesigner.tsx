@@ -33,6 +33,7 @@ export function SessionDesigner() {
   const diagrams = useActivityDiagrams(draft, () => { setEpoch((n) => n + 1); setSelected(""); setView("edit"); });
   const authoring = useLocalAuthoring(draft, diagrams);
   const content = toSessionContent(document), totals = activityTotals(content.activities);
+  const hasDiagrams = content.activities.some(a => a.content.diagrams.length > 0);
   const printActivities = useMemo(() => {
     if (!verifiedPrint) return undefined;
     const current = sameDocument(verifiedPrint.document, document) && verifiedPrint.ownerId === (diagrams.active?.documentId ?? null)
@@ -79,7 +80,8 @@ export function SessionDesigner() {
     <LocalAuthoringNotice controller={authoring} />
     <div className="designer-heading" data-no-print><div><p className="calendar-eyebrow">Session Designer · Local workspace</p><h1 ref={heading} tabIndex={-1}>{view === "import" ? "Session Designer" : document.session.name || "Untitled coaching session"}</h1><p>{view === "import" ? "Import a saved session or start a new coaching plan." : `${document.session.team ?? "Team not specified"} · ${content.activities.length} activities · ${totals.minutes} known min${totals.unknown ? ` · ${totals.unknown} untimed` : ""}`}</p></div><div className="designer-actions">
       <button type="button" disabled={!ready || printRequested || preparingPrint} onClick={() => void preview(true)}><Printer size={16} aria-hidden="true" />Print / Save as PDF</button>
-      <button type="button" className="calendar-primary" disabled={!ready} onClick={download}><Download size={16} aria-hidden="true" />Download JSON</button>
+      {hasDiagrams && <button type="button" className="calendar-primary" disabled={!ready || !diagrams.active || diagrams.blocked || diagrams.busy} onClick={diagrams.downloadCurrent} title={!diagrams.active ? "Open the matching complete local plan to back up its diagrams." : undefined}><Download size={16} aria-hidden="true" />Back up session &amp; diagrams</button>}
+      <button type="button" className={hasDiagrams ? undefined : "calendar-primary"} disabled={!ready} onClick={download}><Download size={16} aria-hidden="true" />{hasDiagrams ? "Download text & references JSON" : "Download JSON"}</button>
     </div></div>
     <div className="designer-draft-status" data-no-print><span className="designer-local-label">Local workspace</span><div><p role="status">{saveState}</p><small>Browser draft only · retained for 30 days · download JSON to keep or share your plan.</small></div></div>
     <div className="designer-toolbar" data-no-print><nav aria-label="Session designer views">
@@ -88,7 +90,7 @@ export function SessionDesigner() {
     </nav><button ref={brandButton} type="button" disabled={!ready} aria-expanded={brandOpen} aria-controls="designer-brand-disclosure" onClick={() => { setBrandTop(Math.min((brandButton.current?.getBoundingClientRect().bottom ?? 100) + 8, window.innerHeight - 260)); setBrandOpen((open) => !open); }}><Palette size={16} aria-hidden="true" />Club Branding</button></div>
     <DiagramWorkspaceStatus controller={diagrams} />
     {!!errors.length && <div role="alert" className="designer-error-list" data-no-print><strong>Complete these fields before exporting or printing</strong><ul>{errors.map((error, i) => <li key={i}>{error}</li>)}</ul><button type="button" onClick={() => setView("edit")}>Return to editor</button></div>}
-    <fieldset disabled={!ready} className="designer-main-fieldset" data-no-print hidden={view !== "import"}><JsonImporter onAccept={(next) => { diagrams.detach(true); update(structuredClone(next)); setEpoch((n) => n + 1); setErrors([]); setView("edit"); heading.current?.focus(); }} /></fieldset>
+    <fieldset disabled={!ready} className="designer-main-fieldset" data-no-print hidden={view !== "import"}><JsonImporter onStored={() => void diagrams.browse()} onReviewPlan={async (id) => { await diagrams.inspect(id); setView("edit"); requestAnimationFrame(() => window.document.querySelector<HTMLElement>(".diagram-recovery h3")?.focus()); }} onAccept={(next) => { diagrams.detach(true); update(structuredClone(next)); setEpoch((n) => n + 1); setErrors([]); setView("edit"); heading.current?.focus(); }} /></fieldset>
     {view === "overview" && <SessionOverview document={document} onActivity={(id) => { setSelected(id); setView("edit"); }} onDetails={() => { setView("edit"); requestAnimationFrame(() => { const details = editorRef.current?.querySelector<HTMLDetailsElement>(".designer-session-details"); if (details) { details.open = true; details.querySelector("input")?.focus(); } }); }} />}
     <div className={`designer-edit-layout ${view === "preview" ? "designer-preview-layout" : ""}`} hidden={view === "import" || view === "overview"}>
       <section ref={editorRef} className="designer-editor" aria-label="Local session editor" hidden={view !== "edit"} data-no-print>

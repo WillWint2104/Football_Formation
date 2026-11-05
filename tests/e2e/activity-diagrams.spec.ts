@@ -117,7 +117,7 @@ test("open complete plan, preview exact geometry, manage multiple pins and expor
   await capture(page, info, "multiple-diagrams");
   await browse(page, source.documentId, "0", "1"); await panel(page).getByRole("button", { name: "Replace diagram 2 with preview", exact: true }).click(); await expect(workspace(page)).toContainText("owner v3");
   await panel(page).getByRole("button", { name: "Return to attached diagrams", exact: true }).click();
-  const complete = parseSessionPackageJson(await download(page, "Download complete package")), legacy = parseSessionJson(await download(page, "Download JSON"));
+  const complete = parseSessionPackageJson(await download(page, "Download complete package")), legacy = parseSessionJson(await download(page, "Download text & references JSON"));
   expect(complete.ok).toBe(true); if (complete.ok) { expect(complete.value.document).toEqual(legacy); expect(complete.value.document.session.activities[0].diagrams.map((p) => [p.scene.revision, p.representativeSeconds])).toEqual([[1, 2], [1, 1]]); }
   await panel(page).getByRole("button", { name: "Remove selected diagram", exact: true }).click(); await expect(workspace(page)).toContainText("owner v4");
   expect(await stored(page, source.documentId)).toEqual({ ok: true, value: { status: "ready", snapshot: source } });
@@ -171,7 +171,7 @@ test("linked missing package preserves the reference-only draft and offers expli
   await page.getByRole("button", { name: "Edit session", exact: true }).click(); await expect(panel(page)).toContainText("Reference-only diagram");
   await workspace(page).scrollIntoViewIfNeeded(); const path = info.outputPath(`missing-recovery-${info.project.name}.png`); await page.screenshot({ path });
   await page.getByRole("button", { name: "Keep reference-only text draft", exact: true }).click(); expect(new URL(page.url()).searchParams.has("localPlan")).toBe(false);
-  expect(parseSessionJson(await download(page, "Download JSON")).session.activities[0].diagrams[0].scene.revision).toBe(1);
+  expect(parseSessionJson(await download(page, "Download text & references JSON")).session.activities[0].diagrams[0].scene.revision).toBe(1);
 });
 
 test("corrupt current snapshot offers verified previous copy without repairing the damaged owner", async ({ page }) => {
@@ -188,9 +188,9 @@ test("newer text draft versus complete snapshot requires a deliberate choice wit
   await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Unsaved text revision");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Unsaved text revision");
   await page.reload(); await expect(workspace(page)).toContainText("linked package version or text draft differs");
-  expect((await download(page, "Download JSON"))).toContain("Unsaved text revision");
+  expect((await download(page, "Download text & references JSON"))).toContain("Unsaved text revision");
   const saved = await stored(page, id); expect(saved.ok && saved.value.status === "ready" && saved.value.snapshot.package.document.session.activities[0].name).toBe("5v2 Rondo");
-  page.once("dialog", (d) => d.dismiss()); await page.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click(); expect(await download(page, "Download JSON")).toContain("Unsaved text revision");
+  page.once("dialog", (d) => d.dismiss()); await page.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click(); expect(await download(page, "Download text & references JSON")).toContain("Unsaved text revision");
   page.once("dialog", (d) => d.accept()); await page.getByRole("button", { name: "Keep current text & revalidate linked diagrams", exact: true }).click();
   await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-rondo"); await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("Unsaved text revision");
   const complete = parseSessionPackageJson(await download(page, "Download complete package")); expect(complete.ok && complete.value.document.session.activities[0].name).toBe("Unsaved text revision");
