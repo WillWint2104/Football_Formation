@@ -54,7 +54,7 @@ export function PackageImporter({ onBusyChange, onStored, onReviewPlan }: { onBu
 
   async function choose(files: FileList) {
     if (!begin()) return;
-    setCandidate(null); setTarget(null); setConfirmed(false); setError(""); setBlocked(false); setRechecked(false);
+    setReceipt(null); setCandidate(null); setTarget(null); setConfirmed(false); setError(""); setBlocked(false); setRechecked(false);
     try {
       if (files.length !== 1 || !/\.json$/i.test(files[0].name)) throw Error("Choose one .json session-and-diagrams package.");
       if (files[0].size > SESSION_PACKAGE_LIMITS.bytes) throw Error("Package exceeds the 8 MiB UTF-8 limit.");

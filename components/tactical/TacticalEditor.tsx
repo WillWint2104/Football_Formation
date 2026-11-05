@@ -18,7 +18,7 @@ import { AnimationProperties } from "./AnimationProperties";
 
 type Tool = "select" | "pan" | "player" | "ball" | "equipment" | "pass" | "run" | "press" | "rotation" | "zone" | "note";
 const gestureGuidance: Record<Tool, string> = {
-  select: "Drag a player or object to move it. Shift + click adds to a selection.",
+  select: "Drag a player or object to move it. Shift + click toggles selection.",
   pan: "Drag the field to pan. The mouse wheel zooms around the pointer.",
   player: "Click the field to add a player, or use Insert at centre in Properties.",
   ball: "Click the field to add a ball, or use Insert at centre in Properties.",
@@ -250,7 +250,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       <button className="calendar-primary" disabled={!canSave} onClick={() => { setPlaying(false); void onSave(scene); }}>{saveLabel}</button></div>
     <div className="editor-layout"><section className="editor-canvas-column" aria-label="Drawing workspace">
       <div className="editor-tools" role="toolbar" aria-label="Drawing tools">{tools.map(([id, label]) => <button key={id} aria-pressed={tool === id} disabled={readOnly && !["select", "pan"].includes(id) || animation && ["player", "ball", "equipment"].includes(id)} onClick={() => setTool(id)}>{label}</button>)}</div>
-      {coaching && <p className="editor-gesture-guidance" role="status" aria-label="Drawing guidance" aria-live="polite">{tool === "select" && animation ? "Drag a player or ball to edit its current timed pose; place equipment in Layout." : gestureGuidance[tool]} Esc cancels the current gesture. Ctrl/Cmd + Z undoes.</p>}
+      {coaching && <p className="editor-gesture-guidance" role="status" aria-label="Drawing guidance" aria-live="polite">{tool === "select" && animation ? "Drag a player or ball for its timed pose; drag arrows, areas or notes for the active stage. Shift + click toggles selection. Place equipment in Layout." : gestureGuidance[tool]} Esc cancels the current gesture{expanded ? " and exits the expanded board" : ""}. {readOnly ? "Editing and undo are unavailable while the diagram is read only." : "Ctrl/Cmd + Z undoes."}</p>}
       <div className="editor-viewbar">{animation ? <><button aria-pressed={!customArea && fit === "context" && !camera} onClick={() => frame("context")}>Overview</button><button aria-label="Fit stage / Action" aria-pressed={!!customArea && framing.startsWith("Action") && !camera} onClick={() => frameAction()}>Fit stage</button><button aria-label="Detail / Focus selection" disabled={!selected.length} aria-pressed={!!customArea && framing.startsWith("Detail") && !camera} onClick={() => frameAction(true)}>Detail</button></> : <><button onClick={() => frame("context")}>Fit exercise</button><button onClick={() => frame("all")}>Fit all</button><button onClick={() => frame("pitch")}>{scene.context?.kind === "neutral" ? "Fit boundary" : "Fit pitch"}</button></>}
         <label>Camera rotation<select aria-label="Camera rotation" value={rotation} onChange={(e) => { setRotation(Number(e.target.value) as Rotation); setCamera(undefined); }}>{[0, 90, 180, 270].map((v) => <option key={v} value={v}>{v}°</option>)}</select></label>
         {scene.context?.kind === "pitch" && scene.context.region === "set-piece" && <label>Focus<select aria-label="Set-piece focus" value={focus} onChange={(e) => { setFocus(e.target.value as typeof focus); frame("context"); }}><option value="delivery">Delivery + box</option><option value="box">Penalty box</option></select></label>}

@@ -37,7 +37,7 @@ export function SessionDesigner() {
   useDesignerNavigation({ ready, checking: diagrams.checking, blocked: diagrams.blocked, document, ownerId: diagrams.active?.documentId ?? null, ownerVersion: diagrams.active?.ownerVersion ?? null,
     view, setView, selected, setSelected, selection: diagramSelection, selectionVersion });
   const content = toSessionContent(document), totals = activityTotals(content.activities);
-  const hasDiagrams = content.activities.some(a => a.content.diagrams.length > 0);
+  const hasDiagrams = content.activities.some(a => a.content.diagrams.length > 0) || !!diagrams.active?.package.scenes.length;
   const printActivities = useMemo(() => {
     if (!verifiedPrint) return undefined;
     const current = sameDocument(verifiedPrint.document, document) && verifiedPrint.ownerId === (diagrams.active?.documentId ?? null)

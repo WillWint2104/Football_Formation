@@ -108,6 +108,7 @@ test("U04 drawing guidance follows the selected tool without changing the origin
   await expect(host).toBeVisible();
   const guidance = host.getByRole("status", { name: "Drawing guidance", exact: true });
   await expect(guidance).toContainText("Drag a player");
+  await expect(guidance).toContainText("Shift + click toggles selection");
   await host.getByRole("button", { name: "→ Pass", exact: true }).click();
   await expect(guidance).toContainText("Drag from passer to receiver");
   await expect(guidance).toContainText("single click creates");
@@ -116,7 +117,43 @@ test("U04 drawing guidance follows the selected tool without changing the origin
   await host.getByRole("button", { name: "▧ Zone", exact: true }).click();
   await expect(guidance).toContainText("opposite corners");
   await expect(guidance).toContainText("Esc cancels");
+  await host.getByRole("button", { name: "Expand board", exact: true }).click();
+  await expect(guidance).toContainText("exits the expanded board");
+  await host.getByRole("dialog", { name: "Tactical diagram editor", exact: true }).press("Escape");
+  await expect(host.getByRole("region", { name: "Tactical diagram editor", exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath("u04-tool-guidance.png") });
   await host.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(diagrams(page).locator(".scene-diagram")).toHaveAttribute("data-scene-id", attachmentExample().scenes[0].id);
+});
+
+test("review: unattached scenes retain complete backup and distinct exact scene choices", async ({ page }) => {
+  const pkg = attachmentExample();
+  pkg.document.session.activities.forEach(a => { a.diagrams = []; });
+  await importPlan(page, pkg);
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Back up session & diagrams", exact: true }).click();
+  expect(JSON.parse(await readFile((await (await download).path())!, "utf8"))).toEqual(pkg);
+  await expect(page.getByRole("button", { name: "Download text & references JSON", exact: true })).toBeVisible();
+  await diagrams(page).getByRole("button", { name: "Add / replace diagram", exact: true }).click();
+  await page.getByLabel("Local scene package").selectOption(new URL(page.url()).searchParams.get("localPlan")!);
+  const options = page.getByLabel("Scene revision").locator("option");
+  await expect(options).toHaveCount(pkg.scenes.length + 1);
+  const labels = (await options.allTextContents()).slice(1);
+  expect(new Set(labels).size).toBe(pkg.scenes.length);
+  pkg.scenes.forEach((s, i) => expect(labels[i]).toContain(s.id));
+});
+
+test("review: choosing another package clears stale import actions without losing the stored plan", async ({ page }) => {
+  await importPlan(page);
+  await page.getByRole("button", { name: "Import JSON", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Package import success" })).toBeVisible();
+  const saved = page.getByRole("button", { name: /^Inspect local package / });
+  const count = await saved.count();
+  await page.getByLabel("Choose session and diagrams package").setInputFiles({ name: "invalid.json", mimeType: "application/json", buffer: Buffer.from("{") });
+  await expect(page.getByRole("alert").filter({ hasText: "Package import needs attention" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Package import success" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Review & open imported plan", exact: true })).toHaveCount(0);
+  await expect(saved).toHaveCount(count);
+  await saved.first().click();
+  await expect(page.getByRole("region", { name: "Inspected local package" })).toContainText(attachmentExample().document.session.name);
 });
