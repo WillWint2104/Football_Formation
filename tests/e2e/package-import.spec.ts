@@ -61,7 +61,7 @@ test("replacement is scoped to the selected owner and retains the prior complete
   const all = await page.evaluate(() => window.companionTest.browserCompanionRepository().list()); if (!all.ok) throw Error("List failed"); const other = all.value.find((e) => e.documentId !== first.documentId)!;
   const before = await data(page, other.documentId), next = companionExample(); next.document.session.name = "Explicit replacement";
   await choose(page, next); await replaceTarget(page, first.documentId); await replace(page);
-  await expect(page.getByRole("region", { name: "Package import success" })).toContainText("owner v2"); expect(await data(page, other.documentId)).toEqual(before);
+  await expect(page.getByRole("region", { name: "Package import success" })).toContainText("version 2"); expect(await data(page, other.documentId)).toEqual(before);
   const raw = await page.evaluate(async (id) => window.companionTest.indexedDbCompanionStorage().transact("readonly", (records) => ({ value: records.find((r) => (r as { documentId: string }).documentId === id) })), first.documentId) as { snapshots: { ownerVersion: number }[] };
   expect(raw.snapshots.map((s) => s.ownerVersion)).toEqual([2, 1]);
 });
@@ -102,10 +102,10 @@ test("two application tabs detect stale replacement and require explicit inspect
   const [first] = await storeNew(page), second = await context.newPage(); await second.goto("/session-designer"); await second.getByRole("button", { name: "Import Session & Diagrams", exact: true }).click();
   const a = companionExample(), b = companionExample(); a.document.session.name = "Tab A replacement"; b.document.session.name = "Tab B candidate";
   await choose(page, a); await choose(second, b); await replaceTarget(page, first.documentId); await replaceTarget(second, first.documentId);
-  await replace(page); await expect(page.getByRole("region", { name: "Package import success" })).toContainText("owner v2");
+  await replace(page); await expect(page.getByRole("region", { name: "Package import success" })).toContainText("version 2");
   await replace(second); await expect(second.getByRole("region", { name: "Import save recovery" })).toBeVisible();
   const current = await data(page, first.documentId); expect(current.ok && current.value.status === "ready" && current.value.snapshot.package.document.session.name).toBe("Tab A replacement");
-  await replaceTarget(second, first.documentId); await replace(second); await expect(second.getByRole("region", { name: "Package import success" })).toContainText("owner v3");
+  await replaceTarget(second, first.documentId); await replace(second); await expect(second.getByRole("region", { name: "Package import success" })).toContainText("version 3");
 });
 test("refresh discovers saved packages without silently replacing the editing draft", async ({ page }) => {
   const [first] = await storeNew(page); await page.evaluate(() => localStorage.setItem(window.companionTest.DESIGNER_DRAFT_KEY, window.companionTest.encodeDraft(window.companionTest.companionExample().document)));
@@ -115,7 +115,7 @@ test("refresh discovers saved packages without silently replacing the editing dr
   expect(await page.evaluate(() => localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY))).toBe(legacy);
 });
 test("corrupt current package offers a verified previous snapshot and a new recovery identity", async ({ page }, info) => {
-  const [first] = await storeNew(page); await choose(page); await replaceTarget(page, first.documentId); await replace(page); await expect(page.getByRole("region", { name: "Package import success" })).toContainText("owner v2");
+  const [first] = await storeNew(page); await choose(page); await replaceTarget(page, first.documentId); await replace(page); await expect(page.getByRole("region", { name: "Package import success" })).toContainText("version 2");
   await page.evaluate(async (id) => {
     const h = window.companionTest;
     await h.indexedDbCompanionStorage().transact("readwrite", (records) => { const record = records.find((r) => (r as { documentId: string }).documentId === id) as { snapshots: { packageJson: string }[] }; record.snapshots[0].packageJson = "{"; return { value: undefined, put: record as never }; });
