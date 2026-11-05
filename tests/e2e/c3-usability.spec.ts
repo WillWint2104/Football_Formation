@@ -97,7 +97,7 @@ test("U03 name and duration are direct controls; known dimensions require confir
   await host.getByRole("button", { name: "Properties", exact: true }).click();
   await expect(host.getByLabel("Area length (m)")).toHaveValue("12");
   await expect(host.getByLabel("Area width (m)")).toHaveValue("15");
-  await expect(host).toContainText("Independent Training Area");
+  await expect(host).toContainText("Independent training area");
   await page.screenshot({ path: info.outputPath("u03-confirmed-training-area.png") });
 });
 

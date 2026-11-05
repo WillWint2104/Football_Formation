@@ -91,6 +91,7 @@ export function useLocalAuthoring(draft: ReturnType<typeof useDesignerDraft>, di
       setBackup(pkg);
       const result = previous ? await repository.save(previous.documentId, previous.ownerVersion, pkg) : await repository.create(pkg);
       if (!result.ok) throw new Error(`${result.error.message} Saving is paused. A missing acknowledgement may still leave a discoverable saved plan; do not retry blindly.`);
+      void diagrams.browse();
       const context = { ...captured.context, candidate: snapshotRef(result.value) };
       // Keep acknowledged identity even if a late source conflict prevents returning. No source write here.
       live(token); returnReference(context); setWork({ ...captured, context, dirtyBaseline: structuredClone(scene) }); setRecover(context);
