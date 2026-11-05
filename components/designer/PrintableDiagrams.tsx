@@ -12,7 +12,7 @@ export function PrintableDiagrams({ diagrams, activityTitle, setup }: { diagrams
   }
   const tailSetup = !!setup && rows.at(-1)?.length === 1 && rows.at(-1)?.[0].layout === "compact";
   return <section className="designer-plan-diagrams" aria-label={`Activity diagrams: ${activityTitle}`}>{rows.map((row, i) => <div key={i} className={`designer-plan-diagram-row${row.length === 2 || tailSetup && i === rows.length - 1 ? " designer-plan-diagram-pair" : ""}`}>{row.map(d => <figure key={d.index} className="designer-plan-diagram" data-diagram-index={d.index} data-diagram-status={d.status}>
-    <figcaption><strong>Diagram {d.index + 1}</strong></figcaption>
+    <figcaption><strong>{activityTitle} · Diagram {d.index + 1}</strong></figcaption>
     {d.status === "ready" ? <><svg className="designer-print-scene" role="img" aria-label={`Diagram ${d.index + 1}, scene ${d.pin.scene.id}, revision ${d.pin.scene.revision}, ${d.pin.representativeSeconds} seconds`}
       viewBox={`0 0 ${d.drawing.view.width} ${d.drawing.view.height}`} width={d.drawing.view.width} height={d.drawing.view.height}
       data-scene-id={d.resolved.scene.id} data-revision={d.resolved.scene.revision} data-time={d.resolved.representativeSeconds} data-namespace={d.resolved.namespace}
@@ -29,6 +29,6 @@ export function DiagramTraceability({ activities }: { activities: (PrintActivity
   const illustrated = activities.filter(a => a.diagrams.length);
   if (!illustrated.length) return null;
   return <section className="designer-plan-sources" aria-label="Diagram source details"><h2>Diagram source details</h2>
-    {illustrated.map(a => <div key={a.activityId} className="designer-plan-source-group"><h3>{a.title}</h3>{a.diagrams.map(d => <p key={d.index} className="designer-plan-trace"><strong>Diagram {d.index + 1}</strong> · Scene {d.pin.scene.id} · revision {d.pin.scene.revision} · {d.pin.representativeSeconds} seconds · Namespace: {d.namespace ?? "not verified"}</p>)}</div>)}
+    {illustrated.map(a => <div key={a.activityId} className="designer-plan-source-group">{illustrated.length > 1 && <h3>{a.title}</h3>}{a.diagrams.map(d => <p key={d.index} className="designer-plan-trace"><strong>Diagram {d.index + 1}</strong> · Scene {d.pin.scene.id} · revision {d.pin.scene.revision} · {d.pin.representativeSeconds} seconds · Namespace: {d.namespace ?? "not verified"}</p>)}</div>)}
   </section>;
 }

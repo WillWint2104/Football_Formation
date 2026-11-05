@@ -12,7 +12,7 @@ export async function openPrintPlan(p:Page,input=fixture()) {
   const saved=await p.evaluate(pkg=>window.companionTest.browserCompanionRepository().create(pkg),input);if(!saved.ok)throw Error(saved.error.message);
   await status(p).getByRole("button",{name:"Browse local plans",exact:true}).click();await status(p).getByText(/Saved local plans \(/).click();
   await status(p).getByRole("button",{name:`Review plan ${saved.value.documentId}`,exact:true}).click();p.once("dialog",d=>d.accept());await p.getByRole("button",{name:"Open reviewed plan as independent copy",exact:true}).click();
-  await expect(p.getByRole("button",{name:"Edit Diagram",exact:true})).toBeEnabled();return new URL(p.url()).searchParams.get("localPlan")!;
+  await expect(p.getByRole("button",{name:input.document.session.activities[0]?.diagrams.length?"Edit Diagram":"Create Diagram",exact:true})).toBeEnabled();return new URL(p.url()).searchParams.get("localPlan")!;
 }
 export async function previewPrintPlan(p:Page){await p.getByRole("button",{name:"Branded preview",exact:true}).click();await expect(plan(p)).toBeVisible();}
 export async function capturePrintOutput(p:Page,info:TestInfo,name:string){
