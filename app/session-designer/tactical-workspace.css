@@ -26,6 +26,10 @@
   .session-designer.designer-tactical-workspace .designer-selected-heading { flex-shrink:0; padding-bottom:4px; margin:0; }
   .session-designer.designer-tactical-workspace .designer-selected-heading p { margin:0; font-size:14px; }
   .session-designer.designer-tactical-workspace .designer-selected-heading h2 { font-size:22px; line-height:1.3; margin:0; }
+  .session-designer.designer-tactical-workspace .designer-selected-heading h2.designer-activity-heading-text { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); }
+  .session-designer.designer-tactical-workspace .designer-quick-fields { grid-column:1; grid-row:2; display:grid; grid-template-columns:minmax(0,1fr) 145px; gap:12px; }
+  .session-designer.designer-tactical-workspace .designer-quick-fields label { display:flex; flex-direction:column; gap:2px; font-size:14px; min-width:0; }
+  .session-designer.designer-tactical-workspace .designer-quick-fields input { width:100%; min-width:0; padding:5px 8px; font-size:16px; line-height:1.35; }
   .session-designer.designer-tactical-workspace .designer-activity-panel-toggle { display:flex; gap:6px; }
   .session-designer.designer-tactical-workspace .designer-practice-layout { display:grid; grid-template-columns:minmax(0,1fr); flex:1; min-height:0; gap:12px; }
   .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] { grid-template-columns:minmax(0,1fr) 340px; }
@@ -102,6 +106,11 @@
   .designer-light .local-candidate-canvas { height:100%; min-height:300px; }
   .designer-light .local-candidate-review aside { overflow:auto; }
   @media (max-width:1450px) {
+    @media (min-width:1024px) {
+      .session-designer.designer-tactical-workspace .designer-heading .designer-actions { max-width:none; flex-wrap:nowrap; }
+      .session-designer.designer-tactical-workspace .designer-quick-fields label { flex-direction:row; align-items:center; gap:6px; }
+      .session-designer.designer-tactical-workspace .designer-quick-fields input { flex:1; width:0; min-width:60px; }
+    }
     .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] { grid-template-columns:minmax(0,1fr) 310px; }
     .session-designer.designer-tactical-workspace .diagram-canvas-toolbar label { gap:4px; }
     .session-designer.designer-tactical-workspace .diagram-tabs { max-width:190px; }

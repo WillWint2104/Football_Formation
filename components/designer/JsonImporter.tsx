@@ -8,7 +8,7 @@ import { sessionLabels } from "@/lib/calendar/schedule";
 import { PackageImporter } from "./PackageImporter";
 
 /** Validation/preview is separate from accepting a replacement draft. No partial import is applied. */
-export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocument) => void }) {
+export function JsonImporter({ onAccept, onStored, onReviewPlan }: { onAccept: (document: DesignerDocument) => void; onStored?: () => void; onReviewPlan?: (id: string) => void }) {
   const [mode, setMode] = useState<"legacy" | "package">("legacy"), [packageBusy, setPackageBusy] = useState(false);
   const [text, setText] = useState(""), [candidate, setCandidate] = useState<DesignerDocument | null>(null);
   const [errors, setErrors] = useState<string[]>([]), [busy, setBusy] = useState(false);
@@ -60,5 +60,5 @@ export function JsonImporter({ onAccept }: { onAccept: (document: DesignerDocume
     </section>}
   </section><aside className="designer-import-help"><p className="calendar-eyebrow">One plan. Fully portable.</p><h2>From JSON to the training ground.</h2><ol><li><strong>Import & review</strong><span>Choose the activities you actually supplied. Nothing is filled in for you.</span></li><li><strong>Make it yours</strong><span>Edit the sequence, timings and coaching detail. Add a crest and club colours.</span></li><li><strong>Take it with you</strong><span>Download the complete JSON or print a branded coaching plan.</span></li></ol>
     <div className="designer-contract-link"><h3>Start with the format</h3><p>Use a simple versioned contract with optional branding. No organisation or account IDs.</p><a href="/samples/session-designer-possession.json" download>Download five-activity sample JSON</a><a href="/samples/session-designer-recovery.json" download>Download recovery-session example</a><a href="/samples/session-designer-contract.txt" target="_blank" rel="noreferrer">Read the JSON format</a></div>
-  </aside></div></div>{mode === "package" && <PackageImporter onBusyChange={setPackageBusy} />}</>;
+  </aside></div></div>{mode === "package" && <PackageImporter onBusyChange={setPackageBusy} onStored={onStored} onReviewPlan={onReviewPlan} />}</>;
 }

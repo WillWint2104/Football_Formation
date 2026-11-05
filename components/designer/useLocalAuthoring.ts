@@ -69,10 +69,12 @@ export function useLocalAuthoring(draft: ReturnType<typeof useDesignerDraft>, di
   }
   function live(token: number) { if (token !== epoch.current.value) throw new Error("The editing context changed during the operation. Inspect the saved candidate; nothing was automatically attached."); }
   async function start(activityId: string, index: number | null) {
+    const area = index === null ? getCurrent().session.activities.find(a => a.id === activityId)?.area : null;
+    if (area && !window.confirm(`Start a new ${area.length} × ${area.width} m local training-area diagram using this activity's dimensions? Its local origin is 0,0; no parent-pitch position is inferred. Existing diagrams are unchanged.`)) return;
     await run(async (token) => {
       setFailed(false); setBackup(null); const before = structuredClone(getCurrent()), origin = await diagrams.prepareAuthoring(); live(token);
       if (!sameDocument(before, getCurrent()) || !isDraftCurrent()) throw new Error("The session changed while opening the editor.");
-      const opened = await beginLocalAuthoring(origin, before, activityId, index); live(token); await unchanged(opened.context);
+      const opened = await beginLocalAuthoring(origin, before, activityId, index, area ? { length: area.length, width: area.width } : undefined); live(token); await unchanged(opened.context);
       returnReference(opened.context); setWork({ context: opened.context, initial: opened.initial, base: opened.package, view: "editor" });
       setRecover(null); setSeconds(String(opened.context.seconds)); setDirty(false);
       setMessage(index === null ? "Create a local diagram. Save a local copy before returning to the activity." : "You are editing a local copy. The imported scene and current attachment stay unchanged until acceptance.");
@@ -89,6 +91,7 @@ export function useLocalAuthoring(draft: ReturnType<typeof useDesignerDraft>, di
       setBackup(pkg);
       const result = previous ? await repository.save(previous.documentId, previous.ownerVersion, pkg) : await repository.create(pkg);
       if (!result.ok) throw new Error(`${result.error.message} Saving is paused. A missing acknowledgement may still leave a discoverable saved plan; do not retry blindly.`);
+      void diagrams.browse();
       const context = { ...captured.context, candidate: snapshotRef(result.value) };
       // Keep acknowledged identity even if a late source conflict prevents returning. No source write here.
       live(token); returnReference(context); setWork({ ...captured, context, dirtyBaseline: structuredClone(scene) }); setRecover(context);

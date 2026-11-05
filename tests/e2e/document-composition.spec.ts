@@ -4,9 +4,12 @@ import { printExample } from "../fixtures/print-session";
 import { openPrintPlan, previewPrintPlan, capturePrintOutput, preparePrintPage } from "../fixtures/print-browser";
 
 test.beforeEach(async({page,context})=>preparePrintPage(page,context));
-for(const variant of ["short-activity","small-sided","full-pitch","five-activities","brand-crest"])test(`B5b coaching composition: ${variant}`,async({page},info)=>{
+for(const variant of ["short-activity","small-sided","full-pitch","five-activities","brand-crest","short-text-activities"])test(`B5b coaching composition: ${variant}`,async({page},info)=>{
   test.setTimeout(60000);const p=printExample(),a=p.document.session.activities[0],full=p.document.session.activities[1];
-  if(variant==="full-pitch"){
+  if (variant === "short-text-activities") {
+    a.diagrams=[];a.instructions=["Move and pass at a comfortable pace."];a.coachingPoints=["Keep the next passing option visible."];a.progressions=[];a.variations=[];
+    p.document.session.activities=[a,{...structuredClone(a),id:"cool-down",name:"Cool-down and review",role:"cool-down",durationMinutes:5}];
+  } else if(variant==="full-pitch"){
     p.document.session.activities=[full];p.document.session.name="Full-pitch team organisation";
     p.document.branding={...p.document.branding,primaryColor:"#1D503A",secondaryColor:"#FFFFFF",accentColor:"#C8DB74"};
   }else if(variant==="five-activities"){
@@ -32,6 +35,7 @@ for(const variant of ["short-activity","small-sided","full-pitch","five-activiti
   if(variant==="brand-crest"){await expect(plan.getByRole("img",{name:"Verification Club - crest edition crest",exact:true})).toBeVisible();await expect(plan.locator('.designer-plan-header')).toHaveCSS('color','rgb(0, 0, 0)');}
   if(variant==="full-pitch")await expect(plan.locator('.designer-plan-split')).toHaveCount(0);
   if(variant==="five-activities"){await expect(plan.locator('.designer-plan-diagram-pair')).toHaveCount(2);await expect(plan).toContainText("80 known minutes");await expect(plan).toContainText("Bibs: quantity unknown");}
-  const pages=await capturePrintOutput(page,info,variant);if(variant==="short-activity")expect(pages).toBe(1);
+  const pages=await capturePrintOutput(page,info,variant);if(variant==="short-activity" || variant==="short-text-activities")expect(pages).toBe(1);
+  if(variant==="short-text-activities"){await expect(plan.locator(".designer-plan-compact")).toHaveCount(2);await expect(plan).toContainText("Cool-down and review");}
   expect(await page.evaluate(id=>window.companionTest.browserCompanionRepository().read(id),id)).toEqual(before);
 });

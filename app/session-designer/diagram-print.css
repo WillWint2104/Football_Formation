@@ -27,6 +27,18 @@
 .designer-print .designer-print-unavailable { border:1px solid #b98434; border-left:4px solid #b98434; background:#fff8e9; padding:14px; }
 .designer-print .designer-print-unavailable strong { font-size:14px; }
 .designer-print .designer-print-unavailable p { margin-top:8px; }
+.designer-print .designer-plan-sources { border-top:1px solid #c7d2db; margin-top:20px; padding-top:12px; }
+.designer-print .designer-plan-sources h2 { font-size:14px; }
+.designer-print .designer-plan-source-group { break-inside:avoid-page; margin-top:8px; }
+.designer-print .designer-plan-source-group h3 { font-size:12px; margin:0; }
+.designer-print .designer-plan-compact .designer-plan-activity-content { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.8fr); gap:0 20px; }
+.designer-print .designer-plan-compact .designer-plan-setup { display:block; }
+.designer-print .designer-plan-compact .designer-plan-setup section + section { margin-top:10px; }
+.designer-print .designer-plan-compact .designer-plan-delivery { display:grid; grid-template-columns:1.5fr 1fr; gap:16px; }
+.designer-print .designer-plan-compact .designer-plan-coaching { grid-column:1/-1; }
+.designer-print .designer-plan-continuation table { font:inherit; }
+.designer-print .designer-plan-continuation :is(th,td) { padding:0; border:0; white-space:normal; }
+.designer-print .designer-plan-continuation-context { color:#53657a; font-size:11px; }
 /* Native Chromium margin boxes: same browser print flow, no second pagination engine. */
 @page designer-plan {
   size:A4;
@@ -75,4 +87,13 @@
   .designer-print .designer-plan-long { display:block; }
   .designer-print .designer-plan-coaching .designer-plan-section { margin-bottom:0; }
   .designer-print .designer-plan-footer { display:none; }
+  .designer-print .designer-plan-sources { margin-top:3mm; padding-top:2mm; }
+  .designer-print .designer-plan-sources h2 { font-size:9pt; break-after:avoid-page; }
+  .designer-print .designer-plan-source-group { margin-top:1.5mm; }
+  .designer-print .designer-plan-source-group h3 { font-size:8pt; break-after:avoid-page; }
+  .designer-print .designer-plan-compact { break-inside:avoid-page; }
+  .designer-print .designer-plan-compact .designer-plan-activity-content { gap:0 4mm; }
+  .designer-print .designer-plan-continuation thead { display:table-header-group; break-inside:avoid-page; }
+  .designer-print .designer-plan-continuation tbody tr { break-inside:auto; }
+  .designer-print .designer-plan-continuation-context { font-size:8pt; margin-bottom:1mm; }
 }

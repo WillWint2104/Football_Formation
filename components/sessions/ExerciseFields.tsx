@@ -3,10 +3,10 @@
 import type { ExerciseContent } from "@/lib/domain/session";
 
 /** Edit structured exercise content without authoring diagrams or altering their pinned references. */
-export function ExerciseFields({ content, onChange, editDiagramReferences = false, focused = false, contextual = false }: { content: ExerciseContent; onChange: (value: ExerciseContent) => void; editDiagramReferences?: boolean; focused?: boolean; contextual?: boolean }) {
+export function ExerciseFields({ content, onChange, editDiagramReferences = false, focused = false, contextual = false, hideActivityName = false }: { content: ExerciseContent; onChange: (value: ExerciseContent) => void; editDiagramReferences?: boolean; focused?: boolean; contextual?: boolean; hideActivityName?: boolean }) {
   const update = <K extends keyof ExerciseContent>(key: K, value: ExerciseContent[K]) => onChange({ ...content, [key]: value });
   const identity = <>
-    <label>Activity name<input required maxLength={200} value={content.title} onChange={(e) => update("title", e.target.value)} /></label>
+    {!hideActivityName && <label>Activity name<input required maxLength={200} value={content.title} onChange={(e) => update("title", e.target.value)} /></label>}
     <div className="coaching-form-row"><label>Participants<input type="number" min="1" step="1" placeholder="Unknown" value={content.playerCount ?? ""}
       onChange={(e) => update("playerCount", e.target.value === "" ? null : Number(e.target.value))} /></label>
       <label className="coaching-checkbox"><input type="checkbox" checked={content.area !== null} onChange={(e) => update("area", e.target.checked ? { origin: { x: 0, y: 0 }, length: 20, width: 15 } : null)} />Specify field dimensions</label></div>
