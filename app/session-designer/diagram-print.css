@@ -27,6 +27,10 @@
 .designer-print .designer-print-unavailable { border:1px solid #b98434; border-left:4px solid #b98434; background:#fff8e9; padding:14px; }
 .designer-print .designer-print-unavailable strong { font-size:14px; }
 .designer-print .designer-print-unavailable p { margin-top:8px; }
+.designer-print .designer-plan-sources { border-top:1px solid #c7d2db; margin-top:20px; padding-top:12px; }
+.designer-print .designer-plan-sources h2 { font-size:14px; }
+.designer-print .designer-plan-source-group { break-inside:avoid-page; margin-top:8px; }
+.designer-print .designer-plan-source-group h3 { font-size:12px; margin:0; }
 /* Native Chromium margin boxes: same browser print flow, no second pagination engine. */
 @page designer-plan {
   size:A4;
@@ -75,4 +79,8 @@
   .designer-print .designer-plan-long { display:block; }
   .designer-print .designer-plan-coaching .designer-plan-section { margin-bottom:0; }
   .designer-print .designer-plan-footer { display:none; }
+  .designer-print .designer-plan-sources { margin-top:3mm; padding-top:2mm; }
+  .designer-print .designer-plan-sources h2 { font-size:9pt; break-after:avoid-page; }
+  .designer-print .designer-plan-source-group { margin-top:1.5mm; }
+  .designer-print .designer-plan-source-group h3 { font-size:8pt; break-after:avoid-page; }
 }

@@ -25,6 +25,9 @@ for(const variant of ["diagram-activities","long-content","missing-source","corr
       const field=svg.nth(1).locator('[data-field-marking="touchlines"]');expect(Number(await field.getAttribute("width"))/Number(await field.getAttribute("height"))).toBeCloseTo(105/68,6);
     }
     await expect(svg.first()).toHaveAttribute("data-clipped","0");
+    await expect(plan(page).locator("figure")).not.toContainText("Namespace:");
+    const sources = plan(page).getByRole("region", { name: "Diagram source details" });
+    await expect(sources).toContainText("Scene example-rondo · revision 1 · 2 seconds · Namespace: renderer-examples");
   }
   const pages=await output(page,info,variant);if(variant==="diagram-activities")expect(pages).toBeLessThanOrEqual(3);if(variant==="long-content"){expect(pages).toBeGreaterThan(3);await expect(plan(page)).toContainText("DELIVERY 70:");}
   if(variant!=="corrupt-source")expect(await page.evaluate(id=>window.companionTest.browserCompanionRepository().read(id),id)).toEqual(before);

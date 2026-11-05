@@ -5,7 +5,7 @@ import { printTheme, printTokens } from "@/lib/documents/print-theme";
 import { contrastingInk } from "@/lib/designer/branding";
 import { cleanDocument, hexColorSchema, toSessionContent, type DesignerDocument } from "@/lib/designer/contract";
 import type { PrintActivity } from "@/lib/designer/print-composition";
-import { PrintableDiagrams } from "./PrintableDiagrams";
+import { DiagramTraceability, PrintableDiagrams } from "./PrintableDiagrams";
 import { equipmentOverview } from "@/lib/designer/overview";
 
 function Lines({ title, lines, ordered = false }: { title: string; lines: string[]; ordered?: boolean }) {
@@ -47,6 +47,7 @@ export function DesignerPreview({ document, visible, activities = [] }: { docume
         <div className={sideCoaching || a.content.instructions.join("").length + a.content.coachingPoints.join("").length > 1200 || a.content.instructions.length > 10 ? "designer-plan-delivery designer-plan-long" : "designer-plan-delivery"}><Lines title="Setup & delivery instructions" lines={a.content.instructions} ordered />{!sideCoaching && <Lines title="Coaching points" lines={a.content.coachingPoints} />}</div>
         {!sideSupplements && <div className={[...a.content.progressions, ...a.content.regressions, ...a.content.variations].join("").length > 900 ? "designer-plan-coaching designer-plan-long" : "designer-plan-coaching"}>{supplements}</div>}
       </article>; })}
+      <DiagramTraceability activities={content.activities.map(a => ({ ...(activities.find(item => item.activityId === a.id) ?? { activityId: a.id, presentation: "wide" as const, diagrams: a.content.diagrams.map((pin, index) => ({ index, pin, layout: "wide" as const, namespace: null, status: "unavailable" as const, reason: "Source not verified" })) }), title: a.content.title }))} />
       <footer className="designer-plan-footer"><span>{branding.clubName ?? "Coaching session plan"}</span><span>Prepared with Football Formation</span></footer>
     </div>
   </div>;
