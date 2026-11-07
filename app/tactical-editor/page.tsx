@@ -5,6 +5,9 @@ import { EditorWorkspace } from "@/components/tactical/EditorWorkspace";
 import "../calendar/calendar.css";
 import "../sessions/sessions.css";
 import "./editor.css";
+import "../sessions/calendar-editing.css";
+import "../calendar/planning.css";
+import { parseCalendarReturn } from "@/lib/coaching/calendar-return";
 
 export const metadata = { title: "2D Tactical Editor | Football Formation" };
 const targetQuery = z.strictObject({ kind: z.enum(["session", "exercise", "template"]), id: idSchema, revision: z.coerce.number().pipe(revisionSchema), activity: idSchema.optional(), event: idSchema.optional(), booking: z.coerce.number().pipe(revisionSchema).optional(), diagram: z.union([z.literal("new"), z.coerce.number().int().nonnegative()]) })
@@ -14,8 +17,10 @@ const targetQuery = z.strictObject({ kind: z.enum(["session", "exercise", "templ
 export default async function TacticalEditorPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const query = await searchParams;
   if (!Object.keys(query).length) return <EditorWorkspace />;
-  const parsed = targetQuery.safeParse(query);
-  if (!parsed.success) return <div className="calendar-workspace"><h1>Invalid diagram reference</h1><p>No missing revision was substituted.</p><Link href="/sessions">Open sessions</Link></div>;
+  const { calendar: rawCalendar, ...targetParams } = query;
+  const calendar = rawCalendar === undefined ? undefined : parseCalendarReturn(rawCalendar);
+  const parsed = targetQuery.safeParse(targetParams);
+  if (!parsed.success || rawCalendar !== undefined && (!calendar || parsed.data.kind !== "session")) return <div className="calendar-workspace"><h1>Invalid diagram reference</h1><p>No missing revision was substituted.</p><Link href="/sessions">Open sessions</Link></div>;
   const target = { ...parsed.data, diagram: parsed.data.diagram === "new" ? null : parsed.data.diagram };
-  return <EditorWorkspace key={JSON.stringify(target)} target={target} />;
+  return <EditorWorkspace key={JSON.stringify([target,calendar])} target={target} calendar={calendar ?? undefined} />;
 }

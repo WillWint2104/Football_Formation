@@ -7,7 +7,7 @@ import type { DomainBundle } from "@/lib/domain/validation";
 import { eventSession, latestEvents, localParts, schedulingConflicts, sessionLabels, wallTimeCandidates } from "@/lib/calendar/schedule";
 import { latest } from "@/lib/coaching/sessions";
 import { scheduleSession, type SchedulingSource } from "@/lib/coaching/scheduling";
-import { scheduleSessionCopy, type SessionCopyRequest } from "@/lib/coaching/session-copy";
+import { copyTeams, scheduleSessionCopy, type SessionCopyRequest } from "@/lib/coaching/session-copy";
 
 /** Focus-contained scheduling form with explicit DST choices and overlap acknowledgement. */
 export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initialPlan, initialTeam, copyRequest, returnFocus, onClose, onSave, onReload }: {
@@ -102,9 +102,9 @@ export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initi
         }}><option value="blank">New blank independent session</option>{plans.map((p) => <option key={p.id} value={`session:${p.id}`}>Unscheduled plan: {p.content.title}</option>)}
           {templates.map((t) => <option key={t.id} value={`template:${t.id}`}>Template: {t.content.title} · v{t.revision}</option>)}</select></label>}
         <label>Session title<input name="title" required maxLength={200} defaultValue={copySource?.content.title ?? event?.title ?? plans.find((p) => p.id === initialPlan)?.content.title ?? ""} readOnly={!!copyRequest || !!event || source.startsWith("session:")} /></label>
-        <div className="calendar-form-row"><label>Team<select aria-label="Team" name="team" value={team} disabled={!!copyRequest || !!event}
-          onChange={(e) => { setTeam(e.target.value); setSource("blank"); if (form.current) (form.current.elements.namedItem("coach") as HTMLSelectElement).value = ""; }}>
-          {bundle.teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+        <div className="calendar-form-row"><label>Team<select aria-label="Team" name="team" value={team} disabled={!!event || !!copySource && copyTeams(bundle, copySource).length < 2}
+          onChange={(e) => { setTeam(e.target.value); setSource("blank"); const coach = form.current?.elements.namedItem("coach") as HTMLSelectElement | null; if (coach) coach.value = ""; }}>
+          {(copySource ? copyTeams(bundle, copySource) : bundle.teams).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select></label>
         <label>Session type<select aria-label="Session type" name="kind" disabled={!!copyRequest || !!event || source !== "blank"} defaultValue={session?.content.kind ?? plans.find((p) => p.id === initialPlan)?.content.kind ?? "possession"}>
           {Object.entries(sessionLabels).map(([id, title]) => <option key={id} value={id}>{title}</option>)}

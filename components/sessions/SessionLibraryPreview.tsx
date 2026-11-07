@@ -44,7 +44,7 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar 
     <section className="library-preview-summary"><h3>Session objective</h3><p>{source.content.objective ?? "Not specified"}</p>
       {!!source.content.focus.length && <p className="library-preview-focus">{source.content.focus.join(" · ")}</p>}
       <p><b>Assigned coaches:</b> {source.coaches.map((c) => `${snapshot.bundle.coaches.find((v) => v.id === c.coachId)?.displayName ?? "Coach unavailable"} (${c.role})`).join(" · ") || "Not assigned"}</p></section>
-    {!current && <p className="library-preview-warning">A newer source revision exists. This preview remains exact. <Link href={calendar?.currentHref ?? `/sessions?session=${encodeURIComponent(source.id)}&organization=${encodeURIComponent(source.organizationId)}&view=preview`}>Preview current revision</Link> before scheduling.</p>}
+    {!current && <p className="library-preview-warning">Historical session revision {source.revision}. A newer source revision exists. This preview remains exact and read only. <Link href={calendar?.currentHref ?? `/sessions?session=${encodeURIComponent(source.id)}&organization=${encodeURIComponent(source.organizationId)}&view=preview`}>Use Latest Available Version</Link> to preview it before confirming a new copy. The original booking keeps its historical version.</p>}
     {completed && existingEvent && <section className="library-preview-completed" role="status"><h3>Independent occurrence found for this request</h3>
       <p>{mode === "sample" ? "Applied in sample memory only; reload discards it." : "The saved booking and session copy are present in the validated organisation snapshot."} The original remains unchanged.</p>
       <Link href={calendar?.completedHref(existingEvent) ?? `/calendar?date=${existingEvent.localDate}&event=${encodeURIComponent(existingEvent.id)}`}>Open scheduled occurrence</Link>
@@ -64,7 +64,7 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar 
           <section><h4>Coaching points</h4>{selectedActivity.content.coachingPoints.length ? <ul>{selectedActivity.content.coachingPoints.map((line, i) => <li key={i}>{line}</li>)}</ul> : <p>Not specified</p>}
             {!!selectedActivity.content.progressions.length && <><h4>Progressions</h4><ul>{selectedActivity.content.progressions.map((line, i) => <li key={i}>{line}</li>)}</ul></>}</section></div>
       </article>}</div>
-    <p className="library-preview-boundary">Scheduling copies this exact session into a new identity for the same team. Activities, staff and diagram pins are retained; document associations are not copied. The source and other bookings stay unchanged. Local C3 packages are a separate workspace and are not uploaded.</p>
+    <p className="library-preview-boundary">Scheduling copies this previewed current revision into a new identity. Choose a team eligible for all retained staff; no coach is removed automatically. Activities and exact diagram pins are retained; document associations are not copied. The source and other bookings stay unchanged. Local C3 packages remain separate.</p>
     {copyRequest && !used && <CopyDialog key={`${scope}:${copyRequest.requestId}`} request={copyRequest} date={calendar?.date} onSaved={calendar?.onSaved} onClose={() => calendar ? calendar.onCancel() : router.replace(previewHref)} />}
   </section>;
 }

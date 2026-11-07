@@ -72,10 +72,10 @@ test("schedule copy commits once, survives refresh and opens the correct calenda
   await page.getByRole("link", { name: "Open scheduled occurrence", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`event=${ids.eventId}`));
   await expect(page.getByRole("complementary", { name: "Session preview" })).toContainText("17:00");
-  await page.getByRole("link", { name: "Open Session", exact: true }).click();
+  await page.getByRole("link", { name: "Edit Session", exact: true }).click();
   await page.getByRole("textbox", { name: "Session objective", exact: true }).fill("Only the scheduled copy changes");
-  await page.getByRole("button", { name: "Save session", exact: true }).click();
-  await expect(page).toHaveURL(/revision=2/);
+  await page.getByRole("button", { name: "Save Session & Return", exact: true }).click();
+  await expect(page).toHaveURL(/bookingRevision=2/);
   expect(m.bundle().sessions.find((s) => s.id === m.source.id)!.content.objective).toEqual(m.source.content.objective);
   expect(m.bundle().sessions.find((s) => s.id === ids.sessionId && s.revision === 2)!.content.objective).toBe("Only the scheduled copy changes");
 });
@@ -112,7 +112,7 @@ test("wrong organisation, missing and stale revisions cannot schedule; C3 local 
   m.newer(); await page.goto(m.href); await loaded(page);
   await expect(page.getByRole("button", { name: "Schedule independent copy", exact: true })).toBeDisabled();
   await expect(page.getByText("A newer source revision exists.", { exact: false })).toBeVisible();
-  await page.getByRole("link", { name: "Preview current revision", exact: true }).click();
+  await page.getByRole("link", { name: "Use Latest Available Version", exact: true }).click();
   await expect(page.getByRole("region", { name: "Saved session preview" })).toContainText("A newer source objective");
   expect(await page.evaluate(() => localStorage.getItem('c4-local-boundary-sentinel'))).toBe('synthetic local package remains separate'); expect(m.writes()).toBe(0);
   await page.goto(m.href+'&copy=invalid'); await expect(page.getByRole("heading", { name: "Invalid session reference" })).toBeVisible();

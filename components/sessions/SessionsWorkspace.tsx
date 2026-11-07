@@ -13,9 +13,10 @@ import { SessionEditor } from "./SessionEditor";
 import { SessionLibraryPreview } from "./SessionLibraryPreview";
 import type { SessionCopyRequest } from "@/lib/coaching/session-copy";
 import { sessionCatalogue, filterCatalogue } from "@/lib/coaching/catalogue";
+import { calendarReturnProblem, savedCalendarHref, updatedCalendarReturn, withCalendar, type CalendarReturn } from "@/lib/coaching/calendar-return";
 
 /** Library entries resolve explicit booking pins; historical links remain read-only snapshots. */
-export function SessionsWorkspace({ eventId, sessionId, revision, preview = false, organizationId, copyRequest }: { eventId?: string; sessionId?: string; revision?: number; preview?: boolean; organizationId?: string; copyRequest?: SessionCopyRequest }) {
+export function SessionsWorkspace({ eventId, sessionId, revision, preview = false, organizationId, copyRequest, calendar }: { eventId?: string; sessionId?: string; revision?: number; preview?: boolean; organizationId?: string; copyRequest?: SessionCopyRequest; calendar?: CalendarReturn }) {
   const { snapshot, scope, loading, busy, blocked, dirty, markDirty } = useCoaching();
   const bundle = snapshot.bundle;
   const router = useRouter();
@@ -30,12 +31,15 @@ export function SessionsWorkspace({ eventId, sessionId, revision, preview = fals
   const created = creation?.scope === scope && creation.session.organizationId === bundle.organizationId ? creation.session : null;
   const source = created ?? (organizationId && organizationId !== bundle.organizationId ? undefined : event ? eventSession(bundle, event) : sessionId ? (revision ? bundle.sessions.find((s) => s.id === sessionId && s.revision === revision) : latest(bundle.sessions).find((s) => s.id === sessionId)) : undefined);
   const historical = !created && !!source && (event ? bookings.find((e) => e.id === event.id)?.revision !== event.revision : latest(bundle.sessions).find((s) => s.id === source.id)?.revision !== source.revision || bookedIds.has(source.id));
-  const currentHref = eventId ? `/sessions?event=${encodeURIComponent(eventId)}` : `/sessions?session=${encodeURIComponent(sessionId ?? "")}`;
-  return <div className="calendar-workspace coaching-workspace"><div className="calendar-page-heading"><div><p className="calendar-eyebrow">Prepare every session</p><h1>Session library</h1><p className="calendar-muted">Independent plans, structured activities and exact saved revisions.</p></div>
-    <button className="calendar-primary" disabled={loading || busy || blocked || navigating || !bundle.teams.length} onClick={() => {
+  const currentEvent = bookings.find(e => e.id === eventId);
+  const currentHref = eventId ? currentEvent && calendar ? withCalendar(`/sessions?event=${encodeURIComponent(eventId)}&revision=${currentEvent.revision}`, updatedCalendarReturn(calendar, currentEvent)) : `/sessions?event=${encodeURIComponent(eventId)}` : `/sessions?session=${encodeURIComponent(sessionId ?? "")}`;
+  const problem = calendar && !loading ? calendarReturnProblem(bundle, calendar, eventId, revision) : undefined;
+  if (problem) return <div className="calendar-workspace"><h1>Calendar editing context unavailable</h1><p role="alert">{problem} No other booking was selected.</p><Link href="/calendar">Open Calendar</Link></div>;
+  return <div className={`calendar-workspace coaching-workspace${calendar ? " coaching-from-calendar calendar-integrated" : ""}`}><div className="calendar-page-heading"><div><p className="calendar-eyebrow">Prepare every session</p><h1>{calendar ? "Edit scheduled session" : "Session library"}</h1><p className="calendar-muted">Independent plans, structured activities and exact saved revisions.</p></div>
+    {!calendar && <button className="calendar-primary" disabled={loading || busy || blocked || navigating || !bundle.teams.length} onClick={() => {
       if (dirty && !window.confirm("Discard the current unsaved draft?")) return;
       markDirty(false); setCreation({ scope, session: newSession(bundle, bundle.teams[0].id) });
-    }}>New session</button></div>
+    }}>New session</button>}</div>
     <WorkspaceStatus />
     <div className="coaching-library-layout"><aside className="coaching-catalog"><label>Find sessions<input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search activity or objective" /></label>
       <label>Filter session type<select aria-label="Filter session type" value={kind} onChange={(e) => setKind(e.target.value)}><option value="">All session types</option>{Object.entries(sessionLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
@@ -51,7 +55,8 @@ export function SessionsWorkspace({ eventId, sessionId, revision, preview = fals
       <SessionLibraryPreview key={`${scope}:${source.id}:${source.revision}`} source={source} copyRequest={copyRequest} editHref={items.find((item) => item.session.id === source.id && item.session.revision === source.revision)?.href ?? `/sessions?session=${encodeURIComponent(source.id)}&revision=${source.revision}`} /> : source ? <>
       {historical && <p className="coaching-notice">This exact snapshot is preserved. <Link href={bookedIds.has(source.id) && !event ? items.find((i) => i.session.id === source.id)?.href ?? currentHref : currentHref}>Open current booking/session</Link></p>}
       <SessionEditor key={`${scope}:${snapshot.version}:${created ? "new" : event?.id ?? source.id}:${source.revision}`} source={source} event={created ? undefined : event} historical={historical} isNew={!!created} navigating={navigating}
-        onSaved={(session, savedEvent) => startNavigation(() => { setCreation(null); router.replace(savedEvent ? `/sessions?event=${encodeURIComponent(savedEvent.id)}&revision=${savedEvent.revision}` : `/sessions?session=${encodeURIComponent(session.id)}`); })}
+        calendar={calendar}
+        onSaved={(session, savedEvent) => startNavigation(() => { setCreation(null); markDirty(false); router.replace(savedEvent && calendar ? savedCalendarHref(calendar, savedEvent, "session-saved") : savedEvent ? `/sessions?event=${encodeURIComponent(savedEvent.id)}&revision=${savedEvent.revision}` : `/sessions?session=${encodeURIComponent(session.id)}`); })}
         onTemplate={(id) => startNavigation(() => router.push(`/templates?item=${encodeURIComponent(id)}`))} />
       {!created && <details className="coaching-history"><summary>Saved revision history</summary>{event ? bundle.events.filter((e) => e.id === event.id).sort((a, b) => b.revision - a.revision).map((e) => <Link key={e.revision} href={`/sessions?event=${encodeURIComponent(e.id)}&revision=${e.revision}`}>Booking v{e.revision} · session v{e.session?.revision ?? "—"}</Link>)
         : bundle.sessions.filter((s) => s.id === source.id).sort((a, b) => b.revision - a.revision).map((s) => <Link key={s.revision} href={`/sessions?session=${encodeURIComponent(s.id)}&revision=${s.revision}`}>Session v{s.revision}</Link>)}</details>}

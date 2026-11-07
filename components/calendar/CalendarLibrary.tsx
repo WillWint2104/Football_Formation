@@ -23,8 +23,8 @@ export function CalendarLibrary({ context }: { context: CalendarNavigation & { d
   const cancel = () => router.replace(calendarHref(base), { scroll: false });
   const navigate = (value: CalendarNavigation) => router.push(calendarHref(value), { scroll: false });
   function completed(event: CalendarEvent) {
-    // Clear only a hiding type filter when returning from a successful copy; the selected team is retained.
-    return calendarHref({ ...base, date: event.localDate, event: event.id, bookingRevision: event.revision, focus: "date",
+    // Return to the chosen eligible team, preserving an all-team view when no filter was set.
+    return calendarHref({ ...base, date: event.localDate, team: base.team ? event.teamId : undefined, event: event.id, bookingRevision: event.revision, focus: "date",
       type: base.type && base.type !== source?.content.kind ? undefined : base.type });
   }
   useEffect(() => {

@@ -10,6 +10,7 @@ export const calendarNavigationSchema = z.strictObject({
   organization: idSchema.optional(), team: idSchema.optional(), event: idSchema.optional(),
   bookingRevision: revisionSchema.optional(),
   focus: z.literal("date").optional(),
+  notice: z.enum(["session-saved", "diagram-saved"]).optional(),
   type: z.enum(["fixture", ...Object.keys(sessionLabels)]).optional(),
   plan: idSchema.optional(), library: z.literal("1").optional(),
   session: idSchema.optional(), revision: revisionSchema.optional(), copy: z.uuid().optional(),

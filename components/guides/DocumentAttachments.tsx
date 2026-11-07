@@ -7,9 +7,10 @@ import { guideHref, MAX_PDF_BYTES, pdfFilenameSchema, type GuideReference } from
 import { downloadPdf, uploadPdf } from "@/lib/documents/client";
 import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { useUnsavedChanges } from "@/components/coaching/useUnsavedChanges";
+import { withCalendar, type CalendarReturn } from "@/lib/coaching/calendar-return";
 
 /** Attach passive PDFs to a new session revision and download only through fresh server authorization. */
-export function DocumentAttachments({ session, reference, historical }: { session: Session; reference: GuideReference; historical: boolean }) {
+export function DocumentAttachments({ session, reference, historical, calendar }: { session: Session; reference: GuideReference; historical: boolean; calendar?: CalendarReturn }) {
   const { snapshot, mode, busy, blocked, loading, externalSave } = useCoaching();
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null), [error, setError] = useState(""), [message, setMessage] = useState("");
@@ -35,7 +36,7 @@ export function DocumentAttachments({ session, reference, historical }: { sessio
         let next = reference;
         await externalSave(snapshot, async () => { const result = await uploadPdf(snapshot, reference, file);
           next = { session: result.session.id, revision: result.session.revision, ...(result.event ? { event: result.event.id, bookingRevision: result.event.revision } : {}) }; });
-        setFile(null); router.replace(guideHref(next));
+        setFile(null); router.replace(withCalendar(guideHref(next), calendar && next.event && next.bookingRevision ? { ...calendar, event: next.event, bookingRevision: next.bookingRevision } : undefined));
       } catch (failure) { setMessage(""); setError(failure instanceof Error ? failure.message : "Upload could not be confirmed. Reload before retrying."); }
     }}><label>Coaching PDF<input type="file" accept="application/pdf,.pdf" disabled={disabled} onChange={(e) => {
       setError(""); const chosen = e.target.files?.[0] ?? null;

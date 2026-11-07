@@ -2,7 +2,7 @@ import { domainBundleSchema, type DomainBundle } from "../domain/validation";
 import type { ExerciseContent } from "../domain/session";
 import { reviseSession, reviseExercise, reviseTemplate } from "../coaching/sessions";
 import { latestEvents } from "../calendar/schedule";
-import { prepareScene } from "./evaluate";
+import { prepareScene, sceneDuration } from "./evaluate";
 import { contextArea } from "./context";
 import type { TacticalScene } from "../domain/tactical-scene";
 
@@ -35,10 +35,13 @@ export function resolveDiagramTarget(bundle: DomainBundle, target: DiagramTarget
   return { content, scene, readOnly, title: content.title };
 }
 /** Atomically append scene and owner revisions; only the selected activity/exercise and booking get a new pin. */
-export function saveDiagram(input: DomainBundle, target: DiagramTarget, draft: TacticalScene): { bundle: DomainBundle; target: DiagramTarget; scene: TacticalScene } {
+export function saveDiagram(input: DomainBundle, target: DiagramTarget, draft: TacticalScene, representativeSeconds?: number): { bundle: DomainBundle; target: DiagramTarget; scene: TacticalScene } {
   const bundle = domainBundleSchema.parse(input), resolved = resolveDiagramTarget(bundle, target);
   if (resolved.readOnly) throw new Error("Open the current saved owner revision before editing");
   const parsed = prepareScene(draft);
+  const previousTime = target.diagram === null ? 0 : resolved.content.diagrams[target.diagram].representativeSeconds;
+  const time = representativeSeconds ?? previousTime, duration = sceneDuration(parsed);
+  if (!Number.isFinite(time) || time < 0 || time > duration) throw new Error(`Choose a representative time between 0 and ${duration} seconds. The previous moment was not changed or saved.`);
   if (parsed.organizationId !== bundle.organizationId) throw new Error("Organisation mismatch");
   if (resolved.scene && (parsed.id !== resolved.scene.id || parsed.revision !== resolved.scene.revision)) throw new Error("Scene draft does not match its pinned source");
   const versions = bundle.scenes.filter((s) => s.id === parsed.id);
@@ -46,7 +49,7 @@ export function saveDiagram(input: DomainBundle, target: DiagramTarget, draft: T
   const scene = prepareScene({ ...parsed, revision: versions.length ? Math.max(...versions.map((s) => s.revision)) + 1 : 1 });
   const next = structuredClone(bundle); next.scenes.push(scene);
   const content = structuredClone(resolved.content), index = target.diagram ?? content.diagrams.length;
-  content.diagrams[index] = { scene: { id: scene.id, revision: scene.revision }, representativeSeconds: 0 };
+  content.diagrams[index] = { scene: { id: scene.id, revision: scene.revision }, representativeSeconds: time };
   if (scene.context) content.area = contextArea(scene);
   const updated = { ...target, diagram: index };
   if (target.kind === "exercise") {

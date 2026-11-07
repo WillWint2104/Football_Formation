@@ -25,8 +25,8 @@ export function sessionCopyOccurrence(bundle: DomainBundle, request: SessionCopy
   const source = bundle.sessions.find((s) => s.id === parsed.source.id && s.revision === parsed.source.revision);
   const firstCopy = bundle.sessions.find((s) => s.id === ids.sessionId && s.revision === 1);
   const firstEvent = bundle.events.find((e) => e.id === ids.eventId && e.revision === 1);
-  if (!source || !firstCopy || firstEvent?.session?.id !== ids.sessionId || firstEvent.session.revision !== 1 || firstEvent.teamId !== source.teamId) return undefined;
-  const expected = sessionSchema.parse({ ...source, id: ids.sessionId, revision: 1, documents: [] });
+  if (!source || !firstCopy || firstEvent?.session?.id !== ids.sessionId || firstEvent.session.revision !== 1 || firstEvent.teamId !== firstCopy.teamId || !copyTeams(bundle, source).some(t => t.id === firstCopy.teamId)) return undefined;
+  const expected = sessionSchema.parse({ ...source, id: ids.sessionId, teamId: firstCopy.teamId, revision: 1, documents: [] });
   if (JSON.stringify(firstCopy) !== JSON.stringify(expected)) return undefined;
   const event = latestEvents(bundle).find((e) => e.id === ids.eventId);
   return event?.session?.id === ids.sessionId && bundle.sessions.some((s) => s.id === ids.sessionId && s.revision === event.session?.revision) ? event : undefined;
@@ -40,14 +40,19 @@ export function scheduleSessionCopy(inputBundle: DomainBundle, input: ScheduleIn
   if (!source) throw new Error("The exact previewed session is unavailable. Nothing was scheduled.");
   if (latest(bundle.sessions).find((s) => s.id === source.id)?.revision !== source.revision)
     throw new Error("The source session changed. Preview its current revision before scheduling a copy.");
-  if (source.teamId !== input.teamId) throw new Error("The scheduled copy must retain the source team. No team or staff reassignment was made.");
+  if (!copyTeams(bundle, source).some(t => t.id === input.teamId)) throw new Error("Choose the source team or another organisation team eligible for all retained coaches. No staff reassignment was made.");
   const { sessionId, eventId } = sessionCopyIds(parsed);
   if (bundle.sessions.some((s) => s.id === sessionId) || bundle.events.some((e) => e.id === eventId))
     throw new Error("This scheduling request has already been used. Reopen the saved occurrence; do not submit it again.");
   let allocated = 0;
   const result = scheduleChange(bundle, { ...input, title: source.content.title, kind: source.content.kind }, undefined,
     () => allocated++ === 0 ? sessionId : eventId);
-  const session = sessionSchema.parse({ ...structuredClone(source), id: sessionId, revision: 1, documents: [] });
+  const session = sessionSchema.parse({ ...structuredClone(source), id: sessionId, teamId: input.teamId, revision: 1, documents: [] });
   result.bundle.sessions = result.bundle.sessions.map((s) => s.id === sessionId ? session : s);
   return { bundle: domainBundleSchema.parse(result.bundle), event: result.event, session };
+}
+
+/** Copying never drops staff to make a different team fit. The validated graph remains authoritative. */
+export function copyTeams(bundle: DomainBundle, source: { coaches: { coachId: string }[] }) {
+  return bundle.teams.filter(t => source.coaches.every(a => bundle.coaches.some(c => c.id === a.coachId && c.teamIds.includes(t.id))));
 }

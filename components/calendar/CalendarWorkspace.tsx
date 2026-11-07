@@ -35,7 +35,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
   const bundle = snapshot.bundle;
   const problem = !loading && calendarContextProblem(bundle, navigation);
   const context = { ...navigation, date, view, organization: bundle.organizationId };
-  function go(change: Partial<CalendarNavigation>) { if (!problem && !navigating) startNavigation(() => router.push(calendarHref({ ...context, ...change, ...(change.library ? { plan: undefined } : {}) }), { scroll: false })); }
+  function go(change: Partial<CalendarNavigation>) { if (!problem && !navigating) startNavigation(() => router.push(calendarHref({ ...context, notice: undefined, ...change, ...(change.library ? { plan: undefined } : {}) }), { scroll: false })); }
   function setDate(value: string) { go({ date: value }); }
   function browse() { go({ library: "1" }); }
   const events = latestEvents(bundle);
@@ -98,6 +98,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
       }}><RefreshCw size={14} />{blocked ? "Reload before saving" : "Reload"}</button>
     </div></div>
     {problem && <p role="alert" className="calendar-context-warning">{problem} <Link href={calendarHref({ date, view })}>Reset Calendar context</Link></p>}
+    {!problem && navigation.notice && <p role="status" className="calendar-saved-notice">{navigation.notice === "diagram-saved" ? "Diagram saved" : "Session saved"} · booking revision {current?.revision}. Your Calendar context is restored.</p>}
     {current && type && type !== (current.kind === "fixture" ? "fixture" : eventSession(bundle, current)?.content.kind ?? "other") && <p className="calendar-context-warning">The selected booking is hidden by the type filter. <button onClick={() => go({ type: undefined })}>Show selected booking</button></p>}
     <div className="calendar-planning"><section className="calendar-main" aria-label="Calendar schedule">
       <fieldset className="calendar-navigation-controls" disabled={navigating || loading || busy}>
@@ -153,6 +154,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
       {view !== "month" && <p className="calendar-muted calendar-footnote">Each day lists bookings chronologically, including parallel sessions and overnight continuations. Use Edit Booking for precise times and daylight-saving choices.</p>}
     </section>
     <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => go({ event: undefined, bookingRevision: undefined })}
+      context={current ? { date, view, organization: bundle.organizationId, team: navigation.team, type: navigation.type, event: current.id, bookingRevision: current.revision } : undefined}
       disabled={loading || busy || navigating || blocked || !!problem} onSchedule={() => setEditing({ event: current })}
       onBrowse={browse} onCopy={current?.session ? () => go({ library: "1", session: current.session!.id, revision: current.session!.revision }) : undefined} /></div>
     {editing && !loading && !problem && <ScheduleDialog bundle={bundle} date={editing.date ?? date} event={editing.event} demo={!saved} busy={busy} blocked={blocked} initialPlan={editing.plan} initialTeam={team}

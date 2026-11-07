@@ -9,12 +9,14 @@ import { eventSession, localParts, sessionLabels } from "@/lib/calendar/schedule
 import { SessionTypeIcon } from "./SessionTypeIcon";
 import { guideHref } from "@/lib/documents/contracts";
 import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import { withCalendar, type CalendarReturn } from "@/lib/coaching/calendar-return";
 
 /** Preview one independent booking and its exact pinned content, without inventing missing diagrams. */
-export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disabled, onBrowse, onCopy }: {
+export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disabled, onBrowse, onCopy, context }: {
   bundle: DomainBundle; event: CalendarEvent | undefined; demo: boolean;
   onClose: () => void; onSchedule: () => void; disabled: boolean;
   onBrowse: () => void; onCopy?: () => void;
+  context?: CalendarReturn;
 }) {
   const panel = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -35,8 +37,8 @@ export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disab
     <span className="calendar-badge">{event.status} · {demo ? "illustrative" : `booking v${event.revision}`}</span>
     <div className="calendar-booking-actions">
     <button className="calendar-primary calendar-wide" onClick={onSchedule} disabled={disabled || event.status === "cancelled"}>Edit Booking</button>
-    {session && <Link className="coaching-session-link" href={`/sessions?event=${encodeURIComponent(event.id)}&revision=${event.revision}`}>Open Session</Link>}
-    {session && <Link className="coaching-session-link" href={guideHref({ session: session.id, revision: session.revision, event: event.id, bookingRevision: event.revision })}>Open coaching guide</Link>}
+    {session && <Link className="coaching-session-link" href={withCalendar(`/sessions?event=${encodeURIComponent(event.id)}&revision=${event.revision}`, context)}>Edit Session</Link>}
+    {session && <Link className="coaching-session-link" href={withCalendar(guideHref({ session: session.id, revision: session.revision, event: event.id, bookingRevision: event.revision }), context)}>Open coaching guide</Link>}
     {onCopy && <button onClick={onCopy} disabled={disabled}>Schedule Another Copy</button>}
     <button onClick={onBrowse} disabled={disabled}>Browse Session Library</button></div>
     <dl className="calendar-meta">
@@ -62,6 +64,6 @@ export function SessionPreview({ bundle, event, demo, onClose, onSchedule, disab
     </section>
     {session && <p className="calendar-muted calendar-footnote">Pinned session revision {session.revision} · {session.documents.length} document references.
       Saved guides, diagrams and private attachments use this exact session revision.</p>}
-    <p className="calendar-muted calendar-footnote">Edit Booking changes scheduling details only. Open Session edits its coaching content. Copies have separate identities. Coaching guides use the pinned revision; saved PDFs are historical exports and may show an earlier schedule.</p>
+    <p className="calendar-muted calendar-footnote">Edit Booking changes scheduling details only. Edit Session changes its coaching content. Copies have separate identities. Coaching guides use the pinned revision; saved PDFs are historical exports and may show an earlier schedule.</p>
   </aside>;
 }
