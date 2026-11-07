@@ -1,10 +1,10 @@
-import { Activity, CircleDot, Dumbbell, FlaskConical, Layers, Shield, Target, Workflow } from "lucide-react";
+import { Activity, CircleDot, Dumbbell, FlaskConical, Flag, Layers, Shield, Target, Workflow } from "lucide-react";
 import type { SessionKind } from "@/lib/domain/session";
 
 /** Compact, consistent type symbols supplement the written labels and colour cues. */
-export function SessionTypeIcon({ kind }: { kind: SessionKind }) {
+export function SessionTypeIcon({ kind }: { kind: SessionKind | "fixture" }) {
   const Icon = { conditioning: Dumbbell, possession: CircleDot, goalkeeper: Shield,
     technical: Target, tactical: Workflow, recovery: Activity, testing: FlaskConical,
-    combined: Layers, other: Target }[kind];
+    combined: Layers, other: Target, fixture: Flag }[kind];
   return <Icon size={16} aria-hidden="true" />;
 }

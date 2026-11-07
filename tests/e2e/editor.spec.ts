@@ -98,7 +98,7 @@ test("neutral conversion is explicit, translated and undoable; physical region a
 
 test("calendar → activity → editor save/reopen → exact guide; history and reusable sources remain independent", async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", (e) => errors.push(e.message)); const mock = await storage(page), initial = structuredClone(mock.bundle());
-  await page.goto("/calendar?date=2026-11-03"); await loaded(page); await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click(); await page.getByRole("link", { name: "Open session editor" }).click();
+  await page.goto("/calendar?date=2026-11-03"); await loaded(page); await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click(); await page.getByRole("link", { name: "Open Session" }).click();
   await page.getByRole("link", { name: "Create diagram", exact: false }).nth(1).click(); await expect(page).toHaveURL(/tactical-editor/); await apply(page, "rondo");
   await page.getByRole("button", { name: "Save diagram", exact: true }).click(); await expect(page).toHaveURL(/revision=2/); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-revision", "1");
   const savedTarget = new URL(page.url()); const sceneId = await page.locator(".scene-diagram").getAttribute("data-scene-id");

@@ -11,15 +11,21 @@ import { sessionCopyIds, sessionCopyOccurrence, type SessionCopyRequest } from "
 import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
 import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import type { CalendarEvent } from "@/lib/domain/calendar";
+
+export type CalendarPreviewNavigation = {
+  date: string; previewHref: string; currentHref: string; completedHref: (event: CalendarEvent) => string;
+  onSchedule: () => void; onCancel: () => void; onSaved: (event: CalendarEvent) => void;
+};
 
 /** Reuse the organisation graph's read/commit boundary; local C3 packages are never inspected. */
-export function SessionLibraryPreview({ source, copyRequest, editHref }: { source: Session; copyRequest?: SessionCopyRequest; editHref: string }) {
+export function SessionLibraryPreview({ source, copyRequest, editHref, calendar }: { source: Session; copyRequest?: SessionCopyRequest; editHref: string; calendar?: CalendarPreviewNavigation }) {
   const { snapshot, scope, mode, busy, loading, blocked } = useCoaching();
   const router = useRouter(), activity = source.content.activities;
   const [selected, setSelected] = useState(activity.find((a) => a.content.diagrams.length)?.id ?? activity[0]?.id ?? "");
   const [diagram, setDiagram] = useState(0);
   const selectedActivity = activity.find((a) => a.id === selected), total = activityTotals(activity);
-  const previewHref = `/sessions?session=${encodeURIComponent(source.id)}&revision=${source.revision}&organization=${encodeURIComponent(source.organizationId)}&view=preview`;
+  const previewHref = calendar?.previewHref ?? `/sessions?session=${encodeURIComponent(source.id)}&revision=${source.revision}&organization=${encodeURIComponent(source.organizationId)}&view=preview`;
   const ids = copyRequest ? sessionCopyIds(copyRequest) : null;
   const existingEvent = copyRequest ? sessionCopyOccurrence(snapshot.bundle, copyRequest) : undefined;
   const completed = !!existingEvent;
@@ -31,17 +37,17 @@ export function SessionLibraryPreview({ source, copyRequest, editHref }: { sourc
   return <section className="session-library-preview" aria-label="Saved session preview">
     <header className="library-preview-heading"><div><p>Saved session preview · revision {source.revision}</p><h2>{source.content.title}</h2>
       <span>{sessionLabels[source.content.kind]} · {snapshot.bundle.teams.find((t) => t.id === source.teamId)?.name ?? "Team unavailable"}</span></div>
-      <div className="library-preview-actions"><Link href={editHref}>Open existing editor</Link>
-        <button className="calendar-primary" disabled={busy || loading || blocked || !current || !!copyRequest} onClick={() => router.replace(`${previewHref}&copy=${crypto.randomUUID()}`)}>Schedule independent copy</button></div></header>
+      <div className="library-preview-actions">{!calendar && <Link href={editHref}>Open existing editor</Link>}
+        <button className="calendar-primary" disabled={busy || loading || blocked || !current || !!copyRequest} onClick={() => calendar ? calendar.onSchedule() : router.replace(`${previewHref}&copy=${crypto.randomUUID()}`)}>Schedule independent copy</button></div></header>
     <div className="library-preview-facts"><span><b>{total.minutes} known min</b>{total.unknown ? ` · ${total.unknown} untimed` : " · all activities timed"}</span>
       <span>{activity.length} activities · {count} diagram references</span><span>{mode === "sample" ? "Sample only · changes disappear on reload" : "Organisation-owned saved content"}</span></div>
     <section className="library-preview-summary"><h3>Session objective</h3><p>{source.content.objective ?? "Not specified"}</p>
       {!!source.content.focus.length && <p className="library-preview-focus">{source.content.focus.join(" · ")}</p>}
       <p><b>Assigned coaches:</b> {source.coaches.map((c) => `${snapshot.bundle.coaches.find((v) => v.id === c.coachId)?.displayName ?? "Coach unavailable"} (${c.role})`).join(" · ") || "Not assigned"}</p></section>
-    {!current && <p className="library-preview-warning">A newer source revision exists. This preview remains exact. <Link href={`/sessions?session=${encodeURIComponent(source.id)}&organization=${encodeURIComponent(source.organizationId)}&view=preview`}>Preview current revision</Link> before scheduling.</p>}
+    {!current && <p className="library-preview-warning">A newer source revision exists. This preview remains exact. <Link href={calendar?.currentHref ?? `/sessions?session=${encodeURIComponent(source.id)}&organization=${encodeURIComponent(source.organizationId)}&view=preview`}>Preview current revision</Link> before scheduling.</p>}
     {completed && existingEvent && <section className="library-preview-completed" role="status"><h3>Independent occurrence found for this request</h3>
       <p>{mode === "sample" ? "Applied in sample memory only; reload discards it." : "The saved booking and session copy are present in the validated organisation snapshot."} The original remains unchanged.</p>
-      <Link href={`/calendar?date=${existingEvent.localDate}&event=${encodeURIComponent(existingEvent.id)}`}>Open scheduled occurrence</Link>
+      <Link href={calendar?.completedHref(existingEvent) ?? `/calendar?date=${existingEvent.localDate}&event=${encodeURIComponent(existingEvent.id)}`}>Open scheduled occurrence</Link>
       <Link href={previewHref}>Return to preview</Link></section>}
     {used && !completed && <p role="alert" className="library-preview-warning">This request identity is already present but its complete occurrence could not be resolved. Reload and inspect saved records. No new copy was created.</p>}
     <div className="library-preview-layout"><nav aria-label="Preview activity sequence"><h3>Activity sequence</h3>{activity.map((a, i) => <button key={a.id} aria-current={a.id === selected ? "step" : undefined} onClick={() => { setSelected(a.id); setDiagram(0); }}>
@@ -59,16 +65,17 @@ export function SessionLibraryPreview({ source, copyRequest, editHref }: { sourc
             {!!selectedActivity.content.progressions.length && <><h4>Progressions</h4><ul>{selectedActivity.content.progressions.map((line, i) => <li key={i}>{line}</li>)}</ul></>}</section></div>
       </article>}</div>
     <p className="library-preview-boundary">Scheduling copies this exact session into a new identity for the same team. Activities, staff and diagram pins are retained; document associations are not copied. The source and other bookings stay unchanged. Local C3 packages are a separate workspace and are not uploaded.</p>
-    {copyRequest && !used && <CopyDialog key={`${scope}:${copyRequest.requestId}`} request={copyRequest} onClose={() => router.replace(previewHref)} />}
+    {copyRequest && !used && <CopyDialog key={`${scope}:${copyRequest.requestId}`} request={copyRequest} date={calendar?.date} onSaved={calendar?.onSaved} onClose={() => calendar ? calendar.onCancel() : router.replace(previewHref)} />}
   </section>;
 }
 
 /** Capture the original validated graph once; another save cannot silently rebase this dialog. */
-function CopyDialog({ request, onClose }: { request: SessionCopyRequest; onClose: () => void }) {
-  const { snapshot, commit, busy, blocked, mode } = useCoaching();
+function CopyDialog({ request, onClose, date, onSaved }: { request: SessionCopyRequest; onClose: () => void; date?: string; onSaved?: (event: CalendarEvent) => void }) {
+  const { snapshot, commit, busy, blocked, mode, reload } = useCoaching();
   const [base] = useState<CalendarSnapshot>(snapshot);
   const returnFocus = useRef<HTMLInputElement>(null);
-  return <ScheduleDialog bundle={base.bundle} date={localParts(new Date().toISOString(), "Australia/Sydney").date}
+  return <ScheduleDialog bundle={base.bundle} date={date ?? localParts(new Date().toISOString(), "Australia/Sydney").date}
     demo={mode === "sample"} busy={busy} blocked={blocked} returnFocus={returnFocus} copyRequest={request} onClose={onClose}
-    onSave={async (bundle) => { await commit(base, bundle); }} />;
+    onReload={() => void reload(base.bundle.organizationId)}
+    onSave={async (bundle, event) => { await commit(base, bundle); onSaved?.(event); }} />;
 }

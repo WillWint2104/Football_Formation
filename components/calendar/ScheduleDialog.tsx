@@ -10,12 +10,14 @@ import { scheduleSession, type SchedulingSource } from "@/lib/coaching/schedulin
 import { scheduleSessionCopy, type SessionCopyRequest } from "@/lib/coaching/session-copy";
 
 /** Focus-contained scheduling form with explicit DST choices and overlap acknowledgement. */
-export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initialPlan, copyRequest, returnFocus, onClose, onSave }: {
+export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initialPlan, initialTeam, copyRequest, returnFocus, onClose, onSave, onReload }: {
   bundle: DomainBundle; date: string; event?: CalendarEvent; demo: boolean; busy: boolean; blocked: boolean;
   onClose: () => void; onSave: (next: DomainBundle, event: CalendarEvent) => Promise<void>;
   returnFocus: RefObject<HTMLInputElement | null>;
   initialPlan?: string;
+  initialTeam?: string;
   copyRequest?: SessionCopyRequest;
+  onReload?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
@@ -25,7 +27,7 @@ export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initi
   const [ambiguities, setAmbiguities] = useState<{ start: string[]; end: string[] }>({ start: [], end: [] });
   const copySource = copyRequest && copyRequest.organizationId === bundle.organizationId
     ? bundle.sessions.find((s) => s.id === copyRequest.source.id && s.revision === copyRequest.source.revision) : undefined;
-  const [team, setTeam] = useState(copySource?.teamId ?? event?.teamId ?? bundle.sessions.find((s) => s.id === initialPlan)?.teamId ?? bundle.teams[0]?.id ?? "");
+  const [team, setTeam] = useState(copySource?.teamId ?? event?.teamId ?? bundle.sessions.find((s) => s.id === initialPlan)?.teamId ?? bundle.teams.find((t) => t.id === initialTeam)?.id ?? bundle.teams[0]?.id ?? "");
   const [source, setSource] = useState(initialPlan ? `session:${initialPlan}` : "blank");
   const scheduled = new Set(latestEvents(bundle).flatMap((e) => e.session ? [e.session.id] : []));
   const plans = latest(bundle.sessions).filter((s) => s.teamId === team && !scheduled.has(s.id));
@@ -42,8 +44,11 @@ export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initi
     (form.current?.elements.namedItem("title") as HTMLInputElement | null)?.focus();
     return () => {
       element?.close();
-      if (previous instanceof HTMLElement && previous.isConnected && !previous.matches(":disabled")) previous.focus();
-      else fallback?.focus();
+      requestAnimationFrame(() => {
+        if (previous instanceof HTMLElement && previous.isConnected && !previous.matches(":disabled")) previous.focus();
+        else if (fallback?.isConnected) fallback.focus();
+        else document.querySelector<HTMLInputElement>('[aria-label="Selected date"]')?.focus();
+      });
     };
   }, [returnFocus]);
   return <dialog ref={dialog} className="calendar-dialog" aria-labelledby="schedule-title"
@@ -125,6 +130,7 @@ export function ScheduleDialog({ bundle, date, event, demo, busy, blocked, initi
           <label className="calendar-inline"><input name="acknowledge" type="checkbox" onChange={(e) => e.stopPropagation()} />Schedule despite these warnings</label></div>}
       </fieldset>
       {error && <p role="alert" className="calendar-warning">{error}</p>}
+      {blocked && onReload && <p className="calendar-warning">The save could not be confirmed. Reload the saved records to inspect this same request before doing anything else. <button type="button" disabled={busy} onClick={onReload}>Reload saved records</button></p>}
       <div className="calendar-dialog-actions"><button type="button" onClick={onClose} disabled={busy}>Cancel</button>
         <button className="calendar-primary" disabled={busy || blocked || !bundle.teams.length}>{busy ? "Saving…" : demo ? "Apply sample change" : "Save booking"}</button></div>
     </form>

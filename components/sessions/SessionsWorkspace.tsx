@@ -12,6 +12,7 @@ import { SessionTypeIcon } from "@/components/calendar/SessionTypeIcon";
 import { SessionEditor } from "./SessionEditor";
 import { SessionLibraryPreview } from "./SessionLibraryPreview";
 import type { SessionCopyRequest } from "@/lib/coaching/session-copy";
+import { sessionCatalogue, filterCatalogue } from "@/lib/coaching/catalogue";
 
 /** Library entries resolve explicit booking pins; historical links remain read-only snapshots. */
 export function SessionsWorkspace({ eventId, sessionId, revision, preview = false, organizationId, copyRequest }: { eventId?: string; sessionId?: string; revision?: number; preview?: boolean; organizationId?: string; copyRequest?: SessionCopyRequest }) {
@@ -24,10 +25,7 @@ export function SessionsWorkspace({ eventId, sessionId, revision, preview = fals
   const [creation, setCreation] = useState<{ scope: number; session: Session } | null>(null);
   const bookings = latestEvents(bundle);
   const bookedIds = new Set(bookings.flatMap((e) => e.session ? [e.session.id] : []));
-  const items = [...bookings.flatMap((event) => {
-    const session = eventSession(bundle, event);
-    return session ? [{ key: `event-${event.id}`, session, event, href: `/sessions?event=${encodeURIComponent(event.id)}&revision=${event.revision}` }] : [];
-  }), ...latest(bundle.sessions).filter((s) => !bookedIds.has(s.id)).map((session) => ({ key: `session-${session.id}`, session, event: undefined, href: `/sessions?session=${encodeURIComponent(session.id)}` }))];
+  const items = sessionCatalogue(bundle);
   const event = eventId ? (revision ? bundle.events.find((e) => e.id === eventId && e.revision === revision) : bookings.find((e) => e.id === eventId)) : undefined;
   const created = creation?.scope === scope && creation.session.organizationId === bundle.organizationId ? creation.session : null;
   const source = created ?? (organizationId && organizationId !== bundle.organizationId ? undefined : event ? eventSession(bundle, event) : sessionId ? (revision ? bundle.sessions.find((s) => s.id === sessionId && s.revision === revision) : latest(bundle.sessions).find((s) => s.id === sessionId)) : undefined);
@@ -41,7 +39,7 @@ export function SessionsWorkspace({ eventId, sessionId, revision, preview = fals
     <WorkspaceStatus />
     <div className="coaching-library-layout"><aside className="coaching-catalog"><label>Find sessions<input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search activity or objective" /></label>
       <label>Filter session type<select aria-label="Filter session type" value={kind} onChange={(e) => setKind(e.target.value)}><option value="">All session types</option>{Object.entries(sessionLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
-      <div className="coaching-catalog-items">{items.filter(({ session }) => (!kind || session.content.kind === kind) && `${session.content.title} ${session.content.objective ?? ""}`.toLowerCase().includes(search.toLowerCase())).map((item) =>
+      <div className="coaching-catalog-items">{filterCatalogue(items, search, kind).map((item) =>
         <div key={item.key} className="coaching-catalog-record"><Link className={`coaching-record calendar-type-${item.session.content.kind}`} href={item.href} aria-current={!created && source?.id === item.session.id && event?.id === item.event?.id ? "page" : undefined}
           onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; e.preventDefault(); startNavigation(() => router.push(item.href)); }}>
           <span><SessionTypeIcon kind={item.session.content.kind} />{sessionLabels[item.session.content.kind]}</span><strong>{item.session.content.title}</strong><small>{item.event ? `${item.event.localDate} · ${item.event.status}` : "Unscheduled plan"} · v{item.session.revision}</small></Link>

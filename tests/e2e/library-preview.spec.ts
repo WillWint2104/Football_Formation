@@ -72,7 +72,7 @@ test("schedule copy commits once, survives refresh and opens the correct calenda
   await page.getByRole("link", { name: "Open scheduled occurrence", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`event=${ids.eventId}`));
   await expect(page.getByRole("complementary", { name: "Session preview" })).toContainText("17:00");
-  await page.getByRole("link", { name: "Open session editor", exact: true }).click();
+  await page.getByRole("link", { name: "Open Session", exact: true }).click();
   await page.getByRole("textbox", { name: "Session objective", exact: true }).fill("Only the scheduled copy changes");
   await page.getByRole("button", { name: "Save session", exact: true }).click();
   await expect(page).toHaveURL(/revision=2/);

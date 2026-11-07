@@ -164,3 +164,41 @@ PGlite (rollback on a synthetic event-insert failure, readback and duplicate/sta
 rejection), and browser checks using strict synthetic HTTP stand-ins. These do
 not establish hosted Auth or cloud release acceptance. Checkpoint D stays stopped,
 issue #17 stays open, and no hosted configuration, merge or deployment is included.
+
+## C4-B2 — Calendar entry and return
+
+Calendar reuses the B1 catalogue selectors, exact preview, request identity and
+atomic graph-save operation. Choose Session on a date opens a transient library
+picker, while Add Session remains available for a blank draft. Search covers
+saved titles, objectives, focus and activity names; the Calendar team filter
+restricts available sources. No C3 local repository is read or published.
+
+Calendar URLs carry validated date, week/month/day view, organisation, team/type
+filters and optional booking identity/revision. Library preview and copy-request
+IDs are transient navigation fields, not a new persistence contract or access
+authority. Duplicate parameters, incomplete references and invalid values are
+rejected. The loaded organisation graph validates scope and team membership;
+stale booking links require explicit recovery. URLs never choose another
+organisation automatically or accept an arbitrary return destination.
+
+Cancellation restores the original Calendar selection without writes. A successful
+copy returns to its committed date and new booking, preserving the view and team.
+If the old type filter would hide the new booking, the preview discloses that it
+will be cleared on success. Same-organisation reload preserves a pending request;
+switching organisations clears that workflow. An uncertain save offers Reload
+Saved Records inside the dialog and never automatically resubmits. Refresh keeps
+request identity but does not persist unsaved scheduling form fields.
+
+Edit Booking changes schedule details only; Open Session edits the selected
+booking's pinned coaching content; Schedule Another Copy starts a new independent
+occurrence. Coaching-guide links include both session and booking revisions.
+Historical PDFs are never automatically regenerated or presented as proof of the
+current booking schedule. Stronger document booking metadata remains outside B2.
+
+The Calendar adopts C3's established light colours with scoped CSS. Month cards
+remain icon and name only. Weekly cards retain concise time and type/team facts;
+match and recovery use distinct symbols and labels. Lanes remain chronological,
+not duration-scaled. On laptops, the selected details appear below the full-width
+grid, brought into view on selection; dismissing them retains the planning date.
+The native picker and scheduling dialog are never stacked. No global theme,
+session editor, renderer or print redesign is part of B2.

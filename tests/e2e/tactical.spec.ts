@@ -59,6 +59,7 @@ test("calendar preview and guide use the exact pinned scene revision and represe
   await page.route("**/api/organizations", (r) => r.fulfill({ json: { organizations: [{ id: bundle.organizationId, name: "Synthetic renderer club", version: 1 }] } }));
   await page.route("**/api/organizations/*/snapshot", (r) => { if (r.request().method() !== "GET") writes++; return r.fulfill({ json: { version: 1, bundle } }); });
   await page.goto(`/calendar?date=${event.localDate}`); await expect(page.getByRole("status").first()).toContainText("Loaded saved organisation snapshot");
+  await page.getByRole("button", { name: `${event.title}, ${event.localDate}, Possession`, exact: true }).click();
   await expect(page.locator(".calendar-scene-preview .scene-diagram")).toHaveAttribute("data-revision", "1");
   await expect(page.locator(".calendar-scene-preview .scene-diagram")).toHaveAttribute("data-time", "1.5");
   await page.goto(guideHref({ session: session.id, revision: 1, event: event.id, bookingRevision: 1 }));
