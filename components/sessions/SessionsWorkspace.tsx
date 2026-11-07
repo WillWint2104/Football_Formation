@@ -10,9 +10,11 @@ import { latest, newSession } from "@/lib/coaching/sessions";
 import type { Session } from "@/lib/domain/session";
 import { SessionTypeIcon } from "@/components/calendar/SessionTypeIcon";
 import { SessionEditor } from "./SessionEditor";
+import { SessionLibraryPreview } from "./SessionLibraryPreview";
+import type { SessionCopyRequest } from "@/lib/coaching/session-copy";
 
 /** Library entries resolve explicit booking pins; historical links remain read-only snapshots. */
-export function SessionsWorkspace({ eventId, sessionId, revision }: { eventId?: string; sessionId?: string; revision?: number }) {
+export function SessionsWorkspace({ eventId, sessionId, revision, preview = false, organizationId, copyRequest }: { eventId?: string; sessionId?: string; revision?: number; preview?: boolean; organizationId?: string; copyRequest?: SessionCopyRequest }) {
   const { snapshot, scope, loading, busy, blocked, dirty, markDirty } = useCoaching();
   const bundle = snapshot.bundle;
   const router = useRouter();
@@ -28,7 +30,7 @@ export function SessionsWorkspace({ eventId, sessionId, revision }: { eventId?: 
   }), ...latest(bundle.sessions).filter((s) => !bookedIds.has(s.id)).map((session) => ({ key: `session-${session.id}`, session, event: undefined, href: `/sessions?session=${encodeURIComponent(session.id)}` }))];
   const event = eventId ? (revision ? bundle.events.find((e) => e.id === eventId && e.revision === revision) : bookings.find((e) => e.id === eventId)) : undefined;
   const created = creation?.scope === scope && creation.session.organizationId === bundle.organizationId ? creation.session : null;
-  const source = created ?? (event ? eventSession(bundle, event) : sessionId ? (revision ? bundle.sessions.find((s) => s.id === sessionId && s.revision === revision) : latest(bundle.sessions).find((s) => s.id === sessionId)) : undefined);
+  const source = created ?? (organizationId && organizationId !== bundle.organizationId ? undefined : event ? eventSession(bundle, event) : sessionId ? (revision ? bundle.sessions.find((s) => s.id === sessionId && s.revision === revision) : latest(bundle.sessions).find((s) => s.id === sessionId)) : undefined);
   const historical = !created && !!source && (event ? bookings.find((e) => e.id === event.id)?.revision !== event.revision : latest(bundle.sessions).find((s) => s.id === source.id)?.revision !== source.revision || bookedIds.has(source.id));
   const currentHref = eventId ? `/sessions?event=${encodeURIComponent(eventId)}` : `/sessions?session=${encodeURIComponent(sessionId ?? "")}`;
   return <div className="calendar-workspace coaching-workspace"><div className="calendar-page-heading"><div><p className="calendar-eyebrow">Prepare every session</p><h1>Session library</h1><p className="calendar-muted">Independent plans, structured activities and exact saved revisions.</p></div>
@@ -40,13 +42,15 @@ export function SessionsWorkspace({ eventId, sessionId, revision }: { eventId?: 
     <div className="coaching-library-layout"><aside className="coaching-catalog"><label>Find sessions<input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search activity or objective" /></label>
       <label>Filter session type<select aria-label="Filter session type" value={kind} onChange={(e) => setKind(e.target.value)}><option value="">All session types</option>{Object.entries(sessionLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
       <div className="coaching-catalog-items">{items.filter(({ session }) => (!kind || session.content.kind === kind) && `${session.content.title} ${session.content.objective ?? ""}`.toLowerCase().includes(search.toLowerCase())).map((item) =>
-        <Link key={item.key} className={`coaching-record calendar-type-${item.session.content.kind}`} href={item.href} aria-current={!created && source?.id === item.session.id && event?.id === item.event?.id ? "page" : undefined}
+        <div key={item.key} className="coaching-catalog-record"><Link className={`coaching-record calendar-type-${item.session.content.kind}`} href={item.href} aria-current={!created && source?.id === item.session.id && event?.id === item.event?.id ? "page" : undefined}
           onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return; e.preventDefault(); startNavigation(() => router.push(item.href)); }}>
-          <span><SessionTypeIcon kind={item.session.content.kind} />{sessionLabels[item.session.content.kind]}</span><strong>{item.session.content.title}</strong><small>{item.event ? `${item.event.localDate} · ${item.event.status}` : "Unscheduled plan"} · v{item.session.revision}</small></Link>)}
+          <span><SessionTypeIcon kind={item.session.content.kind} />{sessionLabels[item.session.content.kind]}</span><strong>{item.session.content.title}</strong><small>{item.event ? `${item.event.localDate} · ${item.event.status}` : "Unscheduled plan"} · v{item.session.revision}</small></Link>
+          <Link className="coaching-preview-link" href={`/sessions?session=${encodeURIComponent(item.session.id)}&revision=${item.session.revision}&organization=${encodeURIComponent(bundle.organizationId)}&view=preview`}>Preview content · v{item.session.revision}</Link></div>)}
         {!items.length && <p className="calendar-muted">No saved sessions. Create a plan or apply a reusable template.</p>}</div>
       <Link href="/templates">Browse session templates →</Link>
     </aside>
-    <section className="coaching-detail" aria-label="Session editor" aria-busy={navigating}>{loading ? <p className="coaching-empty">Loading validated coaching records…</p> : source ? <>
+    <section className={`coaching-detail${preview && !created ? " coaching-preview-detail" : ""}`} aria-label={preview && !created ? "Session library details" : "Session editor"} aria-busy={navigating}>{loading ? <p className="coaching-empty">Loading validated coaching records…</p> : source && preview && !created ?
+      <SessionLibraryPreview key={`${scope}:${source.id}:${source.revision}`} source={source} copyRequest={copyRequest} editHref={items.find((item) => item.session.id === source.id && item.session.revision === source.revision)?.href ?? `/sessions?session=${encodeURIComponent(source.id)}&revision=${source.revision}`} /> : source ? <>
       {historical && <p className="coaching-notice">This exact snapshot is preserved. <Link href={bookedIds.has(source.id) && !event ? items.find((i) => i.session.id === source.id)?.href ?? currentHref : currentHref}>Open current booking/session</Link></p>}
       <SessionEditor key={`${scope}:${snapshot.version}:${created ? "new" : event?.id ?? source.id}:${source.revision}`} source={source} event={created ? undefined : event} historical={historical} isNew={!!created} navigating={navigating}
         onSaved={(session, savedEvent) => startNavigation(() => { setCreation(null); router.replace(savedEvent ? `/sessions?event=${encodeURIComponent(savedEvent.id)}&revision=${savedEvent.revision}` : `/sessions?session=${encodeURIComponent(session.id)}`); })}
