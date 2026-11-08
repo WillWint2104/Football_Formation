@@ -9,6 +9,16 @@ export function bookingOnDay(event: CalendarEvent, day: string): boolean {
     : event.localDate === day;
 }
 
+/** The first authored attachment only: never replace a missing exact revision with a different diagram. */
+export function programmeIllustration(bundle: DomainBundle, event: CalendarEvent) {
+  if (event.organizationId !== bundle.organizationId || event.status === "cancelled") return null;
+  const session = eventSession(bundle, event);
+  const activity = session?.content.activities.find(a => a.content.diagrams.length);
+  const pin = activity?.content.diagrams[0];
+  const scene = pin && bundle.scenes.find(s => s.organizationId === bundle.organizationId && s.id === pin.scene.id && s.revision === pin.scene.revision);
+  return activity && pin && scene ? { activity, pin, scene } : null;
+}
+
 /** A read-only projection of current bookings and their exact content pins, never another saved programme. */
 export function weekProgramme(bundle: DomainBundle, date: string, team = "") {
   const dates = calendarDates(date, "week");

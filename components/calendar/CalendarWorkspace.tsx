@@ -92,7 +92,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
         <button disabled={loading || busy || navigating} onClick={() => setDate(localParts(new Date().toISOString(), "Australia/Sydney").date)}>{view === "week" ? "This week" : "Today"}</button></div>
         <div className="calendar-views" role="group" aria-label="Calendar view">{(["week", "month", "day"] as const).map(v => <button key={v} disabled={loading || busy || navigating} aria-pressed={view === v} onClick={() => go({ view: v })}>{v[0].toUpperCase() + v.slice(1)}</button>)}</div>
         <button className="calendar-primary" disabled={disabled || !bundle.teams.length} onClick={() => setEditing({})}><Plus size={16} />Add session</button></div></div>
-    <div className="programme-utility-row"><div className="calendar-filters"><label>Session type<select aria-label="Session type" disabled={loading || busy || navigating} value={type} onChange={(e) => go({ type: e.target.value || undefined })}><option value="">All types</option><option value="fixture">Match</option>
+    <div className="programme-tools-row"><div className="programme-utility-row"><div className="calendar-filters"><label>Session type<select aria-label="Session type" disabled={loading || busy || navigating} value={type} onChange={(e) => go({ type: e.target.value || undefined })}><option value="">All types</option><option value="fixture">Match</option>
       {Object.entries(sessionLabels).map(([kind, label]) => <option key={kind} value={kind}>{label}</option>)}</select></label>
       <label>Selected date<input ref={dateControl} aria-label="Selected date" type="date" disabled={loading || busy || navigating} value={date} onChange={(e) => { if (isCalendarDate(e.target.value)) go({ date: e.target.value, event: undefined, bookingRevision: undefined }); }} /></label></div>
       <button className="programme-library-action" disabled={disabled} onClick={browse}>Browse Session Library</button>
@@ -105,7 +105,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
         if (organization) void reload(organization);
         else window.location.reload();
       }}><RefreshCw size={14} />{blocked ? "Reload before saving" : "Reload"}</button>
-    </div></details>
+    </div></details></div>
     {problem && <p role="alert" className="calendar-context-warning">{problem} <Link href={calendarHref({ date, view })}>Reset Calendar context</Link></p>}
     {!problem && navigation.notice && <p role="status" className="calendar-saved-notice">{navigation.notice === "diagram-saved" ? "Diagram saved" : "Session saved"} · booking revision {current?.revision}. Your Calendar context is restored.</p>}
     {current && type && type !== (current.kind === "fixture" ? "fixture" : eventSession(bundle, current)?.content.kind ?? "other") && <p className="calendar-context-warning">The selected booking is hidden by the type filter. <button onClick={() => go({ type: undefined })}>Show selected booking</button></p>}
@@ -152,7 +152,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
         })}</div>
       </div>}
       </fieldset>
-      {view === "week" && !problem && <div className="programme-week-summary"><Layers size={23} aria-hidden="true" /><div><h2>Weekly summary</h2><p>{programme.trainingCount} training sessions · {programme.fixtures.length} {programme.fixtures.length === 1 ? "fixture" : "fixtures"}{programme.focus.length ? ` · Focus: ${programme.focus.join(", ")}` : ""}</p></div></div>}
+      {view === "week" && !problem && <div className="programme-week-summary"><Layers size={25} aria-hidden="true" /><div><h2>Weekly programme</h2><p>{programme.trainingCount} training sessions · {programme.fixtures.length} {programme.fixtures.length === 1 ? "fixture" : "fixtures"}</p></div><span className="programme-summary-detail">{new Set(programme.bookings.filter(e => e.status !== "cancelled").map(e => e.localDate)).size} scheduled days</span></div>}
       <div className="calendar-grid-footer"><span>{visible.filter((e) => dates.includes(e.localDate)).length} bookings in this view</span>
         <span>Times shown in each booking’s time zone · Sydney default</span></div>
       {view !== "month" && <p className="calendar-muted calendar-footnote">Each day lists bookings chronologically, including parallel sessions and overnight continuations. Use Edit Booking for precise times and daylight-saving choices.</p>}

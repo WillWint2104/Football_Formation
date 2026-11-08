@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { programmeExample } from "../fixtures/programme";
-import { bookingOnDay, fixtureDayLabel, programmeRange, weekProgramme } from "../../lib/calendar/programme";
+import { bookingOnDay, fixtureDayLabel, programmeIllustration, programmeRange, weekProgramme } from "../../lib/calendar/programme";
 import { calendarDates, wallTimeCandidates } from "../../lib/calendar/schedule";
 
 test("weekly programme reads exact pinned coaching content and current bookings without mutating history",()=>{
@@ -40,4 +40,15 @@ test("programme date range and fixture-day offsets stay calendar based across ye
   assert.match(programmeRange(calendarDates("2026-12-31","week")),/28 Dec 2026.*3 Jan 2027/);
   const fixture=programmeExample().events.find(e=>e.kind==="fixture")!;
   assert.equal(fixtureDayLabel("2026-11-02",fixture),"D−5");assert.equal(fixtureDayLabel("2026-11-07",fixture),"Match day");assert.equal(fixtureDayLabel("2026-11-08",fixture),"D+1");assert.equal(fixtureDayLabel("2026-11-03",undefined),undefined);
+});
+
+test("programme illustration uses the authored first attachment exactly; missing, cancelled or cross-organisation scenes have no substitute",()=>{
+  const bundle=programmeExample(),event=bundle.events.find(e=>e.session?.id==="sample-3")!;
+  const before=structuredClone(bundle),result=programmeIllustration(bundle,event)!;
+  assert.equal(result.scene.revision,1);assert.equal(result.pin.representativeSeconds,2);assert.deepEqual(bundle,before);
+  bundle.scenes=bundle.scenes.filter(s=>!(s.id===result.scene.id && s.revision===1));
+  assert.equal(programmeIllustration(bundle,event),null);
+  bundle.scenes=structuredClone(before.scenes);bundle.scenes.find(s=>s.id===result.scene.id && s.revision===1)!.organizationId="other-organisation";
+  assert.equal(programmeIllustration(bundle,event),null);
+  bundle.scenes=structuredClone(before.scenes);event.status="cancelled";assert.equal(programmeIllustration(bundle,event),null);
 });

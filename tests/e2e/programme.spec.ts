@@ -1,10 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
-import { programmeExample } from "../fixtures/programme";
+import { programmeBusyExample, programmeExample } from "../fixtures/programme";
 import { domainBundleSchema } from "../../lib/domain/validation";
 
 /** Synthetic graph only; no hosted calls or production browser profile. */
-async function storage(page:Page){
-  let bundle=programmeExample(),version=4,writes=0;const before=structuredClone(bundle);
+async function storage(page:Page,initial=programmeExample()){
+  let bundle=initial,version=4,writes=0;const before=structuredClone(bundle);
   await page.context().route('**/*',r=>['localhost','127.0.0.1'].includes(new URL(r.request().url()).hostname)?r.continue():r.abort());
   await page.route('**/api/**',r=>r.abort());
   await page.route('**/api/organizations',r=>r.fulfill({json:{organizations:[{id:bundle.organizationId,name:'Concept 01 review club · synthetic',version}]}}));
@@ -24,7 +24,13 @@ test('Concept 01 frame, full-width seven-day week and actual fixture context at 
   await expect(page.locator('[data-date="2026-11-02"] .calendar-day-number')).toContainText('D−5');
   await expect(page.locator('[data-date="2026-11-07"] .calendar-day-number')).toContainText('Match day');
   await expect(page.locator('.programme-week-summary')).toContainText('5 training sessions · 1 fixture');
-  await expect(page.locator('.calendar-week .scene-diagram, .calendar-week img')).toHaveCount(0);
+  await expect(page.locator('.calendar-week .scene-diagram')).toHaveCount(1);
+  await expect(page.locator('.calendar-week .scene-diagram')).toHaveAttribute('data-revision','1');
+  await expect(page.locator('.calendar-week .scene-diagram')).toHaveAttribute('data-time','2');
+  await expect(page.locator('.calendar-week img')).toHaveCount(0);
+  await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link')).toHaveCount(5);
+  await expect(page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link')).toHaveCount(5);
+  await expect(page.locator('.programme-week-summary')).not.toContainText('Focus:');
   await expect(page.locator('.calendar-planning .calendar-preview[aria-label]')).toHaveCount(0);
   const board=(await page.locator('.programme-week').boundingBox())!,main=(await page.locator('.calendar-planning').boundingBox())!;
   expect(Math.abs(board.width-main.width)).toBeLessThan(2);expect(board.x+board.width).toBeLessThanOrEqual(info.project.use.viewport!.width);
@@ -36,6 +42,36 @@ test('Concept 01 frame, full-width seven-day week and actual fixture context at 
   await page.screenshot({path:info.outputPath('programme-week-closed.png')});
   if(info.project.name==='desktop'){await page.setViewportSize({width:1672,height:941});await page.screenshot({path:info.outputPath('programme-reference-size.png')});await page.setViewportSize({width:1920,height:1080});}
   expect(m.writes()).toBe(0);expect(m.bundle()).toEqual(m.before);expect(errors).toEqual([]);
+});
+
+test('quiet week stays content-sized, dense week remains reachable, and match / empty days are explicit',async({page},info)=>{
+  const m=await storage(page,programmeBusyExample());await page.goto(m.root);await loaded(page);
+  await expect(page.locator('.calendar-week .calendar-event')).toHaveCount(13);
+  await expect(page.locator('.programme-week-summary')).toContainText('12 training sessions · 1 fixture');
+  await expect(page.locator('.calendar-week .scene-diagram')).toHaveCount(1);
+  for(const day of ['2026-11-02','2026-11-04']) {
+    const lane=page.locator(`[data-date="${day}"] .programme-day-sessions`);
+    const last=lane.locator('.calendar-event').last();await last.scrollIntoViewIfNeeded();await expect(last).toBeInViewport();
+    await lane.evaluate(e=>e.scrollTop=0);
+  }
+  await page.screenshot({path:info.outputPath('programme-busy-week.png')});
+  await page.getByRole('button',{name:'Select 2026-11-07',exact:true}).click();
+  await expect(page.locator('[data-date="2026-11-07"]')).toHaveClass(/calendar-date-selected/);
+  await expect(page.locator('[data-date="2026-11-08"]')).toContainText('No sessions scheduled');
+  await page.screenshot({path:info.outputPath('programme-match-empty.png')});
+  expect(m.writes()).toBe(0);expect(m.bundle()).toEqual(m.before);
+});
+
+test('quiet grid does not stretch with taller windows and primary navigation retains keyboard focus',async({page},info)=>{
+  const m=await storage(page);await page.goto(m.root);await loaded(page);
+  await expect(page.locator('.calendar-week .scene-diagram')).toHaveCount(1);
+  const before=(await page.locator('.programme-week').boundingBox())!.height;
+  await page.setViewportSize({width:info.project.use.viewport!.width,height:info.project.use.viewport!.height+300});
+  expect((await page.locator('.programme-week').boundingBox())!.height).toBe(before);
+  const programme=page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link',{name:'Programme',exact:true});
+  await programme.focus();await page.keyboard.press('Tab');
+  await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link',{name:'Sessions',exact:true})).toBeFocused();
+  expect(m.writes()).toBe(0);
 });
 
 test('existing selected-session preview and exact actions remain intact; dismissal releases Calendar space',async({page},info)=>{
@@ -71,7 +107,7 @@ test('week controls keep actual dates, team/type filtering, native picker and co
 
 test('Calendar frame is scoped and existing C3 / native session routes retain their shell',async({page})=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);
-  await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Sessions',exact:true}).click();await expect(page).toHaveURL(/\/sessions$/);
+  await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Sessions',exact:true}).click();await expect(page).toHaveURL(/\/sessions$/);
   await expect(page.locator('.programme-frame-header')).toHaveCount(0);expect(await page.locator('body > aside').evaluate(e=>getComputedStyle(e).width)).toBe('240px');
   await page.goto('/session-designer');await expect(page.locator('.programme-frame-header')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Session Designer',exact:true})).toHaveAttribute('aria-current','page');
   expect(m.writes()).toBe(0);

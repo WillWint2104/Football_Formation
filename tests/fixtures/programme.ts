@@ -26,3 +26,20 @@ export function programmeExample() {
     startsAt:wallTimeCandidates("2026-11-07","15:00","Australia/Sydney")[0],endsAt:wallTimeCandidates("2026-11-07","17:00","Australia/Sydney")[0]});
   return domainBundleSchema.parse(bundle);
 }
+
+/** Additional read-only bookings for density checks; no application seed or persistence write. */
+export function programmeBusyExample() {
+  const bundle=programmeExample();
+  const entries=[
+    ["2026-11-02","sample-3","09:00","10:15"], ["2026-11-02","sample-5","11:00","11:45"],
+    ["2026-11-04","sample-1","09:00","09:45"], ["2026-11-04","sample-3","11:00","12:15"],
+    ["2026-11-04","sample-9","17:00","18:20"], ["2026-11-05","sample-5","10:00","10:45"],
+    ["2026-11-06","sample-3","10:00","11:15"],
+  ];
+  for (const [i,[day,id,start,end]] of entries.entries()) {
+    const source=bundle.events.find(e=>e.session?.id===id)!;
+    bundle.events.push({...structuredClone(source),id:`programme-busy-${i}`,localDate:day,
+      startsAt:wallTimeCandidates(day,start,"Australia/Sydney")[0],endsAt:wallTimeCandidates(day,end,"Australia/Sydney")[0]});
+  }
+  return domainBundleSchema.parse(bundle);
+}
