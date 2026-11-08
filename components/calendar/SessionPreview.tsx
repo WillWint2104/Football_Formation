@@ -30,6 +30,7 @@ function SelectedPreview({ bundle, event, demo, onClose, onSchedule, disabled, o
   const [diagramKey, setDiagramKey] = useState(diagrams[0]?.key ?? "");
   const current = diagrams.find(d => d.key === diagramKey);
   const heading = useRef<HTMLHeadingElement>(null), initialFocus = useRef(focusOnOpen);
+  const reading = useRef<HTMLDivElement>(null), diagramHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { if (initialFocus.current) heading.current?.focus({ preventScroll:true }); }, []);
   const fixture = event.kind === "fixture";
   const kind = fixture ? "fixture" : session?.content.kind ?? "other";
@@ -42,9 +43,9 @@ function SelectedPreview({ bundle, event, demo, onClose, onSchedule, disabled, o
   const emphasis = current?.activity ?? activities[0];
   const bookingActions = <div className="programme-secondary-actions"><button onClick={onSchedule} disabled={disabled || event.status === "cancelled"}>Edit Booking</button>{session && onCopy && <button onClick={onCopy} disabled={disabled}>Schedule Another Copy</button>}<button onClick={onBrowse} disabled={disabled}>Browse Session Library</button></div>;
   return <aside className={`calendar-preview programme-inspector${fixture ? " programme-fixture-inspector" : ""}`} aria-label="Session preview"
-    onKeyDown={e => { if (e.key === "Escape" && !e.defaultPrevented && !disabled) { e.preventDefault(); onClose(); } }}>
+    onKeyDown={e => { if (e.key === "Escape" && !e.defaultPrevented) { e.preventDefault(); onClose(); } }}>
     <div className="calendar-preview-top"><span><CalendarDays size={15} aria-hidden="true" />{date} / {fixture ? "Match" : "Session"}</span>
-      <button disabled={disabled} onClick={onClose} aria-label="Dismiss session preview"><X size={19} /></button></div>
+      <button onClick={onClose} aria-label="Dismiss session preview"><X size={19} /></button></div>
     <header className="programme-inspector-heading">
       <div className={`calendar-type-heading calendar-type-${kind}`}><SessionTypeIcon kind={kind} /><span>{kind === "fixture" ? "Match booking" : session ? sessionLabels[kind] : event.kind}</span><span className="calendar-badge">{event.status} · {demo ? "illustrative" : `booking v${event.revision}`}</span></div>
       <h2 ref={heading} tabIndex={-1} title={event.title}>{event.title}</h2>
@@ -52,10 +53,10 @@ function SelectedPreview({ bundle, event, demo, onClose, onSchedule, disabled, o
       {end && start?.date !== end.date && <p className="calendar-muted">Ends {end.date}</p>}
       <p className="programme-inspector-team"><Users size={16} aria-hidden="true" />{bundle.teams.find(t => t.id === event.teamId)?.name ?? "Team unavailable"}<span>{event.timeZone}</span></p>
     </header>
-    <div className="programme-inspector-scroll" role="region" aria-label={fixture ? "Match information" : "Session coaching information"} tabIndex={0}>
+    <div ref={reading} className="programme-inspector-scroll" role="region" aria-label={fixture ? "Match information" : "Session coaching information"} tabIndex={0}>
       {problem && <p role="alert" className="programme-source-unavailable">{problem}</p>}
       {fixture ? <section className="programme-match-details"><Flag size={42} aria-hidden="true" /><h3>Match details</h3><p>{event.title}</p><p><MapPin size={16} aria-hidden="true" />{event.venue ?? "Venue unassigned"}</p><p className="calendar-muted">This fixture has no attached training session.</p></section> : problem ? null : <>
-        <section className="programme-diagram-section" aria-label="Saved activity diagram"><div className="programme-section-heading"><h3>Session diagram</h3>{diagramActivities.length > 1 ? <label className="programme-diagram-activity"><span className="sr-only">Activity</span><select aria-label="Diagram activity" value={current?.activity.id ?? ""} disabled={disabled} onChange={e => setDiagramKey(diagrams.find(d => d.activity.id === e.target.value)!.key)}>{diagramActivities.map(a => <option key={a.id} value={a.id}>{a.content.title}</option>)}</select></label> : <span>{diagrams.length ? `${diagrams.length} saved` : "Not attached"}</span>}</div>
+        <section className="programme-diagram-section" aria-label="Saved activity diagram"><div className="programme-section-heading"><h3 ref={diagramHeading} tabIndex={-1}>Session diagram</h3>{diagramActivities.length > 1 ? <label className="programme-diagram-activity"><span className="sr-only">Activity</span><select aria-label="Diagram activity" value={current?.activity.id ?? ""} disabled={disabled} onChange={e => setDiagramKey(diagrams.find(d => d.activity.id === e.target.value)!.key)}>{diagramActivities.map(a => <option key={a.id} value={a.id}>{a.content.title}</option>)}</select></label> : <span>{diagrams.length ? `${diagrams.length} saved` : "Not attached"}</span>}</div>
           {diagrams.length ? <>
             <div className="calendar-scene-preview">{current?.scene ? <SceneDiagram scene={current.scene} title={current.activity.content.title} options={{paint:"coaching-light",fit:"exercise",exerciseArea:current.activity.content.area ?? undefined,seconds:current.pin.representativeSeconds}} />
               : <p role="alert" className="programme-source-unavailable">The exact diagram revision is unavailable. No substitute was selected.</p>}</div>
@@ -64,7 +65,7 @@ function SelectedPreview({ bundle, event, demo, onClose, onSchedule, disabled, o
         </section>
         <section><div className="programme-section-heading"><h3>Session plan</h3><span>{activities.length} activities</span></div>
           {activities.length ? <ol className="calendar-activities">{activities.map((activity,i) => <li key={activity.id} data-activity={activity.id} title={activity.role.replaceAll("-"," ")} className={current?.activity.id === activity.id ? "programme-inspector-current-activity" : undefined}>
-            <span>{i+1}</span><div>{activity.content.diagrams.length ? <button className="programme-activity-diagram" disabled={disabled} aria-label={`Show diagram for ${activity.content.title}`} onClick={() => setDiagramKey(diagrams.find(d => d.activity.id === activity.id)!.key)}>{activity.content.title}</button> : activity.content.title}<small>{activity.role.replaceAll("-"," ")}</small></div>
+            <span>{i+1}</span><div>{activity.content.diagrams.length ? <button className="programme-activity-diagram" disabled={disabled} aria-label={`Show diagram for ${activity.content.title}`} onClick={() => { setDiagramKey(diagrams.find(d => d.activity.id === activity.id)!.key); reading.current?.scrollTo({top:0}); diagramHeading.current?.focus({preventScroll:true}); }}>{activity.content.title}</button> : activity.content.title}<small>{activity.role.replaceAll("-"," ")}</small></div>
             <strong>{activity.durationMinutes ?? "TBC"}{activity.durationMinutes !== null && "m"}</strong></li>)}</ol> : <p className="calendar-muted">No activities yet. Open the session editor to add structured coaching activities.</p>}
         </section>
         <section><h3><Target size={18} aria-hidden="true" />Session objective</h3><p>{session?.content.objective ?? "Coaching content has not been added."}</p>

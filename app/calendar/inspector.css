@@ -19,6 +19,7 @@
 .calendar-programme .programme-inspector .calendar-badge { margin-left:auto; font-size:10px; color:#62798c; background:transparent; border:0; padding:0; font-weight:400; }
 .calendar-programme .programme-inspector h2 { margin:0 0 10px; font:750 25px/1.15 var(--font-hanken),sans-serif; color:#102d47; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
 .programme-inspector h2:focus-visible { outline:2px solid #2281bb; outline-offset:3px; }
+.programme-inspector h3:focus-visible { outline:2px solid #2281bb; outline-offset:2px; }
 .programme-inspector-time,.programme-inspector-team { display:flex; align-items:center; gap:7px; }
 .programme-inspector-time { font-size:16px; color:#143451; }
 .programme-inspector-time strong { font-weight:700; }
