@@ -3,6 +3,7 @@ import { CalendarWorkspace } from "@/components/calendar/CalendarWorkspace";
 import "./calendar.css";
 import "../sessions/library-preview.css";
 import "./planning.css";
+import "./programme.css";
 import Link from "next/link";
 import { parseCalendarNavigation } from "@/lib/calendar/navigation";
 
