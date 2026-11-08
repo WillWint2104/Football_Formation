@@ -26,7 +26,7 @@ async function storage(page:Page, options:{ historical?:boolean; crossTeam?:bool
   return {source,event,before,bundle:()=>bundle,writes:()=>writes,root:`/calendar?date=2026-11-11&view=week&organization=${bundle.organizationId}&team=first-team&event=${event.id}&bookingRevision=1`};
 }
 async function loaded(page:Page){await expect(page.locator('.calendar-connection [role=status]')).toContainText('Loaded saved organisation snapshot');}
-async function openEditor(page:Page){await page.getByRole('link',{name:'Edit Session',exact:true}).click();await expect(page.getByRole('heading',{name:'Edit scheduled session',exact:true})).toBeVisible();}
+async function openEditor(page:Page){await page.getByRole('link',{name:'Open Session',exact:true}).click();await expect(page.getByRole('heading',{name:'Edit scheduled session',exact:true})).toBeVisible();}
 
 for(const view of ['week','month'] as const) test(`scheduled reuse, explicit latest preview, independent editing and exact ${view} Calendar return`,async({page},info)=>{
   const m=await storage(page,{historical:true});await page.goto(m.root.replace('view=week',`view=${view}`));await loaded(page);
@@ -58,7 +58,7 @@ for(const view of ['week','month'] as const) test(`scheduled reuse, explicit lat
   expect(m.bundle().events.filter(e=>e.id===m.event.id)).toEqual(m.before.events.filter(e=>e.id===m.event.id));
   expect(m.bundle().scenes).toEqual(m.before.scenes);
   await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:info.outputPath('copy-saved-calendar.png')});
-  await page.getByRole('link',{name:'Open coaching guide',exact:true}).click();await expect(page).toHaveURL(/bookingRevision=2/);
+  await page.getByRole('link',{name:'Coaching Guide',exact:true}).click();await expect(page).toHaveURL(/bookingRevision=2/);
   await expect(page.getByText('No illustrated exports have been saved for this session revision.',{exact:true})).toBeVisible();
   await page.getByRole('link',{name:'Return to Calendar',exact:true}).click();await expect(page).toHaveURL(new RegExp(`event=${newId}`));expect(m.writes()).toBe(2);
   await openEditor(page);await page.getByRole('link',{name:'Edit diagram 2 · scene v2 →',exact:true}).click();
@@ -87,7 +87,7 @@ test('diagram editing retains valid moments; shortened scenes require explicit t
   await page.getByRole('button',{name:'Save Diagram & Return',exact:true}).click();await expect(page).toHaveURL(/notice=diagram-saved/);
   const first=m.bundle().sessions.find(s=>s.id===m.source.id&&s.revision===2)!;
   expect(first.content.activities[1].content.diagrams[1].representativeSeconds).toBe(4);
-  await page.getByRole('link',{name:'Open coaching guide',exact:true}).click();
+  await page.getByRole('link',{name:'Coaching Guide',exact:true}).click();
   await expect(page.locator('.guide-saved-diagram .scene-diagram').nth(1)).toHaveAttribute('data-revision','3');await expect(page.locator('.guide-saved-diagram .scene-diagram').nth(1)).toHaveAttribute('data-time','4');
   await page.locator('.guide-saved-diagram').nth(1).scrollIntoViewIfNeeded();await page.screenshot({path:info.outputPath('exact-guide-retained-moment.png')});
   await page.getByRole('link',{name:'Return to Calendar',exact:true}).click();await expect(page).toHaveURL(/calendar\?/);

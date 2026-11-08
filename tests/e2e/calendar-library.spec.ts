@@ -96,7 +96,7 @@ test("preview schedules one independent copy and returns to its actual date, tea
   expect(m.bundle().scenes).toEqual(m.before.scenes);
   await page.screenshot({ path: info.outputPath("calendar-independent-booking.png") });
   await page.reload(); await loaded(page); expect(m.writes()).toBe(1); await expect(selected).toBeVisible();
-  await page.getByRole("link", { name: "Open coaching guide", exact: true }).click();
+  await page.getByRole("link", { name: "Coaching Guide", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`session=scheduled-session-${request}.*revision=1.*event=scheduled-event-${request}.*bookingRevision=1`));
   await expect(page.getByText("No illustrated exports have been saved for this session revision.", { exact: true })).toBeVisible();
   expect(m.writes()).toBe(1);
@@ -185,15 +185,15 @@ test("weekly/monthly cards distinguish match and recovery; booking edits preserv
   await page.screenshot({ path: info.outputPath("calendar-light-month.png") });
   await card.click();
   const panel = page.getByRole("complementary", { name: "Session preview" });
-  await expect(panel.getByRole("link", { name: "Edit Session", exact: true })).toHaveAttribute("href", new RegExp(`^/sessions\\?event=${m.originalEvent.id}&revision=1&calendar=`));
+  await expect(panel.getByRole("link", { name: "Open Session", exact: true })).toHaveAttribute("href", new RegExp(`^/sessions\\?event=${m.originalEvent.id}&revision=1&calendar=`));
   await panel.getByRole("button", { name: "Edit Booking", exact: true }).click();
   const form = page.getByRole("dialog"); await form.getByLabel("Start time").fill("17:00"); await form.getByLabel("End time").fill("18:00");
   await form.getByRole("button", { name: "Save booking", exact: true }).click();
   await expect(page).toHaveURL(/bookingRevision=2/);
   expect(m.bundle().sessions).toEqual(m.before.sessions);
-  await expect(panel.getByRole("link", { name: "Open coaching guide", exact: true })).toHaveAttribute("href", new RegExp(`^/guides\\?session=${m.source.id}&revision=1&event=${m.originalEvent.id}&bookingRevision=2&calendar=`));
+  await expect(panel.getByRole("link", { name: "Coaching Guide", exact: true })).toHaveAttribute("href", new RegExp(`^/guides\\?session=${m.source.id}&revision=1&event=${m.originalEvent.id}&bookingRevision=2&calendar=`));
   await expect(panel).toContainText("saved PDFs are historical exports");
-  await panel.getByRole("link", { name: "Open coaching guide", exact: true }).click();
+  await panel.getByRole("link", { name: "Coaching Guide", exact: true }).click();
   await expect(page.getByText("Original booking 2026-11-03 · booking revision 1. Saved schedule may differ from the current booking.", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Download illustrated PDF 1", exact: true })).toBeEnabled();
   expect(m.writes()).toBe(1); // Opening the old export list neither regenerates nor overwrites it.

@@ -79,7 +79,7 @@ test('existing selected-session preview and exact actions remain intact; dismiss
   await page.getByRole('button',{name:'First touch & support play, 2026-11-03, Technical',exact:true}).click();
   const panel=page.getByRole('complementary',{name:'Session preview'});await expect(panel).toBeVisible();
   await expect(panel.locator('.scene-diagram')).toHaveAttribute('data-revision','1');await expect(panel.locator('.scene-diagram')).toHaveAttribute('data-time','2');
-  await expect(panel.getByRole('link',{name:'Edit Session',exact:true})).toHaveAttribute('href',/^\/sessions\?event=sample-4&revision=1&calendar=/);
+  await expect(panel.getByRole('link',{name:'Open Session',exact:true})).toHaveAttribute('href',/^\/sessions\?event=sample-4&revision=1&calendar=/);
   await page.screenshot({path:info.outputPath('programme-existing-preview.png')});
   await page.getByRole('button',{name:'Dismiss session preview',exact:true}).click();await expect(panel).toHaveCount(0);
   expect((await page.locator('.calendar-main').boundingBox())!.width).toBe(wide);

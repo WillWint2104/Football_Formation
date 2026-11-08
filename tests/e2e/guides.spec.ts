@@ -48,7 +48,7 @@ async function pdf() { const doc = await PDFDocument.create(); doc.addPage().dra
 test("calendar and editor open a complete exact guide with activity navigation, coaching details and honest diagram slots", async ({ page }, info) => {
   const mock = await storage(page); await page.goto("/calendar?date=2026-11-03"); await loaded(page);
   await page.getByRole("button", { name: "Rondos & Positional Play, 2026-11-03, Possession", exact: true }).click();
-  await page.getByRole("link", { name: "Open coaching guide", exact: true }).click();
+  await page.getByRole("link", { name: "Coaching Guide", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rondos & Positional Play");
   await expect(page.getByRole("region", { name: "Session guide summary" })).toContainText("A. Carter (lead)");
   const first = page.locator(".guide-activity").first();

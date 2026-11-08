@@ -26,7 +26,7 @@ test("calendar opens its pinned session; coaching edits, activity order and null
   const mock = await storage(page);
   await page.goto("/calendar?date=2026-11-03"); await loaded(page);
   await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click();
-  await page.getByRole("link", { name: "Edit Session" }).click();
+  await page.getByRole("link", { name: "Open Session" }).click();
   const editor = page.getByRole("region", { name: "Session editor" });
   await editor.getByLabel("Session objective").fill("Progress through pressure with clear support angles.");
   await editor.getByLabel("Role for M. Lopez").selectOption("specialist");
@@ -50,7 +50,7 @@ test("calendar opens its pinned session; coaching edits, activity order and null
   expect(session.coaches.find((c) => c.coachId === "coach-lopez")?.role).toBe("specialist");
   await expect(page).toHaveURL(new RegExp(`event=${booking.id}.*bookingRevision=${booking.revision}`));
   await page.reload(); await loaded(page);
-  await page.getByRole("link", { name: "Edit Session", exact: true }).click();
+  await page.getByRole("link", { name: "Open Session", exact: true }).click();
   await expect(editor.getByLabel("Session objective")).toHaveValue("Progress through pressure with clear support angles.");
   await editor.getByRole("link", { name: "Cancel / Return to Calendar" }).click();
   await expect(page.getByRole("complementary", { name: "Session preview" })).toContainText("Progress through pressure with clear support angles.");
@@ -188,7 +188,7 @@ test("an independent saved plan can be scheduled and reopened from the calendar 
   await expect(dialog.getByLabel("Session title", { exact: true })).toBeEditable();
   await dialog.getByLabel("Session title", { exact: true }).fill("Another independent session");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
-  await page.getByRole("link", { name: "Edit Session" }).click();
+  await page.getByRole("link", { name: "Open Session" }).click();
   await expect(page).toHaveURL(new RegExp(`event=${event.id}`));
   await expect(page.getByLabel("Session title")).toHaveValue("Rondos & Positional Play");
 });

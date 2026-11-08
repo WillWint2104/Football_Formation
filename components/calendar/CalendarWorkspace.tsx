@@ -42,7 +42,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
   function setDate(value: string) { go({ date: value }); }
   function browse() { go({ library: "1" }); }
   const events = latestEvents(bundle);
-  const current = !problem ? events.find((e) => e.id === selected) : undefined;
+  const current = !loading && !problem ? events.find((e) => e.id === selected) : undefined;
   const dates = calendarDates(date, view);
   const visible = events.filter((e) => (!team || e.teamId === team) &&
     (!type || (e.kind === "fixture" ? "fixture" : eventSession(bundle, e)?.content.kind ?? "other") === type));
@@ -85,7 +85,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
     }
   }
 
-  return <div className={`calendar-workspace calendar-integrated calendar-programme${view === "week" ? " calendar-programme-week" : ""}`} aria-busy={loading || busy || navigating}>
+  return <div className={`calendar-workspace calendar-integrated calendar-programme${view === "week" ? " calendar-programme-week" : ""}${current ? " calendar-inspector-open" : ""}`} aria-busy={loading || busy || navigating}><div className="calendar-planning"><div className="programme-main-column">
     <div className="calendar-page-heading programme-page-heading"><div className="programme-heading-title"><div className="programme-heading-context"><label>Team<select aria-label="Team" disabled={loading || busy || navigating} value={team} onChange={(e) => go({ team: e.target.value || undefined, event: undefined, bookingRevision: undefined })}><option value="">All teams</option>
       {bundle.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label><p className="calendar-eyebrow">Training programme</p></div><h1>{view === "week" ? programmeRange(dates) : view === "day" ? new Intl.DateTimeFormat("en-AU", { weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"UTC" }).format(new Date(`${date}T12:00:00Z`)) : title}</h1></div>
       <div className="programme-heading-controls"><div className="calendar-period"><button disabled={loading || busy || navigating} onClick={() => move(-1)} aria-label="Previous period"><ChevronLeft size={18} /></button><button disabled={loading || busy || navigating} onClick={() => move(1)} aria-label="Next period"><ChevronRight size={18} /></button>
@@ -97,7 +97,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
       <label>Selected date<input ref={dateControl} aria-label="Selected date" type="date" disabled={loading || busy || navigating} value={date} onChange={(e) => { if (isCalendarDate(e.target.value)) go({ date: e.target.value, event: undefined, bookingRevision: undefined }); }} /></label></div>
       <button className="programme-library-action" disabled={disabled} onClick={browse}>Browse Session Library</button>
     </div>
-    <details className="calendar-storage-strip programme-storage" open={blocked || connectionOpen} onToggle={e => setConnectionOpen(e.currentTarget.open)}><summary className="calendar-connection"><span className="programme-storage-label">{saved ? "Organisation storage" : "Illustrative sample data · not saved"}</span><p role="status" title={message}>{message}</p><span>Connection & storage details <ChevronDown size={13} /></span></summary>
+    <details className="calendar-storage-strip programme-storage" open={blocked || connectionOpen} onToggle={e => setConnectionOpen(e.currentTarget.open)}><summary className="calendar-connection"><span className="programme-storage-label">{loading ? "Loading…" : !saved ? "Illustrative sample data · not saved" : busy ? "Saving…" : blocked ? "Storage requires review" : `Saved · v${snapshot.version}`}</span><p role="status" title={message}>{message}</p><span>Connection & storage details <ChevronDown size={13} /></span></summary>
     <div className="programme-storage-controls"><div className="calendar-source"><span>{saved ? "Authenticated API · hosted staging verification remains a separate release gate." : "Synthetic examples. Sample changes disappear on reload and are never uploaded automatically."}</span><Link href="/login">Sign in</Link></div>
       {organizations.length > 0 && <label>Organisation<select value={organization} disabled={loading || busy || !!editing} onChange={(e) => void reload(e.target.value, true)}>
         {organizations.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select></label>}
@@ -112,7 +112,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
     {view === "week" && !problem && <section className="programme-overview" aria-label="Weekly programme context"><div><Flag size={25} aria-hidden="true" /><div><p>{programme.fixtures.length > 1 ? `${programme.fixtures.length} fixtures this week` : "Fixture this week"}</p><strong>{programme.fixtures[0]?.title ?? "No fixture scheduled"}</strong><span>{programme.fixtures.length === 1 ? `${shortDate(programme.fixtures[0].localDate)} · ${programme.fixtures[0].startsAt ? localParts(programme.fixtures[0].startsAt, programme.fixtures[0].timeZone).time : "Time TBC"}` : programme.fixtures.length > 1 ? programme.fixtures.map(e => shortDate(e.localDate)).join(" · ") : "Selected week"}</span></div></div>
       <div><Target size={25} aria-hidden="true" /><div><p>Scheduled training focus</p><strong title={programme.focus.join(" · ")}>{programme.focus.length ? `${programme.focus.slice(0,3).join(" · ")}${programme.focus.length > 3 ? ` +${programme.focus.length-3}` : ""}` : "Focus not specified"}</strong></div></div>
       <div><NotebookText size={25} aria-hidden="true" /><div><p>Session objectives{programme.objectives.length > 1 ? ` · ${programme.objectives.length} saved` : ""}</p><strong title={programme.objectives.join(" · ")}>{programme.objectives[0] ?? "Objectives not specified"}</strong></div></div></section>}
-    <div className="calendar-planning"><section className="calendar-main" aria-label="Calendar schedule">
+    <section className="calendar-main" aria-label="Calendar schedule">
       <fieldset className="calendar-navigation-controls" disabled={navigating || loading || busy}>
       {view !== "week" && <div className="calendar-legend">{(["conditioning", "possession", "goalkeeper", "tactical", "testing", "recovery", "fixture"] as const).map((kind) =>
         <span key={kind} className={`calendar-type-${kind}`}><SessionTypeIcon kind={kind} />{kind === "fixture" ? "Match" : sessionLabels[kind]}</span>)}</div>}
@@ -156,8 +156,8 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
       <div className="calendar-grid-footer"><span>{visible.filter((e) => dates.includes(e.localDate)).length} bookings in this view</span>
         <span>Times shown in each booking’s time zone · Sydney default</span></div>
       {view !== "month" && <p className="calendar-muted calendar-footnote">Each day lists bookings chronologically, including parallel sessions and overnight continuations. Use Edit Booking for precise times and daylight-saving choices.</p>}
-    </section>
-    <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => go({ event: undefined, bookingRevision: undefined })}
+    </section></div>
+    <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => go({ event: undefined, bookingRevision: undefined, focus:"date" })} focusOnOpen={!navigation.library && navigation.focus !== "date" && !editing}
       context={current ? { date, view, organization: bundle.organizationId, team: navigation.team, type: navigation.type, event: current.id, bookingRevision: current.revision } : undefined}
       disabled={loading || busy || navigating || blocked || !!problem} onSchedule={() => setEditing({ event: current })}
       onBrowse={browse} onCopy={current?.session ? () => go({ library: "1", session: current.session!.id, revision: current.session!.revision }) : undefined} /></div>
