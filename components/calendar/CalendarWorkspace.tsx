@@ -30,6 +30,9 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
   const [connectionOpen, setConnectionOpen] = useState(false);
   const dateControl = useRef<HTMLInputElement>(null);
   const libraryWasOpen = useRef(!!navigation.library);
+  useEffect(() => () => {
+    if (!["/calendar", "/team-schedule"].includes(window.location.pathname)) delete document.body.dataset.programmeInput;
+  }, []);
   useEffect(() => { if (navigation.focus === "date") dateControl.current?.focus(); }, [navigation.focus]);
   useEffect(() => {
     if (libraryWasOpen.current && !navigation.library) dateControl.current?.focus();
@@ -85,7 +88,8 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
     }
   }
 
-  return <div className={`calendar-workspace calendar-integrated calendar-programme${view === "week" ? " calendar-programme-week" : ""}${current ? " calendar-inspector-open" : ""}`} aria-busy={loading || busy || navigating}><div className="calendar-planning"><div className="programme-main-column">
+  return <div className={`calendar-workspace calendar-integrated calendar-programme${view === "week" ? " calendar-programme-week" : ""}${current ? " calendar-inspector-open" : ""}`} aria-busy={loading || busy || navigating}
+    onPointerDownCapture={() => { document.body.dataset.programmeInput = "pointer"; }} onKeyDownCapture={() => { document.body.dataset.programmeInput = "keyboard"; }}><div className="calendar-planning"><div className="programme-main-column">
     <div className="calendar-page-heading programme-page-heading"><div className="programme-heading-title"><div className="programme-heading-context"><label>Team<select aria-label="Team" disabled={loading || busy || navigating} value={team} onChange={(e) => go({ team: e.target.value || undefined, event: undefined, bookingRevision: undefined })}><option value="">All teams</option>
       {bundle.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label><p className="calendar-eyebrow">Training programme</p></div><h1>{view === "week" ? programmeRange(dates) : view === "day" ? new Intl.DateTimeFormat("en-AU", { weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"UTC" }).format(new Date(`${date}T12:00:00Z`)) : title}</h1></div>
       <div className="programme-heading-controls"><div className="calendar-period"><button disabled={loading || busy || navigating} onClick={() => move(-1)} aria-label="Previous period"><ChevronLeft size={18} /></button><button disabled={loading || busy || navigating} onClick={() => move(1)} aria-label="Next period"><ChevronRight size={18} /></button>
@@ -117,7 +121,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
       {view !== "week" && <div className="calendar-legend">{(["conditioning", "possession", "goalkeeper", "tactical", "testing", "recovery", "fixture"] as const).map((kind) =>
         <span key={kind} className={`calendar-type-${kind}`}><SessionTypeIcon kind={kind} />{kind === "fixture" ? "Match" : sessionLabels[kind]}</span>)}</div>}
       {view === "week" ? <ProgrammeWeek bundle={bundle} dates={dates} date={date} events={visible} selected={selected} team={team} fixtures={programme.fixtures} disabled={disabled}
-        onDate={day => go({ date: day, event: undefined, bookingRevision: undefined })} onSelect={(event, day) => go({ event: event.id, bookingRevision: event.revision, date: day })}
+        onDate={day => go({ date: day, event: undefined, bookingRevision: undefined })} onSelect={(event, day) => go({ event: event.id, bookingRevision: event.revision, date: day, focus:undefined })}
         onChoose={day => go({ date: day, event: undefined, bookingRevision: undefined, library: "1" })} onAdd={day => setEditing({ date: day })} /> : <div className={`calendar-grid calendar-${view === "day" ? "view-day" : view}`}>
         {view === "month" && <div className="calendar-weekdays">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <span key={d}>{d}</span>)}</div>}
         <div className="calendar-days">{dates.map((day) => {
@@ -138,7 +142,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
               return <button key={event.id} className={`calendar-event calendar-type-${kind} ${selected === event.id ? "calendar-event-selected" : ""}`}
                 aria-label={`${event.title}, ${event.localDate}, ${kindLabel}`} aria-pressed={selected === event.id}
                 title={view === "month" ? event.title : undefined}
-                onClick={() => go({ event: event.id, bookingRevision: event.revision, date: day })}>
+                onClick={() => go({ event: event.id, bookingRevision: event.revision, date: day, focus:undefined })}>
                 <span className="calendar-event-title"><SessionTypeIcon kind={kind} /><strong>{event.title}</strong></span>
                 {view !== "month" && <><span className="calendar-event-time">{event.localDate < day ? "Continued booking · " : ""}{start ? `${overnight ? `${start.date} ` : ""}${start.time}` : "Time TBC"}
                   {end && ` – ${overnight ? `${end.date} ` : ""}${end.time}`}</span>

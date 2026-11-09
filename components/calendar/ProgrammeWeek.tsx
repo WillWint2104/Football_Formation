@@ -30,7 +30,7 @@ export function ProgrammeWeek({ bundle, dates, date, events, selected, team, fix
     const daily = events.filter(e => bookingOnDay(e, day));
     const matchDay = fixtures.some(e => e.localDate === day), offset = fixtureDayLabel(day, anchorFixture);
     return <div key={day} className={`calendar-day${day === date ? " calendar-date-selected" : ""}${matchDay ? " programme-match-day" : ""}`} data-date={day}>
-      <button className="calendar-day-number" aria-label={`Select ${day}`} aria-pressed={day === date} onClick={() => onDate(day)}>
+      <button className="calendar-day-number" aria-label={`Select ${day}`} aria-description={day === date ? "Current Calendar date." : "Change the Calendar date."} aria-pressed={day === date} onClick={() => onDate(day)}>
         <strong>{new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}</strong>
         <span>{offset ?? (matchDay ? "Match day" : "")}</span>
       </button>
@@ -42,7 +42,7 @@ export function ProgrammeWeek({ bundle, dates, date, events, selected, team, fix
         const minutes = event.startsAt && event.endsAt ? (Date.parse(event.endsAt) - Date.parse(event.startsAt)) / 60000 : null;
         const illustration = event.id === illustratedEvent?.id && event.localDate === day ? programmeIllustration(bundle, event) : null;
         return <button key={event.id} className={`calendar-event calendar-type-${kind}${selected === event.id ? " calendar-event-selected" : ""}${event.status === "cancelled" ? " programme-event-cancelled" : ""}`}
-          aria-label={`${event.title}, ${event.localDate}, ${kindLabel}`} aria-pressed={selected === event.id} onClick={() => onSelect(event, day)}>
+          aria-label={`${event.title}, ${event.localDate}, ${kindLabel}`} title={event.title} aria-description={selected === event.id ? "Selected Calendar booking." : "Open the contextual inspector for this booking."} aria-pressed={selected === event.id} onClick={() => onSelect(event, day)}>
           <span className="programme-card-kind"><SessionTypeIcon kind={kind} /><b>{kind === "other" && !session ? event.kind : kindLabel}</b>{event.status !== "confirmed" && <small>{event.status}</small>}</span>
           {kind === "fixture" && <Flag className="programme-fixture-mark" size={30} aria-hidden="true" />}
           <span className="calendar-event-time">{event.localDate < day ? "Continued · " : ""}{start ? `${overnight ? `${start.date} ` : ""}${start.time}` : "Time TBC"}{end && ` – ${overnight ? `${end.date} ` : ""}${end.time}`}</span>
