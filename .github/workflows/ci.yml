@@ -44,4 +44,4 @@ jobs:
       - name: Install desktop test browser
         run: npx playwright install --with-deps chromium
       - name: Desktop calendar, session, guide, renderer and editor interactions
-        run: npm run test:e2e
+        run: npm run test:e2e -- --workers=3
