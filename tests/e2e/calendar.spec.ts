@@ -11,7 +11,9 @@ async function sample(page: Page) {
 
 /** Select the saved examples' November date rather than depending on the workstation clock. */
 async function november(page: Page) {
-  await page.getByLabel("Selected date").fill("2026-11-03");
+  const input = page.getByLabel("Selected date"), changed = await input.inputValue() !== "2026-11-03";
+  await input.fill("2026-11-03");
+  if (changed) await expect(page).toHaveURL((url) => url.searchParams.get("date") === "2026-11-03" && !url.searchParams.has("event"));
 }
 
 test("independent month cards open the correct preview; month/week/day, filters and route alias work", async ({ page }, info) => {
@@ -71,7 +73,7 @@ test("sample scheduling is keyboard accessible, independent and explicitly disca
 test("rescheduling warns on overlaps and appends only the selected booking; Escape restores focus", async ({ page }) => {
   await sample(page);
   await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click();
-  const reschedule = page.getByRole("button", { name: "Reschedule booking" });
+  const reschedule = page.getByRole("button", { name: "Edit Booking" });
   await reschedule.click();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -158,16 +160,18 @@ test("authenticated-contract scheduling saves, reloads pinned history and never 
   await expect(page.getByRole("status")).toHaveText("Loaded saved organisation snapshot v3.");
   await november(page);
   await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click();
-  await page.getByRole("button", { name: "Reschedule booking" }).click();
+  await page.getByRole("button", { name: "Edit Booking" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Start time").fill("14:00");
   await dialog.getByLabel("End time").fill("15:20");
   await dialog.getByRole("button", { name: "Save booking", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Saved organisation snapshot v4.");
+  await expect(page).toHaveURL(/bookingRevision=2/);
   expect(mock.writes()).toBe(1);
   expect(mock.bundle().events.filter((e) => e.id === "sample-4")).toHaveLength(2);
   await page.reload(); await expect(page.getByRole("status")).toContainText("snapshot v4"); await november(page);
   await page.getByRole("button", { name: "Day", exact: true }).click();
+  await expect(page.locator(".calendar-view-day")).toBeVisible();
   await expect(page.getByRole("button", { name: /Rondos & Positional Play, 2026/ })).toContainText("14:00 – 15:20");
 });
 
@@ -202,6 +206,7 @@ test("month cards hide metadata for every status and bound long titles while pre
   await expect(page.getByRole("button", { name: `${longTitle}, 2026-11-02, Conditioning`, exact: true })).toContainText("10:00 – 11:00");
   await page.getByLabel("Selected date").fill("2026-11-04");
   await page.getByRole("button", { name: "Day", exact: true }).click();
+  await expect(page.locator(".calendar-view-day")).toBeVisible();
   await expect(page.getByRole("button", { name: "Overnight testing, 2026-11-03, Testing", exact: true })).toContainText("Continued booking · 2026-11-03 23:00 – 2026-11-05 02:00");
 });
 
@@ -241,7 +246,7 @@ for (const status of [409, 503, 401]) {
     const mock = await savedApi(page, status);
     await page.goto("/calendar"); await expect(page.getByRole("status")).toContainText("snapshot v3"); await november(page);
     await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click();
-    await page.getByRole("button", { name: "Reschedule booking" }).click();
+    await page.getByRole("button", { name: "Edit Booking" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Save booking", exact: true }).click();
     await expect(page.getByRole("status")).not.toContainText("snapshot v3");
     await expect(page.getByRole("status")).not.toContainText("PRIVATE");

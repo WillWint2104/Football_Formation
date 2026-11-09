@@ -109,3 +109,96 @@ without approval. The existing 10 MiB complete-organisation snapshot limit remai
 
 Rollback reverts these UI/operation consumers together without deleting saved
 records or immutable revisions. No manual deployment is part of this PR.
+
+## C4-B1 — Saved preview and independent scheduling copies
+
+Each catalogue record now has **Preview content**; the existing editor also links
+to **Preview saved session**. The read-only preview uses the current organisation
+graph, not the C3 local companion catalogue. It shows known activity minutes and
+untimed counts, objective/focus, team/staff, the complete activity sequence and
+each activity's exact saved diagram revisions, dimensions, equipment, instructions
+and coaching points. Missing facts remain unspecified. Diagram selection uses
+the existing `SceneDiagram` with its approved light paint; scene data is unchanged.
+
+Preview URLs include organisation, session and an optional exact revision. A wrong
+organisation, malformed reference or missing exact revision is not replaced. A
+superseded revision remains inspectable but cannot start a new scheduling copy.
+The existing original/booking editor links and “schedule this saved unscheduled
+plan” behaviour remain available; B1 adds an explicit **Schedule independent copy**.
+
+The scheduling action reuses `ScheduleDialog` and `scheduleChange`. The new pure
+`scheduleSessionCopy` command validates the graph and previewed source, retains
+the source team, coaches, content, template/exercise provenance and exact scene
+pins/timestamps, and allocates a new session revision 1 plus a new **draft** booking
+revision 1. No source record, other date or earlier revision is modified. Document
+associations start empty: an old generated PDF is not a guide for the new session.
+Both new records go through the existing atomic whole-organisation save and
+expectedVersion boundary; there is no second database, endpoint or migration.
+
+A scheduling request UUID is placed in the preview URL and deterministically
+allocates both record IDs. It is not an authorization token. A synchronous form
+guard and the existing provider lock prevent concurrent submissions. Reusing the
+same request rejects duplicate IDs. After a lost response, reload retains the URL
+identity and can discover the already-saved occurrence; recovery verifies its
+preserved first session/event revisions against the exact source before showing
+success. Stale/uncertain writes keep the existing reload-required/no-auto-retry
+behaviour. Starting a deliberately new request can schedule another occurrence;
+this is not a global duplicate-time prohibition or an exactly-once job service.
+
+The preview captures the base graph when its scheduling dialog opens. Source edits,
+organisation switches and another writer cannot silently rebase it. Existing
+IANA/UTC, DST and advisory overlap checks apply. Times are explicit new booking
+choices, separate from known activity minutes. Sample mode stays memory-only and
+is labelled accordingly; refreshing sample changes discards them.
+
+Only the new preview and its dialog have a scoped light reading surface. This is
+not final visual-design acceptance, a full-light shell rollout or a Calendar
+redesign. C3's local Designer, portable JSON, package storage and native scene
+contracts are unchanged. Local package publication remains a separate C4-B4 gate.
+The next approved sequence is B2 scheduling/navigation, B3 further reuse/edit-copy
+work, B4 ownership bridge (separate architecture approval), then B5 weekly programme.
+None of those later checkpoints is implemented by B1.
+
+Verification includes pure copy/recovery tests, actual production SQL in local
+PGlite (rollback on a synthetic event-insert failure, readback and duplicate/stale
+rejection), and browser checks using strict synthetic HTTP stand-ins. These do
+not establish hosted Auth or cloud release acceptance. Checkpoint D stays stopped,
+issue #17 stays open, and no hosted configuration, merge or deployment is included.
+
+## C4-B2 — Calendar entry and return
+
+Calendar reuses the B1 catalogue selectors, exact preview, request identity and
+atomic graph-save operation. Choose Session on a date opens a transient library
+picker, while Add Session remains available for a blank draft. Search covers
+saved titles, objectives, focus and activity names; the Calendar team filter
+restricts available sources. No C3 local repository is read or published.
+
+Calendar URLs carry validated date, week/month/day view, organisation, team/type
+filters and optional booking identity/revision. Library preview and copy-request
+IDs are transient navigation fields, not a new persistence contract or access
+authority. Duplicate parameters, incomplete references and invalid values are
+rejected. The loaded organisation graph validates scope and team membership;
+stale booking links require explicit recovery. URLs never choose another
+organisation automatically or accept an arbitrary return destination.
+
+Cancellation restores the original Calendar selection without writes. A successful
+copy returns to its committed date and new booking, preserving the view and team.
+If the old type filter would hide the new booking, the preview discloses that it
+will be cleared on success. Same-organisation reload preserves a pending request;
+switching organisations clears that workflow. An uncertain save offers Reload
+Saved Records inside the dialog and never automatically resubmits. Refresh keeps
+request identity but does not persist unsaved scheduling form fields.
+
+Edit Booking changes schedule details only; Open Session edits the selected
+booking's pinned coaching content; Schedule Another Copy starts a new independent
+occurrence. Coaching-guide links include both session and booking revisions.
+Historical PDFs are never automatically regenerated or presented as proof of the
+current booking schedule. Stronger document booking metadata remains outside B2.
+
+The Calendar adopts C3's established light colours with scoped CSS. Month cards
+remain icon and name only. Weekly cards retain concise time and type/team facts;
+match and recovery use distinct symbols and labels. Lanes remain chronological,
+not duration-scaled. On laptops, the selected details appear below the full-width
+grid, brought into view on selection; dismissing them retains the planning date.
+The native picker and scheduling dialog are never stacked. No global theme,
+session editor, renderer or print redesign is part of B2.

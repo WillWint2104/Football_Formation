@@ -4,8 +4,9 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { coachingSample } from "../../lib/coaching/sample";
 import { newSession, reviseCoach, reviseExercise, reviseSession, reviseTemplate } from "../../lib/coaching/sessions";
-import { eventSession, latestEvents } from "../../lib/calendar/schedule";
+import { eventSession, latestEvents, wallTimeCandidates } from "../../lib/calendar/schedule";
 import { domainBundleSchema, type DomainBundle } from "../../lib/domain/validation";
+import { scheduleSessionCopy, sessionCopyIds } from "../../lib/coaching/session-copy";
 
 test("production SQL stores edited activities, independent templates/exercises, staff and exact booking revisions atomically", async () => {
   const db = new PGlite();
@@ -52,5 +53,24 @@ test("production SQL stores edited activities, independent templates/exercises, 
     assert.deepEqual(reopened.exercises.find((e) => e.revision === 1), initial.exercises[0]);
     await assert.rejects(save(1, next), (error: unknown) => typeof error === "object" && error !== null && "code" in error && error.code === "40001");
     assert.equal((await db.query<{ count: number }>("select count(*)::int as count from public.organization_snapshots")).rows[0].count, 2);
+    const original = eventSession(next, latestEvents(next).find((e) => e.id === event.id)!)!;
+    const request = { organizationId: next.organizationId, source: { id: original.id, revision: original.revision }, requestId: "44444444-4444-4444-8444-444444444444" };
+    const slot = { title: original.content.title, kind: original.content.kind, teamId: original.teamId, coachId: "", date: "2026-11-11", start: "17:00", endDate: "2026-11-11", end: "18:00", timeZone: "Australia/Sydney",
+      startInstant: wallTimeCandidates("2026-11-11", "17:00", "Australia/Sydney")[0], endInstant: wallTimeCandidates("2026-11-11", "18:00", "Australia/Sydney")[0], venue: "", areaLabel: "" };
+    const scheduledCopy = scheduleSessionCopy(next, slot, request);
+    // A real database error during event insertion must roll back the whole proposed graph.
+    await db.exec(`create function public.reject_synthetic_copy() returns trigger language plpgsql as $$ begin if new.id like 'scheduled-event-%' then raise exception 'Synthetic write failure'; end if; return new; end $$;
+      create trigger reject_copy before insert on public.calendar_events for each row execute function public.reject_synthetic_copy();`);
+    await assert.rejects(save(2, scheduledCopy.bundle), /Synthetic write failure/);
+    assert.equal((await db.query<{ count: number }>("select count(*)::int as count from public.session_revisions where id=$1", [sessionCopyIds(request).sessionId])).rows[0].count, 0);
+    assert.equal((await db.query<{ version: number }>("select version from public.organizations where id=$1", [next.organizationId])).rows[0].version, 2);
+    await db.exec("drop trigger reject_copy on public.calendar_events; drop function public.reject_synthetic_copy();");
+    assert.equal((await save(2, scheduledCopy.bundle)).rows[0].version, 3);
+    const savedCopy = await db.query<{ bundle: unknown }>("select bundle from public.organization_snapshots where organization_id=$1 and version=3", [next.organizationId]);
+    const readback = domainBundleSchema.parse(savedCopy.rows[0].bundle);
+    assert.deepEqual(readback, scheduledCopy.bundle); assert.deepEqual(readback.sessions.find((s) => s.id === original.id && s.revision === original.revision), original);
+    assert.throws(() => scheduleSessionCopy(readback, slot, request), /already been used/);
+    await assert.rejects(save(2, scheduledCopy.bundle));
+    assert.equal((await db.query<{ count: number }>("select count(*)::int as count from public.calendar_events where id=$1", [scheduledCopy.event.id])).rows[0].count, 1);
   } finally { await db.close(); }
 });

@@ -1,0 +1,39 @@
+/* B5c: preserve the accepted composition, font sizes and inspector widths. */
+.calendar-programme .programme-week .calendar-date-selected { background:#fbfcfe; }
+.calendar-programme .programme-week .calendar-date-selected > .calendar-day-number {
+  color:#24415a; background:#f0f3f6; box-shadow:inset 0 -2px #8da3b7;
+}
+.calendar-programme .programme-week .calendar-event-selected {
+  outline:2px solid #1e77bc; background:#edf5fd; box-shadow:0 2px 7px #245d8e17;
+}
+.calendar-programme .programme-week :is(.calendar-event,.calendar-day-number):focus-visible {
+  outline:3px solid #087a77; outline-offset:2px;
+}
+.calendar-programme .programme-week .calendar-event-title {
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;
+}
+.calendar-programme .programme-week .calendar-type-fixture .calendar-event-title { -webkit-line-clamp:4; }
+/* Headings receive programmatic focus for navigation. Pointer selection should not frame the title. */
+.calendar-programme .programme-inspector :is(h2,h3):focus-visible {
+  outline:none; box-shadow:0 2px 0 #087a77;
+}
+.application-shell[data-programme-input="pointer"] .calendar-programme .programme-inspector :is(h2,h3):focus-visible {
+  outline:none; box-shadow:none;
+}
+.calendar-programme .programme-inspector-scroll:focus-visible { outline:2px solid #087a77; outline-offset:-2px; }
+.calendar-programme .programme-inspector .calendar-type-heading { margin-bottom:5px; }
+.calendar-programme .programme-inspector h2 { margin-bottom:8px; }
+.calendar-programme .programme-inspector-team { margin-top:6px; }
+.calendar-programme .programme-section-heading { align-items:center; }
+.calendar-programme .programme-inspector-scroll > section { padding-block:12px; }
+.calendar-programme .programme-inspector-scroll > section:first-child { padding-top:0; }
+.calendar-programme .programme-inspector-scroll :is(p,li,dd) { overflow-wrap:anywhere; }
+.calendar-programme .programme-inspector .calendar-activities li { padding-block:7px; }
+@media(min-width:1024px) and (max-width:1500px) {
+  /* Fit the existing planning actions beside the date/team heading instead of stacking another row. */
+  .calendar-inspector-open .programme-heading-controls { gap:6px; }
+  .calendar-inspector-open .programme-heading-controls .calendar-period { gap:5px; }
+  .calendar-inspector-open .programme-heading-controls .calendar-period button:last-child { padding-inline:14px; }
+  .calendar-inspector-open .calendar-views button { padding-inline:9px; }
+  .calendar-inspector-open .programme-heading-controls .calendar-primary { padding-inline:13px; }
+}

@@ -98,16 +98,19 @@ test("neutral conversion is explicit, translated and undoable; physical region a
 
 test("calendar → activity → editor save/reopen → exact guide; history and reusable sources remain independent", async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", (e) => errors.push(e.message)); const mock = await storage(page), initial = structuredClone(mock.bundle());
-  await page.goto("/calendar?date=2026-11-03"); await loaded(page); await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click(); await page.getByRole("link", { name: "Open session editor" }).click();
+  await page.goto("/calendar?date=2026-11-03"); await loaded(page); await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click(); await page.getByRole("link", { name: "Open Session" }).click();
   await page.getByRole("link", { name: "Create diagram", exact: false }).nth(1).click(); await expect(page).toHaveURL(/tactical-editor/); await apply(page, "rondo");
-  await page.getByRole("button", { name: "Save diagram", exact: true }).click(); await expect(page).toHaveURL(/revision=2/); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-revision", "1");
+  await page.getByRole("button", { name: "Save Diagram & Return", exact: true }).click(); await expect(page).toHaveURL(/bookingRevision=2/);
+  await page.getByRole("link", { name: "Open Session", exact: true }).click(); await page.getByRole("link", { name: "Edit diagram 1 · scene v1 →", exact: true }).click();
+  await expect(page.locator(".scene-diagram")).toHaveAttribute("data-revision", "1");
   const savedTarget = new URL(page.url()); const sceneId = await page.locator(".scene-diagram").getAttribute("data-scene-id");
   expect(mock.writes()).toBe(1); expect(mock.bundle().templates).toEqual(initial.templates); expect(mock.bundle().exercises).toEqual(initial.exercises);
   await page.reload(); await loaded(page); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-scene-id", sceneId!);
-  await page.getByRole("button", { name: "● Player", exact: true }).click(); await page.getByRole("button", { name: "Insert at centre" }).click(); await page.getByRole("button", { name: "Save diagram", exact: true }).click(); await expect(page).toHaveURL(/revision=3/); await expect(page.locator(".scene-diagram")).toHaveAttribute("data-revision", "2");
-  await page.getByRole("link", { name: "Open exact guide", exact: false }).click(); await expect(page.locator(".guide-saved-diagram .scene-diagram")).toHaveAttribute("data-revision", "2"); await page.screenshot({ path: info.outputPath("editor-saved-guide.png"), fullPage: true });
+  await page.getByRole("button", { name: "Layout", exact: true }).click(); await page.getByRole("button", { name: "Properties", exact: true }).click();
+  await page.getByRole("button", { name: "● Player", exact: true }).click(); await page.getByRole("button", { name: "Insert at centre" }).click(); await page.getByRole("button", { name: "Save Diagram & Return", exact: true }).click(); await expect(page).toHaveURL(/bookingRevision=3/);
+  await page.getByRole("link", { name: "Coaching Guide", exact: true }).click(); await expect(page.locator(".guide-saved-diagram .scene-diagram")).toHaveAttribute("data-revision", "2"); await page.screenshot({ path: info.outputPath("editor-saved-guide.png"), fullPage: true });
   await page.goto(guideHref({ session: target.id, revision: 2, event: target.event, bookingRevision: 2 })); await expect(page.locator(".guide-saved-diagram .scene-diagram")).toHaveAttribute("data-revision", "1");
-  await page.goto(savedTarget.href); await loaded(page); await expect(page.getByText("Historical snapshot · read only", { exact: true })).toBeVisible(); await expect(page.getByRole("button", { name: "Save diagram", exact: true })).toBeDisabled();
+  await page.goto(savedTarget.href); await loaded(page); await expect(page.getByText("Historical snapshot · read only", { exact: true })).toBeVisible(); await expect(page.getByRole("button", { name: "Save Diagram & Return", exact: true })).toBeDisabled();
   expect(mock.writes()).toBe(2); expect(errors).toEqual([]);
 });
 

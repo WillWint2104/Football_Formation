@@ -20,13 +20,13 @@ async function storage(page: Page, status?: number) {
 }
 
 /** Await the validated saved graph, independent of request and hydration timing. */
-async function loaded(page: Page) { await expect(page.getByRole("status")).toContainText("Loaded saved organisation snapshot"); }
+async function loaded(page: Page) { await expect(page.locator(".calendar-connection [role=status]")).toContainText("Loaded saved organisation snapshot"); }
 
 test("calendar opens its pinned session; coaching edits, activity order and nullable timings survive reopening", async ({ page }, info) => {
   const mock = await storage(page);
   await page.goto("/calendar?date=2026-11-03"); await loaded(page);
   await page.getByRole("button", { name: /Rondos & Positional Play, 2026/ }).click();
-  await page.getByRole("link", { name: "Open session editor" }).click();
+  await page.getByRole("link", { name: "Open Session" }).click();
   const editor = page.getByRole("region", { name: "Session editor" });
   await editor.getByLabel("Session objective").fill("Progress through pressure with clear support angles.");
   await editor.getByLabel("Role for M. Lopez").selectOption("specialist");
@@ -40,18 +40,19 @@ test("calendar opens its pinned session; coaching edits, activity order and null
   await editor.getByLabel("Progressions", { exact: true }).fill("Add a neutral player.");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("session-editor.png"), fullPage: true });
-  await editor.getByRole("button", { name: "Save session", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Saved organisation snapshot v5");
+  await editor.getByRole("button", { name: "Save Session & Return", exact: true }).click();
+  await expect(page.locator(".calendar-connection [role=status]")).toContainText("Saved organisation snapshot v5");
   const booking = latestEvents(mock.bundle()).find((e) => e.title === "Rondos & Positional Play")!;
   const session = eventSession(mock.bundle(), booking)!;
   expect(booking.session?.revision).toBe(2); expect(booking.revision).toBe(2);
   expect(session.content.activities[1].content.playerCount).toBe(10);
   expect(session.content.activities[1].durationMinutes).toBeNull();
   expect(session.coaches.find((c) => c.coachId === "coach-lopez")?.role).toBe("specialist");
-  await expect(page).toHaveURL(new RegExp(`event=${booking.id}&revision=${booking.revision}`));
+  await expect(page).toHaveURL(new RegExp(`event=${booking.id}.*bookingRevision=${booking.revision}`));
   await page.reload(); await loaded(page);
+  await page.getByRole("link", { name: "Open Session", exact: true }).click();
   await expect(editor.getByLabel("Session objective")).toHaveValue("Progress through pressure with clear support angles.");
-  await editor.getByRole("link", { name: "Back to booking" }).click();
+  await editor.getByRole("link", { name: "Cancel / Return to Calendar" }).click();
   await expect(page.getByRole("complementary", { name: "Session preview" })).toContainText("Progress through pressure with clear support angles.");
   await expect(page.locator(".calendar-month .calendar-event-time")).toHaveCount(0);
 });
@@ -187,7 +188,7 @@ test("an independent saved plan can be scheduled and reopened from the calendar 
   await expect(dialog.getByLabel("Session title", { exact: true })).toBeEditable();
   await dialog.getByLabel("Session title", { exact: true }).fill("Another independent session");
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
-  await page.getByRole("link", { name: "Open session editor" }).click();
+  await page.getByRole("link", { name: "Open Session" }).click();
   await expect(page).toHaveURL(new RegExp(`event=${event.id}`));
   await expect(page.getByLabel("Session title")).toHaveValue("Rondos & Positional Play");
 });

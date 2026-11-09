@@ -1,0 +1,15 @@
+/* B3: scoped reuse of the accepted light workspace, not a new editor or global theme. */
+.coaching-from-calendar .coaching-library-layout { grid-template-columns:minmax(0,1fr); }
+.coaching-from-calendar .coaching-catalog { display:none; }
+.coaching-from-calendar .coaching-detail { background:white; border-color:#cbd8e0; padding:24px; }
+.coaching-from-calendar :is(input,textarea,select) { color-scheme:light; background:white; color:#18334b; border-color:#cbd8e0; font-size:14px; }
+.coaching-from-calendar .coaching-editor { max-width:1200px; margin:auto; }
+.coaching-from-calendar .coaching-field-section { margin-block:20px; }
+.coaching-from-calendar .coaching-notice { background:#eef4f9; color:#18334b; border-color:#cbd8e0; }
+.coaching-from-calendar .coaching-save-bar { background:white; border-color:#cbd8e0; }
+.coaching-from-calendar .coaching-form-row label { font-size:14px; }
+.coaching-from-calendar .representative-time { display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:14px; background:white; border:1px solid #cbd8e0; margin-bottom:14px; }
+.representative-time { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:12px 0; }
+.representative-time input { width:120px; }
+.representative-time span { font-size:13px; }
+.calendar-saved-notice { background:#edf7f1; border:1px solid #9bbfa9; padding:12px; margin-bottom:14px; }

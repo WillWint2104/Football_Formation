@@ -60,9 +60,11 @@ const navigation: {
 /** Reuses one route/availability map for the desktop sidebar and mobile drawer. */
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const programme = ["/calendar", "/team-schedule"].includes(pathname);
+  const primary = ["/sessions", "/lineup", "/presentations", "/coaches"];
   return (
     <nav aria-label="Main navigation" className="flex flex-col gap-2 p-4">
-      {navigation.map(({ label, href, icon: Icon, planned, aliases }) => {
+      {navigation.filter(item => !programme || !!onNavigate || !primary.includes(item.href ?? "")).map(({ label, href, icon: Icon, planned, aliases }) => {
         const active =
           href !== null &&
           [href, ...(aliases ?? [])].some(
@@ -71,7 +73,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
         const content = (
           <>
             <Icon className="size-5 shrink-0" aria-hidden="true" />
-            <span className="flex-1">{label}</span>
+            <span className="flex-1">{programme && label === "Exercise Library" ? "Library" : programme && label === "Session Designer" ? "Designer" : label}</span>
             {planned && (
               <span className="font-mono text-[10px] uppercase tracking-wide text-shell-muted">
                 Planned

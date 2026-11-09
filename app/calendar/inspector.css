@@ -1,0 +1,105 @@
+/* B5b extends the approved Programme; inspector, not a second scheduling surface. */
+.programme-main-column { min-width:0; }
+.calendar-programme.calendar-inspector-open > .calendar-planning { grid-template-columns:minmax(0,1fr) 380px; }
+.calendar-programme .programme-storage:not([open]) .calendar-connection p { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.calendar-programme .programme-storage-label { color:#567087; font-size:12px; }
+.calendar-programme .programme-storage:not([open]) > summary { gap:5px; }
+.calendar-programme .calendar-filters :is(select,input) { background:transparent; border-color:transparent; }
+.calendar-programme .calendar-filters :is(select,input):is(:hover,:focus-visible) { background:white; border-color:#bdcfde; }
+.calendar-programme .programme-inspector {
+  position:sticky; top:88px; height:min(850px,calc(100dvh - 116px)); min-height:560px; max-height:none; overflow:hidden;
+  display:flex; flex-direction:column; padding:0; border:1px solid #bdccd9; border-radius:6px; background:white; box-shadow:0 3px 10px #18374f0a;
+}
+.calendar-programme .programme-inspector .calendar-preview-top { flex-shrink:0; min-height:43px; padding:6px 12px; margin:0; background:linear-gradient(110deg,#102b44,#0e2133); color:white; }
+.programme-inspector .calendar-preview-top > span { display:flex; align-items:center; gap:7px; text-transform:uppercase; font-size:12px; font-weight:600; letter-spacing:.025em; }
+.calendar-programme .programme-inspector .calendar-preview-top button { padding:5px; color:#eaf4ff; border:0; background:transparent; }
+.calendar-programme .programme-inspector .calendar-preview-top button:hover { background:#29475f; }
+.programme-inspector-heading { padding:14px 16px 12px; flex-shrink:0; }
+.calendar-programme .programme-inspector .calendar-type-heading { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:7px; font-size:13px; font-weight:650; }
+.calendar-programme .programme-inspector .calendar-badge { margin-left:auto; font-size:10px; color:#62798c; background:transparent; border:0; padding:0; font-weight:400; }
+.calendar-programme .programme-inspector h2 { margin:0 0 10px; font:750 25px/1.15 var(--font-hanken),sans-serif; color:#102d47; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+.programme-inspector h2:focus-visible { outline:2px solid #2281bb; outline-offset:3px; }
+.programme-inspector h3:focus-visible { outline:2px solid #2281bb; outline-offset:2px; }
+.programme-inspector-time,.programme-inspector-team { display:flex; align-items:center; gap:7px; }
+.programme-inspector-time { font-size:16px; color:#143451; }
+.programme-inspector-time strong { font-weight:700; }
+.programme-inspector-time > span { font-size:13px; }
+.programme-inspector-team { font-size:13px; margin-top:8px; color:#405f77; flex-wrap:wrap; }
+.programme-inspector-team > span { margin-left:auto; font-size:11px; }
+.programme-inspector-scroll { flex:1; min-height:0; overflow:auto; padding:0 16px 10px; scrollbar-width:thin; scrollbar-color:#b7c9d8 #f3f6f8; }
+.calendar-programme .programme-inspector-scroll > section { font-size:14px; line-height:1.5; padding:13px 0; border-top:1px solid #dde5eb; }
+.calendar-programme .programme-inspector-scroll > section:first-child { padding-top:0; border-top:0; }
+.calendar-programme .programme-inspector h3 { display:flex; align-items:center; gap:7px; font:750 18px/1.25 var(--font-hanken),sans-serif; color:#183750; margin:0 0 9px; }
+.programme-section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; }
+.calendar-programme .programme-section-heading h3 { margin:0; }
+.programme-section-heading > span { font-size:12px; color:#526f84; white-space:nowrap; }
+.calendar-programme .programme-inspector .calendar-scene-preview { width:100%; height:200px; border:1px solid #b5cba7; border-radius:4px; overflow:hidden; background:#dcebc1; }
+.programme-inspector .scene-diagram-caption { display:none; }
+.programme-diagram-activity { display:flex; align-items:center; gap:8px; margin:0; font-size:12px; flex:1; max-width:180px; min-width:0; }
+.calendar-programme .programme-diagram-activity select { min-width:0; flex:1; width:100%; background:white; font-size:13px; padding:5px 7px; }
+.programme-diagram-controls { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
+.programme-diagram-controls > span { font-size:13px; font-weight:600; min-width:0; }
+.programme-diagram-controls > div { display:flex; gap:4px; flex-shrink:0; }
+.calendar-programme .programme-diagram-controls button { padding:3px 8px; min-width:30px; min-height:29px; font-size:13px; }
+.calendar-programme .programme-diagram-controls button[aria-pressed=true] { background:#155a94; border-color:#155a94; color:white; }
+.programme-no-diagram,.programme-source-unavailable { padding:15px; border:1px dashed #cad8e2; background:#f5f8fa; border-radius:4px; font-size:14px; }
+.programme-source-unavailable { color:#805619; background:#fffaee; border-color:#d9c69e; }
+.calendar-programme .programme-inspector .calendar-activities { gap:0; }
+.calendar-programme .programme-inspector .calendar-activities li { gap:9px; padding:8px 3px; border:0; border-bottom:1px solid #e4ebf0; border-radius:0; font-size:14px; background:transparent; align-items:flex-start; }
+.calendar-programme .programme-inspector .calendar-activities li > span { width:19px; height:19px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:50%; background:#15578f; color:white; font:600 11px/1 var(--font-inter),sans-serif; margin-top:1px; }
+.calendar-programme .programme-inspector .calendar-activities strong { font-size:12px; color:#45617a; white-space:nowrap; margin-top:2px; }
+.calendar-programme .programme-inspector .calendar-activities small { display:none; } /* Role remains in each row's title; avoid repeating exercise labels. */
+.calendar-programme .programme-inspector .programme-activity-diagram { display:inline; border:0; padding:0; border-radius:0; background:transparent; font-size:14px; text-align:left; line-height:1.5; color:#15578f; font-weight:600; }
+.calendar-programme .programme-inspector .programme-activity-diagram:hover { text-decoration:underline; }
+.calendar-programme .programme-inspector .programme-inspector-current-activity { background:#f0f6fc; }
+.programme-inspector .calendar-tags { margin-top:9px; }
+.programme-emphasis-source { color:#526e83; font-size:12px; margin-bottom:5px; }
+.programme-coaching-points { padding-left:18px; list-style:disc; }
+.programme-coaching-points li { margin:4px 0; }
+.calendar-programme .programme-inspector .calendar-meta { margin:0 0 12px; font-size:13px; }
+.calendar-programme .programme-inspector .calendar-meta :is(dt,small) { font-size:12px; }
+.programme-inspector-details h4 { font-size:13px; font-weight:700; margin-bottom:4px; }
+.calendar-programme .programme-inspector .calendar-footnote { font-size:12px; margin-top:10px; }
+.calendar-programme .programme-inspector-actions { flex-shrink:0; display:block; border-top:1px solid #d2dee7; padding:12px; margin:0; background:#f7f9fb; }
+.programme-primary-actions { display:flex; gap:8px; }
+.calendar-programme .programme-primary-actions a { flex:1; min-width:0; display:flex; align-items:center; justify-content:center; gap:7px; min-height:43px; padding:8px 6px; margin:0; font-size:14px; line-height:1.3; font-weight:650; border:1px solid #8aa8bf; border-radius:5px; color:#153e61; background:white; text-decoration:none; }
+.calendar-programme .programme-primary-actions a:last-child { background:#103c61; border-color:#103c61; color:white; }
+.programme-primary-actions a:hover { box-shadow:0 2px 5px #153d611c; }
+.programme-secondary-actions { display:flex; flex-wrap:wrap; gap:7px; }
+.calendar-programme .programme-secondary-actions button { font-size:12px; min-height:32px; padding:5px 8px; background:#f4f8fb; }
+.programme-action-help { margin-top:8px; color:#516d82; font-size:12px; }
+.programme-match-details { padding:20px 15px!important; background:linear-gradient(145deg,#edf3f8,#f8fafc); border-radius:5px; }
+.programme-match-details > svg { color:#225c8a; margin-bottom:14px; }
+.programme-match-details > p { margin-bottom:12px; }
+.programme-match-details > p:has(svg) { display:flex; align-items:center; gap:7px; }
+@media(min-width:1024px) and (max-width:1500px){
+  .calendar-programme.calendar-inspector-open > .calendar-planning { grid-template-columns:minmax(0,1fr) 320px; gap:14px; }
+  .calendar-inspector-open .programme-page-heading { flex-wrap:wrap; gap:9px; }
+  .calendar-inspector-open .programme-heading-controls { gap:9px; }
+  .calendar-inspector-open .programme-tools-row { flex-wrap:wrap; gap:5px; }
+  .calendar-inspector-open .programme-tools-row .programme-storage { margin-left:auto; }
+  .calendar-inspector-open .calendar-filters { gap:10px; }
+  .calendar-inspector-open .programme-overview { grid-template-columns:1.2fr 1fr; }
+  .calendar-inspector-open .programme-overview > div { padding-inline:9px; gap:8px; }
+  .calendar-inspector-open .programme-overview > div:last-child { display:none; } /* Full authored objectives are in the inspector. */
+  .calendar-inspector-open .programme-week .calendar-day-number { padding:9px 6px; }
+  .calendar-inspector-open .programme-week .calendar-day-number strong { font-size:15px; }
+  .calendar-inspector-open .programme-week .calendar-event { padding:8px 6px; }
+  .calendar-inspector-open .programme-week .programme-card-kind { font-size:13px; gap:4px; }
+  .calendar-inspector-open .programme-week .calendar-event-title { font-size:14px; overflow-wrap:anywhere; }
+  .calendar-inspector-open .programme-week .calendar-event-time { font-size:14px; }
+  .calendar-inspector-open .programme-week .calendar-type-fixture .calendar-event-title { font-size:15px; }
+  .calendar-inspector-open .programme-week .calendar-type-fixture .calendar-event-time { font-size:17px; }
+  .calendar-inspector-open .programme-week .calendar-slot-actions { padding-inline:3px; }
+  .calendar-inspector-open .programme-week .calendar-slot-actions .calendar-add-slot { font-size:10px; }
+  .calendar-programme .programme-inspector { top:76px; height:calc(100dvh - 96px); }
+  .programme-inspector-heading { padding:12px; }
+  .calendar-programme .programme-inspector h2 { font-size:23px; }
+  .programme-inspector-scroll { padding-inline:12px; }
+  .calendar-programme .programme-inspector .calendar-scene-preview { height:190px; }
+  .calendar-programme .programme-primary-actions a { font-size:13px; gap:5px; }
+}
+@media(max-width:1023px){
+  .calendar-programme.calendar-inspector-open > .calendar-planning { grid-template-columns:1fr; }
+  .calendar-programme .programme-inspector { position:static; height:750px; }
+}
