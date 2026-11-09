@@ -114,5 +114,8 @@ test('save conflict keeps source history intact and still allows read-only inspe
   await expect(dialog.getByRole('button',{name:'Save booking',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Close scheduling form',exact:true}).click();
   await panel(page).getByRole('button',{name:'Dismiss session preview',exact:true}).click();await expect(panel(page)).toHaveCount(0);
   expect((await page.locator('.programme-week').boundingBox())!.width).toBe(full);await expect(page.locator('.calendar-connection [role=status]')).toContainText('Reload');
+  await expect(page.getByLabel('Team',{exact:true})).toBeEnabled();await expect(page.getByLabel('Selected date',{exact:true})).toBeEnabled();
+  await page.getByRole('button',{name:'Month',exact:true}).click();await expect(page.getByRole('button',{name:'Month',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:'Week',exact:true}).click();await expect(page.getByRole('button',{name:'Week',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.screenshot({path:info.outputPath('11-conflict-inspector-dismissed.png')});expect(m.writes()).toBe(1);expect(m.bundle).toEqual(m.before);expect(m.errors).toEqual([]);
 });

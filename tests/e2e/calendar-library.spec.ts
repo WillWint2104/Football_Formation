@@ -31,7 +31,15 @@ async function storage(page: Page, failure?: number | "lost-ack") {
   });
   return { source, originalEvent, before, bundle: () => bundle, writes: () => writes,
     root: `/calendar?date=2026-11-11&view=week&organization=${bundle.organizationId}&team=first-team`,
-    newer() { bundle.sessions.push({ ...structuredClone(source), revision: 2 }); version++; } };
+    newer() { bundle.sessions.push({ ...structuredClone(source), revision: 2 }); version++; },
+    newerWithDifferentActivity() {
+      const activity = structuredClone(source.content.activities[1]);
+      activity.id = "current-rondo"; activity.content.title = "Revised rondo only";
+      activity.content.diagrams = activity.content.diagrams.slice(0, 1);
+      bundle = domainBundleSchema.parse({ ...bundle, sessions: [...bundle.sessions, { ...structuredClone(source), revision: 2,
+        content: { ...structuredClone(source.content), activities: [activity] } }] });
+      version++;
+    } };
 }
 async function loaded(page: Page) { await expect(page.locator(".calendar-connection [role=status]")).toContainText("Loaded saved organisation snapshot"); }
 async function browse(page: Page) { await page.getByRole("button", { name: "Browse Session Library", exact: true }).first().click(); return page.getByRole("dialog"); }
@@ -49,6 +57,31 @@ async function copy(page: Page) {
   await form.getByLabel("Start time").fill("17:00"); await form.getByLabel("End time").fill("18:15");
   return form;
 }
+
+async function navigationDisabled(page: Page) {
+  for (const control of [page.getByLabel("Team", { exact: true }), page.getByLabel("Session type", { exact: true }),
+    page.getByLabel("Selected date", { exact: true }), page.getByRole("button", { name: "Previous period", exact: true }),
+    page.getByRole("button", { name: "Next period", exact: true }), page.getByRole("button", { name: "This week", exact: true }),
+    ...["Week", "Month", "Day"].map(name => page.getByRole("button", { name, exact: true }))]) await expect(control).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Reset Calendar context", exact: true })).toBeVisible();
+}
+
+test("historical preview selection resets when latest revision replaces activities and removes diagrams", async ({ page }, info) => {
+  const m = await storage(page); m.newerWithDifferentActivity();
+  await page.goto(`${m.root}&library=1&session=${m.source.id}&revision=1`); await loaded(page);
+  const saved = page.getByRole("region", { name: "Saved session preview" });
+  await saved.getByRole("button", { name: "Diagram 2 · r2", exact: true }).click();
+  await expect(saved.locator(".scene-diagram")).toHaveAttribute("data-time", "4");
+  await saved.getByRole("link", { name: "Use Latest Available Version", exact: true }).click();
+  await expect(saved).toContainText("Saved session preview · revision 2");
+  await expect(saved.getByRole("button", { name: /Revised rondo only/ })).toHaveAttribute("aria-current", "step");
+  await expect(saved.locator(".scene-diagram")).toHaveAttribute("data-revision", "1");
+  await expect(saved.locator(".scene-diagram")).toHaveAttribute("data-time", "2");
+  await expect(saved.getByRole("button", { name: "Diagram 2 · r2", exact: true })).toHaveCount(0);
+  await expect(saved.getByRole("button", { name: "Schedule independent copy", exact: true })).toBeEnabled();
+  await page.screenshot({ path: info.outputPath("latest-preview-selection-reset.png") });
+  expect(m.writes()).toBe(0);
+});
 
 test("Calendar context survives picker, preview, cancellation, refresh and Back/Forward without mutations", async ({ page }, info) => {
   const m = await storage(page); await page.goto(`${m.root}&event=${m.originalEvent.id}&bookingRevision=1`); await loaded(page);
@@ -155,7 +188,7 @@ test("deliberate Reload after lost acknowledgement retains the same request and 
   expect(page.url()).toBe(url); await expect(page.getByText("Independent occurrence found for this request", { exact: true })).toBeVisible(); expect(m.writes()).toBe(1);
 });
 
-test("invalid, stale and cross-organisation/team links never substitute another source or authorize a write", async ({ page }) => {
+test("invalid, stale and cross-organisation/team links never substitute another source or authorize a write", async ({ page }, info) => {
   const m = await storage(page); await page.goto(m.root); await loaded(page);
   await page.evaluate(() => localStorage.setItem('c4-b2-local-boundary', 'synthetic local package'));
   for (const tail of ['&library=1&session=missing&revision=1', `&library=1&session=${m.source.id}&revision=999`]) {
@@ -164,10 +197,13 @@ test("invalid, stale and cross-organisation/team links never substitute another 
   await page.goto(m.root.replace(`organization=${m.source.organizationId}`, 'organization=other-club')+'&library=1'); await loaded(page);
   await expect(page.locator(".calendar-workspace [role=alert]")).toContainText("different organisation"); await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Browse Session Library", exact: true }).first()).toBeDisabled();
+  await navigationDisabled(page);
+  await page.screenshot({ path: info.outputPath("invalid-context-navigation-disabled.png") });
   await page.goto(m.root.replace('team=first-team','team=youth-team')+`&library=1&session=${m.source.id}&revision=1`); await loaded(page);
   await expect(page.locator(".calendar-workspace [role=alert]")).toContainText("exact session revision is unavailable");
   await page.goto(`${m.root}&event=${m.originalEvent.id}&bookingRevision=999`); await loaded(page);
   await expect(page.locator(".calendar-workspace [role=alert]")).toContainText("has changed");
+  await navigationDisabled(page);
   m.newer(); await page.goto(m.root+`&library=1&session=${m.source.id}&revision=1`); await loaded(page);
   await expect(page.getByRole("button", { name: "Schedule independent copy", exact: true })).toBeDisabled();
   await page.goto(m.root+'&view=day'); await expect(page.getByRole("heading", { name: "Invalid Calendar context" })).toBeVisible();
