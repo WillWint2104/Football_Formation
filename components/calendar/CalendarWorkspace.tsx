@@ -118,7 +118,7 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
       <div><Target size={25} aria-hidden="true" /><div><p>Scheduled training focus</p><strong title={programme.focus.join(" · ")}>{programme.focus.length ? `${programme.focus.slice(0,3).join(" · ")}${programme.focus.length > 3 ? ` +${programme.focus.length-3}` : ""}` : "Focus not specified"}</strong></div></div>
       <div><NotebookText size={25} aria-hidden="true" /><div><p>Session objectives{programme.objectives.length > 1 ? ` · ${programme.objectives.length} saved` : ""}</p><strong title={programme.objectives.join(" · ")}>{programme.objectives[0] ?? "Objectives not specified"}</strong></div></div></section>}
     <section className="calendar-main" aria-label="Calendar schedule">
-      <fieldset className="calendar-navigation-controls" disabled={navigating || loading || busy}>
+      <fieldset className="calendar-navigation-controls" disabled={navigationDisabled}>
       {view !== "week" && <div className="calendar-legend">{(["conditioning", "possession", "goalkeeper", "tactical", "testing", "recovery", "fixture"] as const).map((kind) =>
         <span key={kind} className={`calendar-type-${kind}`}><SessionTypeIcon kind={kind} />{kind === "fixture" ? "Match" : sessionLabels[kind]}</span>)}</div>}
       {view === "week" ? <ProgrammeWeek bundle={bundle} dates={dates} date={date} events={visible} selected={selected} team={team} fixtures={programme.fixtures} disabled={disabled}

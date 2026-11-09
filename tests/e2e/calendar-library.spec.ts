@@ -64,6 +64,7 @@ async function navigationDisabled(page: Page) {
     page.getByRole("button", { name: "Next period", exact: true }), page.getByRole("button", { name: "This week", exact: true }),
     ...["Week", "Month", "Day"].map(name => page.getByRole("button", { name, exact: true }))]) await expect(control).toBeDisabled();
   await expect(page.getByRole("link", { name: "Reset Calendar context", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Select 2026-11-11", exact: true })).toBeDisabled();
 }
 
 test("historical preview selection resets when latest revision replaces activities and removes diagrams", async ({ page }, info) => {
