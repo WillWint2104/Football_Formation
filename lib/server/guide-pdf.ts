@@ -13,7 +13,8 @@ import { GUIDE_EXPORT_VERSION } from "../documents/export-contracts";
 import { printTheme, printTokens as tokens } from "../documents/print-theme";
 import type { DocumentOptions, DocumentBrand } from "../documents/design-contracts";
 import { contextArea } from "../tactical/context";
-import { drawScene, serializeDrawing, TACTICAL_RENDERER_VERSION, type DrawingOptions } from "../tactical/drawing";
+import { serializeDrawing, TACTICAL_RENDERER_VERSION } from "../tactical/drawing";
+import { coachingPrintDrawing } from "../tactical/coaching-view";
 import type { SessionActivity } from "../domain/session";
 import type { TacticalScene } from "../domain/tactical-scene";
 import { A4, PdfLayout, printColor } from "./pdf-layout";
@@ -31,11 +32,7 @@ function fontBytes() { return fonts ??= Promise.all(["Inter-Regular.ttf", "Inter
 
 /** Frame each explicit scene context independently; legacy scenes can still use their saved activity area. */
 export function guideDiagramDrawing(scene: TacticalScene, activity: SessionActivity, seconds: number, width: number, height: number) {
-  const area = contextArea(scene), rotation = scene.context?.kind === "pitch" && area.width > area.length ? 270 : 0;
-  const options: DrawingOptions = { width: Math.round(width * 1.25), height: Math.round(height * 1.25), padding: 24, fit: "exercise", exerciseArea: scene.context ? area : activity.content.area ?? undefined, rotation, seconds, paths: "stage", labels: true };
-  let drawing = drawScene(scene, options); if (drawing.clippedEntities) drawing = drawScene(scene, { ...options, fit: "all" });
-  if (drawing.clippedEntities) throw new PersistenceError(400, "Diagram framing could not include every saved object");
-  return drawing;
+  return coachingPrintDrawing(scene, seconds, Math.round(width * 1.25), Math.round(height * 1.25), activity.content.area).drawing;
 }
 
 /** Rasterise only the shared exact drawing; no independent tactical geometry is introduced by print layout. */

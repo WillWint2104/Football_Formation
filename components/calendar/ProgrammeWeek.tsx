@@ -7,12 +7,13 @@ import { eventSession, localParts, sessionLabels } from "@/lib/calendar/schedule
 import { bookingOnDay, fixtureDayLabel, programmeIllustration } from "@/lib/calendar/programme";
 import { SessionTypeIcon } from "./SessionTypeIcon";
 import { drawScene } from "@/lib/tactical/drawing";
+import { coachingDrawingOptions } from "@/lib/tactical/coaching-view";
 import { renderDrawingNode } from "@/components/tactical/DrawingNodes";
 
 /** Reuse the saved-scene drawing tree at a readable reference size, then scale its SVG as a thumbnail. */
 function ProgrammeIllustration({ illustration }: { illustration: NonNullable<ReturnType<typeof programmeIllustration>> }) {
   const { activity, pin, scene } = illustration;
-  const drawing = drawScene(scene, { width:480, height:280, padding:24, paint:"coaching-light", fit:"exercise", exerciseArea:activity.content.area ?? undefined, seconds:pin.representativeSeconds, labels:false });
+  const drawing = drawScene(scene, { ...coachingDrawingOptions(scene, pin.representativeSeconds, activity.content.area), width:480, height:280, padding:24, labels:false });
   return <span className="programme-card-diagram"><span className="scene-diagram" data-scene-id={scene.id} data-revision={scene.revision} data-time={drawing.seconds} data-width="480" data-height="280">
     <svg role="img" aria-label={`${activity.content.title} · saved diagram`} width="100%" height="100%" viewBox="0 0 480 280"><title>{activity.content.title} · scene revision {scene.revision}, {pin.representativeSeconds}s</title>{drawing.nodes.map(renderDrawingNode)}</svg>
   </span></span>;

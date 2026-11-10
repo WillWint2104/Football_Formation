@@ -13,7 +13,7 @@ test("light paint changes presentation while preserving evaluated geometry, time
     const dark = drawScene(scene, options), light = drawScene(scene, { ...options, paint: "coaching-light" });
     assert.deepEqual(light.view, dark.view); assert.deepEqual(light.anchors, dark.anchors);
     assert.equal(light.sceneId, dark.sceneId); assert.equal(light.revision, dark.revision); assert.equal(light.seconds, dark.seconds);
-    assert.deepEqual(scene, before); assert.equal(light.nodes[0].attrs.fill, coachingLightPalette.field);
+    assert.deepEqual(scene, before); assert.equal(light.nodes[0].attrs.fill, scene.context?.kind === "neutral" ? coachingLightPalette.field : coachingLightPalette.surround);
     assert.equal(dark.nodes[0].attrs.fill, scene.context?.kind === "neutral" ? tacticalPalette.field : tacticalPalette.surround);
     assert.notEqual(serializeDrawing(light), serializeDrawing(dark));
   }

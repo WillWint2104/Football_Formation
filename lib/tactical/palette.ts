@@ -8,7 +8,7 @@ export const tacticalPalette = {
 export type TacticalPaint = { [K in keyof typeof tacticalPalette]: string };
 /** Opt-in coaching-board paint; default drawing/export paint and scene data stay unchanged. */
 export const coachingLightPalette: TacticalPaint = {
-  ...tacticalPalette, surround: "#80ad79", field: "#80ad79", stripe: "#88b580", line: "#f5fff1", grid: "#426c48",
-  a: "#1761e8", b: "#d93349", neutral: "#f6d74b", ink: "#18334b", outline: "#244e35", label: "#ffffff",
-  cone: "#ec7915", equipment: "#f0cf35", pass: "#075e89", run: "#f8fff2", press: "#b72c42", rotation: "#713d9d", dribble: "#e4bc23", area: "#176d77",
+  ...tacticalPalette, surround: "#e9eee8", field: "#778d66", stripe: "#7d936c", line: "#f1f5ea", grid: "#345130",
+  a: "#1761e8", b: "#d93349", neutral: "#f6d74b", ink: "#18334b", outline: "#24391f", label: "#ffffff",
+  cone: "#ec7915", equipment: "#f0cf35", pass: "#075e89", run: "#f8fff2", press: "#b72c42", rotation: "#713d9d", dribble: "#e4bc23", area: "#6d9d94",
 };

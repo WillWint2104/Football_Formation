@@ -1,0 +1,19 @@
+.coaching-diagram-preview { height:100%; min-height:0; display:flex; flex-direction:column; background:#e9eee8; color:#18334b; overflow:hidden; }
+.coaching-scene-controls { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; padding:7px 10px; flex:none; max-height:110px; overflow:auto; background:#f5f7f3; border-bottom:1px solid #c8d2c1; font:14px/1.3 var(--font-sans,system-ui,sans-serif); }
+.coaching-scene-controls label { display:flex!important; flex-direction:row!important; align-items:center; gap:6px; color:#18334b!important; font-size:14px!important; }
+.coaching-scene-controls button,.coaching-scene-controls select { min-height:30px!important; padding:4px 8px!important; border:1px solid #819278!important; border-radius:4px; color:#18334b!important; background:white!important; font:inherit!important; width:auto!important; }
+.coaching-scene-controls select { max-width:230px; }
+.coaching-scene-controls button:disabled { opacity:.45; }
+.coaching-scene-controls button:focus-visible,.coaching-scene-controls select:focus-visible,.coaching-scene-controls input:focus-visible { outline:3px solid #075e89; outline-offset:2px; }
+.coaching-stage-time input { width:85px!important; min-height:24px; padding:0!important; accent-color:#075e89; }
+.coaching-preview-surface { flex:1; min-height:120px; position:relative; }
+.coaching-preview-surface .scene-diagram { height:100%!important; }
+.coaching-preview-provenance { flex:none; display:block; font:12px/1.3 var(--font-sans,system-ui,sans-serif); padding:4px 10px; background:#f5f7f3; }
+.coaching-area-warning { flex:none; margin:0!important; padding:5px 10px; background:#fff7df; color:#25341f; font:13px/1.3 var(--font-sans,system-ui,sans-serif); }
+.session-designer.designer-tactical-workspace .activity-diagrams:has(.coaching-diagram-preview) { grid-template-rows:auto auto minmax(370px,1fr) auto; overflow:auto; }
+.session-designer.designer-tactical-workspace .activity-diagram-canvas:has(.coaching-diagram-preview) { min-height:0; }
+.session-designer.designer-tactical-workspace .activity-diagrams:has(.coaching-diagram-preview):has(.diagram-source-browser) { grid-template-rows:auto auto 280px auto auto; }
+@media (max-width:1450px) {
+  .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] .activity-diagrams:has(.coaching-diagram-preview) { grid-template-rows:none; grid-auto-rows:max-content; }
+  .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] .activity-diagram-canvas:has(.coaching-diagram-preview) { height:370px; min-height:0; }
+}

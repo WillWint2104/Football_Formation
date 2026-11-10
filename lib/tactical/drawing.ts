@@ -5,11 +5,11 @@ import { contextArea } from "./context";
 import { tacticalPalette as defaultPaint, coachingLightPalette, type TacticalPaint } from "./palette";
 import { posePreview } from "./animation";
 
-export const TACTICAL_RENDERER_VERSION = "svg-2d/1.2.0";
+export const TACTICAL_RENDERER_VERSION = "svg-2d/1.3.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
 export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; contextMask?: boolean; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[]; paint?: "coaching-light" };
-export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
+export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; croppedDetails: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[] };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
 const line = (a: Point, b: Point, attrs: SvgNode["attrs"]) => node("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, ...attrs });
 const title = (text: string) => node("title", {}, text);
@@ -32,20 +32,32 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
   let gridSpacing: number | null = null;
   if (options.gridMetres !== undefined) {
     const grid = metricGrid(view, scene.field, options.gridMetres); gridSpacing = grid.spacing;
-    const style = { stroke: c.grid, strokeWidth: 0.7, opacity: 0.42 };
+    const style = { stroke: c.grid, strokeWidth: options.paint === "coaching-light" ? 0.6 : 0.7, opacity: options.paint === "coaching-light" ? 0.2 : 0.42 };
     grid.x.forEach((x) => nodes.push(worldLine({ x, y: 0 }, { x, y: scene.field.width }, style)));
     grid.y.forEach((y) => nodes.push(worldLine({ x: 0, y }, { x: scene.field.length, y }, style)));
   }
   const mark = { stroke: c.line, strokeWidth: 1.4, fill: "none", opacity: 0.9 };
+  const markingStart = nodes.length;
   if (options.markings !== "none") {
     if (!neutral || scene.context?.kind === "neutral" && scene.context.boundary) nodes.push(rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { ...mark, "data-field-marking": neutral ? "training-boundary" : "touchlines" }));
     if (!neutral && (options.markings === "football" || (options.markings !== "boundary" && scene.field.length >= 70 && scene.field.width >= 45))) footballMarkings(scene, view, c).forEach((n) => nodes.push(n));
+    if (options.markings === "boundary" && options.exerciseArea && (options.exerciseArea.length !== scene.field.length || options.exerciseArea.width !== scene.field.width || options.exerciseArea.origin.x !== 0 || options.exerciseArea.origin.y !== 0)) {
+      const a = options.exerciseArea; nodes.push(rect(a.origin, a.length, a.width, { ...mark, "data-field-marking": "exercise-boundary" }));
+    }
     if (scene.context?.kind === "pitch") for (const right of [false, true]) {
       const anchor = { x: right ? scene.field.length : 0, y: scene.field.width / 2 };
       if (scene.entities.some((e) => e.kind === "equipment" && e.equipment === "goal" && Math.hypot(e.position.x - anchor.x, e.position.y - anchor.y) < 0.1)) continue;
       const corners = equipmentFootprint({ id: "context-goal", kind: "equipment", equipment: "goal", headingDegrees: right ? 180 : 0, position: anchor }).map(p);
       nodes.push(node("polygon", { points: corners.map((q) => `${q.x},${q.y}`).join(" "), fill: c.line, fillOpacity: 0.1, stroke: c.line, strokeWidth: 1.5, "data-field-marking": "goal" }));
     }
+  }
+  if (options.paint === "coaching-light") {
+    const outlines: SvgNode[] = nodes.slice(markingStart).filter(n => n.attrs.stroke).map(n => {
+      const attrs: SvgNode["attrs"] = { ...n.attrs, fill: "none", stroke: c.outline, strokeWidth: Number(n.attrs.strokeWidth ?? 1.4) + 2.8, opacity: 1, "data-presentation-outline": "marking" };
+      delete attrs["data-field-marking"]; return { ...n, attrs };
+    });
+    // Under-strokes improve edge contrast without inventing any field geometry.
+    nodes.splice(markingStart, 0, ...outlines);
   }
   if (options.guides) {
     const style = { stroke: c.guide, strokeWidth: 1, strokeDasharray: "6 6", opacity: 0.65 };
@@ -58,8 +70,21 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     const x = Math.max(0, Math.min(view.width, box.x)), y = Math.max(0, Math.min(view.height, box.y)), right = Math.max(x, Math.min(view.width, box.x + box.width)), bottom = Math.max(y, Math.min(view.height, box.y + box.height));
     for (const b of [{ x: 0, y: 0, width: view.width, height: y }, { x: 0, y: bottom, width: view.width, height: view.height - bottom }, { x: 0, y, width: x, height: bottom - y }, { x: right, y, width: view.width - right, height: bottom - y }]) nodes.push(node("rect", { ...b, fill: c.surround }));
   }
+  // A focused coaching board shows the authored practice, not unused grass from its parent pitch.
+  // Uniform metric projection may letterbox; never fill that space by stretching the exercise.
+  if (options.paint === "coaching-light" && options.fit === "exercise" && options.exerciseArea) {
+    const b = view.target, box = screenRectangle({ x: b.minX, y: b.minY }, b.maxX - b.minX, b.maxY - b.minY, view);
+    const x = Math.max(0, box.x - 3), y = Math.max(0, box.y - 3), right = Math.min(view.width, box.x + box.width + 3), bottom = Math.min(view.height, box.y + box.height + 3);
+    for (const mask of [{ x: 0, y: 0, width: view.width, height: y }, { x: 0, y: bottom, width: view.width, height: view.height - bottom }, { x: 0, y, width: x, height: Math.max(0, bottom - y) }, { x: right, y, width: view.width - right, height: Math.max(0, bottom - y) }]) {
+      if (mask.width > 0 && mask.height > 0) nodes.push(node("rect", { ...mask, fill: c.surround, "data-presentation-mask": "exercise" }));
+    }
+  }
   const overlays: SvgNode[] = [], labels: SvgNode[] = [];
   const displayed = evaluated.entities.filter((entity) => !evaluated.hiddenEntityIds.includes(entity.id));
+  const outside = (point: Point) => { const q = p(point); return q.x < 8 || q.x > view.width - 8 || q.y < 8 || q.y > view.height - 8; };
+  const croppedDetails = evaluated.paths.filter(path => !evaluated.hiddenEntityIds.includes(path.entityId)).reduce((n, path) => n + Number(path.points.some(outside)), 0)
+    + evaluated.annotations.reduce((n, { annotation: a }) => n + Number((a.kind === "note" ? [a.position] : a.kind === "arrow" ? [a.from, a.to] : [a.area.origin, { x: a.area.origin.x + a.area.length, y: a.area.origin.y + a.area.width }]).some(outside)), 0)
+    + displayed.filter(e => e.kind === "equipment" && equipmentFootprint(e).some(outside)).length;
   const visible = displayed.map((entity) => ({ entity, screen: p(entity.position) })).filter(({ screen }) => screen.x >= 20 && screen.x <= view.width - 20 && screen.y >= 20 && screen.y <= view.height - 20);
   const boxes: Box[] = visible.map(({ screen }) => ({ x: screen.x - 19, y: screen.y - 19, w: 38, h: 38 }));
   let labelCollisions = 0;
@@ -124,7 +149,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     const a = track.annotation, points = a.kind === "arrow" ? [a.from, a.to] : a.kind === "note" ? [a.position] : [a.area.origin, { x: a.area.origin.x + a.area.length, y: a.area.origin.y + a.area.width }];
     points.map(p).forEach((q) => nodes.push(node("circle", { cx: q.x, cy: q.y, r: 5, fill: c.guide, stroke: c.ink, strokeWidth: 1, pointerEvents: "none" })));
   }
-  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: displayed.length - visible.length, outsideField: displayed.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: displayed.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
+  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities: displayed.length - visible.length, croppedDetails, outsideField: displayed.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: displayed.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })) };
 }
 
 /** Interpolate equipment-footprint edges without changing their metre anchors. */

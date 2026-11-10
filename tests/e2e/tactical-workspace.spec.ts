@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { buildSync } from "esbuild";
 import { writeFile } from "node:fs/promises";
 import { attachmentExample } from "../fixtures/attachments";
@@ -60,7 +61,7 @@ test("diagram selection survives activity navigation; coaching panels scroll ind
 test("focused presentation contains coaching guidance, traps keyboard focus and preserves the exact pin",async({page},info)=>{
   await open(page);await panel(page).getByRole("button",{name:"Expand diagram",exact:true}).click();
   const modal=page.getByRole("dialog",{name:"Expanded activity diagram",exact:true});
-  await page.keyboard.press("Tab");await expect(modal.getByText("Coaching guidance",{exact:true})).toBeFocused();await page.keyboard.press("Enter");
+  await assertDialogTabCycle(page,modal);await modal.getByText("Coaching guidance",{exact:true}).focus();await page.keyboard.press("Enter");
   await expect(modal.getByText("Receive with an open body shape.",{exact:true})).toBeVisible();
   await page.keyboard.press("Tab");await page.keyboard.press("Tab");await expect(modal.getByRole("button",{name:"Close diagram · Esc",exact:true})).toBeFocused();
   await expect(modal.locator(".scene-diagram")).toHaveAttribute("data-time","2");await capture(page,info,"focused-guidance",modal.locator(".scene-diagram"));

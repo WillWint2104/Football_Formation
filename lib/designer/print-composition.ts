@@ -1,34 +1,33 @@
 import { exportDocument, type DesignerDocument } from "./contract";
 import { validateSessionPackage, type SessionPackage, type ResolvedPackageDiagram } from "./package";
 import { previewAttachment } from "./attachments";
-import { drawScene, type SceneDrawing } from "../tactical/drawing";
-import { coachingExerciseArea } from "../tactical/coaching-view";
+import type { SceneDrawing } from "../tactical/drawing";
+import type { TrainingArea } from "../domain/tactical-scene";
+import { coachingExerciseArea, coachingPrintDrawing } from "../tactical/coaching-view";
 
-export type PrintDiagram = { index: number; namespace: string | null; layout: "wide" | "split" | "compact"; pin: DesignerDocument["session"]["activities"][number]["diagrams"][number] } &
+export type PrintDiagram = { index: number; namespace: string | null; layout: "wide" | "split" | "compact"; area?: TrainingArea | null; pin: DesignerDocument["session"]["activities"][number]["diagrams"][number] } &
   ({ status: "ready"; resolved: ResolvedPackageDiagram; drawing: SceneDrawing } | { status: "unavailable"; reason: string });
 export type PrintActivity = { activityId: string; presentation: "split" | "balanced" | "wide" | "sequence"; diagrams: PrintDiagram[] };
 
 type ReadyDiagram = Extract<PrintDiagram, { status: "ready" }>;
 
-function drawingFor(resolved: ResolvedPackageDiagram, layout: PrintDiagram["layout"]) {
-  const area = coachingExerciseArea(resolved.scene);
+function drawingFor(resolved: ResolvedPackageDiagram, layout: PrintDiagram["layout"], explicitArea?: TrainingArea | null) {
+  const area = coachingExerciseArea(resolved.scene, explicitArea);
   // Glyphs remain screen-sized in the shared renderer. Match viewport width to the physical column
   // so a two-up board retains ~9pt player numbers instead of scaling a full-width drawing down.
   const width = layout === "compact" ? 380 : layout === "split" ? 500 : 760;
   const height = layout === "compact" ? 300 : layout === "split" ? 380 : Math.round(Math.max(360, Math.min(480, width * area.width / area.length)));
-  return drawScene(resolved.scene, { width, height, padding: 26, fit: "exercise", exerciseArea: area,
-    paint: "coaching-light", seconds: resolved.representativeSeconds, paths: "stage", labels: true,
-    gridMetres: area.length > 40 ? 5 : 1 });
+  return coachingPrintDrawing(resolved.scene, resolved.representativeSeconds, width, height, explicitArea).drawing;
 }
 
 function smallPractice(d: PrintDiagram): d is ReadyDiagram {
   if (d.status !== "ready") return false;
-  const area = coachingExerciseArea(d.resolved.scene), players = d.resolved.scene.entities.filter(e => e.kind === "player");
+  const area = coachingExerciseArea(d.resolved.scene, d.area), players = d.resolved.scene.entities.filter(e => e.kind === "player");
   return area.length <= 30 && area.width <= 30 && players.length <= 10 && players.every(e => e.kind === "player" && String(e.number).length <= 2);
 }
 
 function readable(d: ReadyDiagram, layout: PrintDiagram["layout"]): ReadyDiagram | null {
-  const drawing = drawingFor(d.resolved, layout), ids = new Set(d.resolved.scene.entities.filter(e => e.kind === "player").map(e => e.id));
+  const drawing = drawingFor(d.resolved, layout, d.area), ids = new Set(d.resolved.scene.entities.filter(e => e.kind === "player").map(e => e.id));
   const players = drawing.anchors.filter(a => ids.has(a.id));
   if (drawing.clippedEntities || drawing.labelCollisions || players.some((a, i) => players.slice(i + 1).some(b => Math.hypot(a.screen.x - b.screen.x, a.screen.y - b.screen.y) < 32))) return null;
   return { ...d, layout, drawing };
@@ -66,12 +65,12 @@ export function composePrintActivities(document: DesignerDocument, library: Sess
   const reason = unavailable || (!library ? "The matching complete local plan is not available. Import or reopen its session-and-diagrams package." :
     candidate && !candidate.ok ? `The complete plan could not be validated. ${candidate.diagnostics.slice(0, 2).map(d => d.message).join(" ")}` : "");
   return clean.session.activities.map((activity, activityIndex) => ({ activityId: activity.id, ...arrangePrintDiagrams(activity.diagrams.map((pin, index): PrintDiagram => {
-    const base = { index, pin, layout: "wide" as const, namespace: candidate?.ok ? candidate.value.sceneNamespace : null };
+    const base = { index, pin, area: activity.area, layout: "wide" as const, namespace: candidate?.ok ? candidate.value.sceneNamespace : null };
     if (reason || !candidate?.ok) return { ...base, status: "unavailable", reason };
     const resolved = previewAttachment(candidate.value, activity.id, pin);
     if (!resolved.ok) return { ...base, status: "unavailable", reason: resolved.diagnostics.map(d => d.message).join(" ") };
     try {
-      const drawing = drawingFor(resolved.value, "wide");
+      const drawing = drawingFor(resolved.value, "wide", activity.area);
       return { ...base, status: "ready", resolved: { ...resolved.value, diagramIndex: index }, drawing };
     } catch { return { ...base, status: "unavailable", reason: "This exact scene could not be drawn. Review it in the diagram workspace before printing." }; }
   }), activity.equipment.length <= 6 && activity.equipment.reduce((n, e) => n + e.name.length, 0) < 180, activityIndex === 0 && clean.session.activities.length >= 5) }));

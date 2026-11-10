@@ -10,6 +10,7 @@ import { inspectBooking } from "@/lib/calendar/inspector";
 import { SessionTypeIcon } from "./SessionTypeIcon";
 import { guideHref } from "@/lib/documents/contracts";
 import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import { coachingDrawingOptions } from "@/lib/tactical/coaching-view";
 import { withCalendar, type CalendarReturn } from "@/lib/coaching/calendar-return";
 
 type Props = {
@@ -58,7 +59,7 @@ function SelectedPreview({ bundle, event, demo, onClose, onSchedule, disabled, o
       {fixture ? <section className="programme-match-details"><Flag size={42} aria-hidden="true" /><h3>Match details</h3><p>{event.title}</p><p><MapPin size={16} aria-hidden="true" />{event.venue ?? "Venue unassigned"}</p><p className="calendar-muted">This fixture has no attached training session.</p></section> : problem ? null : <>
         <section className="programme-diagram-section" aria-label="Saved activity diagram"><div className="programme-section-heading"><h3 ref={diagramHeading} tabIndex={-1}>Session diagram</h3>{diagramActivities.length > 1 ? <label className="programme-diagram-activity"><span className="sr-only">Activity</span><select aria-label="Diagram activity" value={current?.activity.id ?? ""} disabled={disabled} onChange={e => setDiagramKey(diagrams.find(d => d.activity.id === e.target.value)!.key)}>{diagramActivities.map(a => <option key={a.id} value={a.id}>{a.content.title}</option>)}</select></label> : <span>{diagrams.length ? `${diagrams.length} saved` : "Not attached"}</span>}</div>
           {diagrams.length ? <>
-            <div className="calendar-scene-preview">{current?.scene ? <SceneDiagram scene={current.scene} title={current.activity.content.title} options={{paint:"coaching-light",fit:"exercise",exerciseArea:current.activity.content.area ?? undefined,seconds:current.pin.representativeSeconds}} />
+            <div className="calendar-scene-preview">{current?.scene ? <SceneDiagram scene={current.scene} title={current.activity.content.title} options={coachingDrawingOptions(current.scene, current.pin.representativeSeconds, current.activity.content.area)} />
               : <p role="alert" className="programme-source-unavailable">The exact diagram revision is unavailable. No substitute was selected.</p>}</div>
             {current && <div className="programme-diagram-controls"><span title={current.pin.scene.id}>{current.activity.content.title} · r{current.pin.scene.revision} · {current.pin.representativeSeconds}s</span><div role="group" aria-label="Saved diagrams">{diagrams.filter(d => d.activity.id === current.activity.id).map(d => <button key={d.key} disabled={disabled} aria-pressed={diagramKey === d.key} aria-label={`Diagram ${d.diagramIndex + 1} · r${d.pin.scene.revision}`} onClick={() => setDiagramKey(d.key)}>{d.diagramIndex + 1}</button>)}</div></div>}
           </> : <p className="calendar-muted programme-no-diagram">No tactical diagrams attached to this session.</p>}

@@ -17,7 +17,7 @@ test("print composition resolves exact namespace, revision, representative time 
     assert.equal(d.resolved.namespace,p.sceneNamespace);assert.equal(d.drawing.revision,d.pin.scene.revision);assert.equal(d.drawing.seconds,d.pin.representativeSeconds);
     const evaluated=evaluateScene(d.resolved.scene,d.pin.representativeSeconds);
     assert.deepEqual(d.drawing.anchors.map(a=>a.world),evaluated.entities.map(e=>e.position));
-    assert.equal(d.drawing.clippedEntities,0);assert.equal(d.drawing.nodes[0].attrs.fill,"#80ad79");
+    assert.equal(d.drawing.clippedEntities,0);assert.equal(d.drawing.nodes[0].attrs.fill,"#e9eee8");
   }
   assert.deepEqual({p,doc},before);assert.equal(exportDocument(doc).session.activities[1].name,"Current coaching text");
 });

@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { readFile } from "node:fs/promises";
 import { buildSync } from "esbuild";
 import { attachmentExample } from "../fixtures/attachments";
@@ -84,7 +85,7 @@ async function expandCapture(page: Page, info: TestInfo, name: string) {
   await panel(page).getByRole("button", { name: "Expand diagram", exact: true }).click();
   const modal = page.getByRole("dialog", { name: "Expanded activity diagram", exact: true });
   await expect(modal).toBeVisible(); await expect(modal.getByRole("button", { name: "Close diagram · Esc", exact: true })).toBeFocused();
-  await page.keyboard.press("Tab"); await expect(modal.locator("summary")).toBeFocused(); await page.keyboard.press("Tab"); await expect(modal.getByRole("button")).toBeFocused();
+  await assertDialogTabCycle(page, modal);
   const after = await modal.locator("g[data-entity-id]").evaluateAll((nodes) => nodes.map((n) => [n.getAttribute("data-entity-id"), n.getAttribute("data-world-x"), n.getAttribute("data-world-y")])); expect(after).toEqual(before);
   await expect(modal.locator(".scene-diagram")).toHaveAttribute("data-clipped", "0");
   const path = info.outputPath(`${name}-${info.project.name}.png`); await page.screenshot({ path }); await info.attach(name, { path, contentType: "image/png" });

@@ -10,7 +10,7 @@ import { activityTotals } from "@/lib/coaching/sessions";
 import { sessionCopyIds, sessionCopyOccurrence, type SessionCopyRequest } from "@/lib/coaching/session-copy";
 import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
-import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import { CoachingDiagramPreview } from "@/components/tactical/CoachingDiagramPreview";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 
 export type CalendarPreviewNavigation = {
@@ -56,7 +56,7 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar 
       {selectedActivity && <article className="library-preview-activity" aria-label="Preview activity details"><h3>{selectedActivity.content.title}</h3>
         <p className="library-preview-activity-meta">{selectedActivity.role.replaceAll("-", " ")} · {selectedActivity.durationMinutes === null ? "Duration not specified" : `${selectedActivity.durationMinutes} min`} · {selectedActivity.content.playerCount === null ? "Participants not specified" : `${selectedActivity.content.playerCount} participants`}</p>
         {!!selectedActivity.content.diagrams.length && <div className="library-preview-diagram-tabs" role="group" aria-label="Preview diagrams">{selectedActivity.content.diagrams.map((p, i) => <button key={i} aria-pressed={i === diagram} onClick={() => setDiagram(i)}>Diagram {i + 1} · r{p.scene.revision}</button>)}</div>}
-        {pin ? <figure><div className="library-preview-diagram">{scene ? <SceneDiagram scene={scene} title={`${selectedActivity.content.title} · diagram ${diagram + 1}`} options={{ paint: "coaching-light", fit: "exercise", exerciseArea: selectedActivity.content.area ?? undefined, seconds: pin.representativeSeconds }} /> : <p role="alert">The exact diagram revision is unavailable. No substitute was selected.</p>}</div>
+        {pin ? <figure><div className="library-preview-diagram">{scene ? <CoachingDiagramPreview scene={scene} title={`${selectedActivity.content.title} · diagram ${diagram + 1}`} area={selectedActivity.content.area} seconds={pin.representativeSeconds} /> : <p role="alert">The exact diagram revision is unavailable. No substitute was selected.</p>}</div>
           <figcaption>Saved diagram revision {pin.scene.revision} · snapshot {pin.representativeSeconds}s<details><summary>Exact source</summary>{source.organizationId} · {pin.scene.id} · r{pin.scene.revision}</details></figcaption></figure> : <p className="library-preview-empty">No diagram attached to this activity.</p>}
         <div className="library-preview-guidance"><section><h4>Setup & equipment</h4><p>{selectedActivity.content.area ? `${selectedActivity.content.area.length} × ${selectedActivity.content.area.width} m` : "Field dimensions not specified"}</p>
           {selectedActivity.content.equipment.length ? <ul>{selectedActivity.content.equipment.map((e, i) => <li key={i}>{e.name} · {e.quantity === null ? "quantity not specified" : e.quantity}</li>)}</ul> : <p>Equipment not specified</p>}
