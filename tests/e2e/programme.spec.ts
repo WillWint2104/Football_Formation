@@ -27,6 +27,26 @@ test('Concept 01 frame, full-width seven-day week and actual fixture context at 
   await expect(page.locator('.calendar-week .scene-diagram')).toHaveCount(1);
   await expect(page.locator('.calendar-week .scene-diagram')).toHaveAttribute('data-revision','1');
   await expect(page.locator('.calendar-week .scene-diagram')).toHaveAttribute('data-time','2');
+  const thumbnail = page.locator('.programme-card-diagram .scene-diagram');
+  await expect(thumbnail).toHaveAttribute('data-screen-mode', 'compact');
+  if (info.project.name === 'desktop') {
+    const svg = thumbnail.locator('svg');
+    await expect(svg).toBeVisible();
+    const display = await svg.evaluate((el: SVGSVGElement) => {
+      const frame = el.getBoundingClientRect(), view = el.viewBox.baseVal;
+      return {
+        widthRatio: frame.width / view.width, heightRatio: frame.height / view.height,
+        disc: el.querySelector('[data-player-disc]')?.getBoundingClientRect().width,
+        numbers: [...el.querySelectorAll('[data-player-number]')].map(text => parseFloat(getComputedStyle(text).fontSize) * Math.min(frame.width / view.width, frame.height / view.height)),
+      };
+    });
+    expect(display.widthRatio).toBeCloseTo(1, 2);
+    expect(display.heightRatio).toBeCloseTo(1, 2);
+    expect(display.disc).toBeGreaterThanOrEqual(16);
+    expect(display.numbers.every(size => size >= 10)).toBe(true);
+  } else {
+    await expect(thumbnail).toBeHidden();
+  }
   await expect(page.locator('.calendar-week img')).toHaveCount(0);
   await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link')).toHaveCount(5);
   await expect(page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link')).toHaveCount(5);

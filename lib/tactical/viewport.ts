@@ -1,6 +1,7 @@
 import { areaSchema, type TacticalScene, type TrainingArea, type TacticalEntity } from "../domain/tactical-scene";
 import { prepareScene, type Point } from "./evaluate";
 import { contextArea } from "./context";
+import { COMPACT_VIEWPORT_MIN } from "./screen-presentation";
 
 export type Bounds = { minX: number; minY: number; maxX: number; maxY: number };
 export type FitMode = "exercise" | "all" | "pitch" | "context" | "attacking-half" | "defensive-half" | "custom";
@@ -45,9 +46,10 @@ export function contentBounds(scene: TacticalScene, exerciseArea?: TrainingArea)
 }
 
 /** Uniform projection respects length/width proportions, explicit framing, pixel gutters and a separate view-only camera. */
-export function fitViewport(input: unknown, options: { width: number; height: number; fit: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; padding?: number; camera?: Camera; rotation?: Rotation; setPieceFocus?: "delivery" | "box" }): Projection {
+export function fitViewport(input: unknown, options: { width: number; height: number; fit: FitMode; exerciseArea?: TrainingArea; customArea?: TrainingArea; padding?: number; camera?: Camera; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; compact?: boolean; includeContextGoals?: boolean }): Projection {
   const scene = prepareScene(input), { width, height } = options;
-  if (![width, height].every((value) => Number.isFinite(value) && value >= 120 && value <= 8192)) throw new RangeError("Viewport dimensions must be between 120 and 8192 pixels");
+  const minimum = options.compact ? COMPACT_VIEWPORT_MIN : 120;
+  if (![width, height].every((value) => Number.isFinite(value) && value >= minimum && value <= 8192)) throw new RangeError(`Viewport dimensions must be between ${minimum} and 8192 pixels`);
   let target: Bounds;
   if (options.fit === "context" || options.fit === "exercise" && scene.context && !options.exerciseArea) target = areaBounds(contextArea(scene, options.setPieceFocus));
   else if (options.fit === "pitch") target = { minX: 0, minY: 0, maxX: scene.field.length, maxY: scene.field.width };
@@ -57,7 +59,7 @@ export function fitViewport(input: unknown, options: { width: number; height: nu
   else if (options.fit === "exercise" || options.fit === "all") target = contentBounds(scene, options.exerciseArea);
   else throw new RangeError("Unsupported fit mode");
   // A football context fits the actual goal depth too, rather than assuming pixel padding is sufficient at every zoom.
-  if (scene.context?.kind === "pitch" && ["context", "exercise", "pitch"].includes(options.fit)) {
+  if (scene.context?.kind === "pitch" && (["context", "exercise", "pitch"].includes(options.fit) || options.includeContextGoals && options.fit === "all")) {
     for (const right of [false, true]) {
       const anchor = { x: right ? scene.field.length : 0, y: scene.field.width / 2 };
       if (anchor.x < target.minX || anchor.x > target.maxX || anchor.y < target.minY || anchor.y > target.maxY) continue;

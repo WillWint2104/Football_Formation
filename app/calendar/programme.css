@@ -103,9 +103,10 @@
 .programme-card-team,.programme-card-activities,.programme-card-zone { font-size:12px; color:#526b82; margin-top:5px; }
 .calendar-programme .programme-week .calendar-event-selected { outline:2px solid #1e77bc; outline-offset:-1px; background:#edf5fd; box-shadow:0 2px 7px #245d8e17; }
 .calendar-programme .programme-week .calendar-type-technical { --type-color:#0755a4; }
-.programme-card-diagram { display:block; height:84px; margin-top:9px; border:1px solid #b0c5a0; border-radius:4px; overflow:hidden; background:#d9e9bb; }
+.programme-card-diagram { display:block; height:84px; margin-top:9px; border:1px solid #b0c5a0; border-radius:4px; overflow:hidden; background:#e5ebe2; }
 .programme-card-diagram .scene-diagram-caption { display:none; }
 .programme-card-diagram .scene-diagram { display:block; min-height:0; }
+.programme-diagram-available { display:grid; height:100%; place-content:center; padding:4px; text-align:center; color:#304d43; font-size:12px; }
 .calendar-programme .programme-week .calendar-type-fixture { background:linear-gradient(150deg,#153e64,#0b2b47); border:1px solid #183e61; color:white; padding:17px 12px; text-align:center; align-items:center; min-height:280px; box-shadow:0 3px 7px #15395715; }
 .calendar-programme .programme-week .calendar-type-fixture:hover { background:linear-gradient(150deg,#1c4c77,#103453); }
 .calendar-programme .programme-week .calendar-type-fixture :is(.programme-card-kind,.calendar-event-title,.calendar-event-time,.programme-card-activities,.programme-card-team,.programme-card-zone) { color:white; }
