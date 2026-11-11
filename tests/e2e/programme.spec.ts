@@ -126,10 +126,13 @@ test('week controls keep actual dates, team/type filtering, native picker and co
   await page.screenshot({path:info.outputPath('programme-month-preserved.png')});expect(m.writes()).toBe(0);
 });
 
-test('Calendar frame is scoped and existing C3 / native session routes retain their shell',async({page})=>{
+test('Calendar and Saved Sessions share the navy frame while editors retain their existing shell',async({page})=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);
   await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Sessions',exact:true}).click();await expect(page).toHaveURL(/\/sessions$/);
-  await expect(page.locator('.programme-frame-header')).toHaveCount(0);expect(await page.locator('body > aside').evaluate(e=>getComputedStyle(e).width)).toBe('240px');
+  await expect(page.locator('.programme-frame-header')).toBeVisible();
+  await expect(page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Sessions',exact:true})).toHaveAttribute('aria-current','page');
+  await page.goto('/sessions?event=sample-4&revision=1');
+  await expect(page.locator('.programme-frame-header')).toBeHidden();expect(await page.locator('body > aside').evaluate(e=>getComputedStyle(e).width)).toBe('240px');
   await page.goto('/session-designer');await expect(page.locator('.programme-frame-header')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Session Designer',exact:true})).toHaveAttribute('aria-current','page');
   expect(m.writes()).toBe(0);
 });

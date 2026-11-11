@@ -16,17 +16,20 @@ const workspaceLabels: Record<string, string> = {
 /** Shows route context and available tactics tools without advertising planned tools as links. */
 export function Header() {
   const pathname = usePathname();
-  if (["/calendar", "/team-schedule"].includes(pathname)) return <header className="programme-frame-header">
+  const programme = ["/calendar", "/team-schedule"].includes(pathname);
+  const sessions = pathname === "/sessions";
+  const programmeHeader = (programme || sessions) && <header className={`programme-frame-header${sessions ? " session-frame-header" : ""}`}>
     <Link href="/calendar" className="programme-frame-brand" aria-label="Football Formation Calendar"><span className="programme-brand-shield"><Shield aria-hidden="true" /><b aria-hidden="true">F</b></span><span>FOOTBALL<br />FORMATION</span></Link>
     <MobileNavigation /><nav className="programme-primary-navigation" aria-label="Primary navigation">
-      <Link href="/calendar" className="programme-frame-current" aria-current="page"><CalendarDays size={22} aria-hidden="true" /><span>Programme</span></Link>
-      <Link href="/sessions"><ClipboardList size={21} aria-hidden="true" /><span>Sessions</span></Link>
+      <Link href="/calendar" aria-current={programme ? "page" : undefined}><CalendarDays size={22} aria-hidden="true" /><span>Programme</span></Link>
+      <Link href="/sessions" aria-current={sessions ? "page" : undefined}><ClipboardList size={21} aria-hidden="true" /><span>Sessions</span></Link>
       <Link href="/lineup"><Workflow size={21} aria-hidden="true" /><span>Tactics</span></Link>
       <Link href="/presentations"><Presentation size={21} aria-hidden="true" /><span>Presentations</span></Link>
       <Link href="/coaches"><Users size={21} aria-hidden="true" /><span>Coaches</span></Link>
     </nav>
     <span className="programme-frame-context">Coaching workspace</span>
   </header>;
+  if (programme) return programmeHeader;
   const tactics = ["/lineup", "/tactical-renderer", "/tactical-editor"].includes(pathname);
   const workspace = tactics
     ? "Tactics"
@@ -38,7 +41,7 @@ export function Header() {
         ? "Squad"
         : "Coaching workspace";
   return (
-    <header className="border-b border-shell-edge bg-shell text-shell-text">
+    <>{programmeHeader}<header className={`border-b border-shell-edge bg-shell text-shell-text${sessions ? " session-default-header" : ""}`}>
       <div className={`flex ${pathname === "/tactical-editor" ? "min-h-[48px]" : "min-h-header"} items-center gap-3 px-4 md:px-8`}>
         <MobileNavigation />
         <div className="min-w-0">
@@ -68,6 +71,6 @@ export function Header() {
           <Link href="/presentations" className="px-3 py-3 text-body-md text-shell-text focus-visible:outline-2 focus-visible:outline-shell-accent">2D Presentation</Link>
         </nav>
       )}
-    </header>
+    </header></>
   );
 }
