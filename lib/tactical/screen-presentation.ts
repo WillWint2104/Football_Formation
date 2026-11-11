@@ -1,19 +1,20 @@
 import { coachingLightPalette, type TacticalPaint } from "./palette";
+import type { Point } from "./evaluate";
 
-export const SCREEN_PRESENTATION_VERSION = "1.0.0";
+export const SCREEN_PRESENTATION_VERSION = "1.1.0";
 export const COMPACT_VIEWPORT_MIN = 64;
 export type DiagramSize = "compact" | "standard" | "expanded";
 
 export const screenCoachingPalette: TacticalPaint = {
   ...coachingLightPalette,
-  field: "#7d9968",
-  stripe: "#829e6d",
-  surround: "#e5ebe2",
-  line: "#fcfff2",
-  outline: "#263e2c",
-  a: "#1457c2",
-  b: "#b92b41",
-  area: "#234f46",
+  field: "#6c8f57",
+  stripe: "#75975e",
+  surround: "#e6ece3",
+  line: "#fcfff4",
+  outline: "#23442c",
+  a: "#1b55a9",
+  b: "#af3047",
+  area: "#163f36",
 };
 
 /** Screen-space sizes depend on the surface, independent of projection scale and pixel density. */
@@ -21,13 +22,49 @@ export function screenGlyphs(mode: DiagramSize, width: number, height: number) {
   const span = Math.min(width, height);
   const interpolate = (min: number, max: number, start: number, end: number) =>
     min + (max - min) * Math.max(0, Math.min(1, (span - start) / (end - start)));
-  const radius = mode === "compact" ? interpolate(8, 10, 64, 150)
+  const radius = mode === "compact" ? interpolate(5.5, 9, 64, 210)
     : mode === "standard" ? interpolate(13, 15, 180, 480)
-    : interpolate(15, 18, 300, 800);
+    : interpolate(15.5, 19, 300, 800);
   const numberSize = mode === "compact" ? interpolate(10, 11, 64, 150)
     : mode === "standard" ? interpolate(13, 14, 180, 480)
     : interpolate(15, 16, 300, 800);
-  return { radius, numberSize, extent: radius + (mode === "compact" ? 3.5 : 5) };
+  return { radius, numberSize, minRadius: mode === "compact" ? 4.25 : mode === "standard" ? 11.5 : 13.5 };
+}
+
+export type ScreenBox = { x: number; y: number; w: number; h: number };
+export const boxesOverlap = (a: ScreenBox, b: ScreenBox) =>
+  a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+export function sizePlayerDiscs(mode: DiagramSize, glyphs: ReturnType<typeof screenGlyphs>, players: Point[], equipment: ScreenBox[], width: number, height: number) {
+  let clearance = Infinity;
+  for (const [i, player] of players.entries()) {
+    clearance = Math.min(clearance, player.x - 2, player.y - 2, width - player.x - 2, height - player.y - 2);
+    for (let j = 0; j < i; j++) {
+      clearance = Math.min(clearance, (Math.hypot(player.x - players[j].x, player.y - players[j].y) - 1.5) / 2);
+    }
+    for (const box of equipment) {
+      const dx = Math.max(box.x - player.x, 0, player.x - box.x - box.w);
+      const dy = Math.max(box.y - player.y, 0, player.y - box.y - box.h);
+      clearance = Math.min(clearance, Math.hypot(dx, dy) - 1);
+    }
+  }
+  const radius = Math.max(glyphs.minRadius, Math.min(glyphs.radius, clearance));
+  return { radius, extent: radius + (mode === "compact" ? 2 : 5) };
+}
+
+/** Reserve a collision-free box near the projected anchor, including the outer edges of a zone. */
+export function screenLabelBox(anchor: ScreenBox, w: number, h: number, occupied: ScreenBox[], width: number, height: number) {
+  const middleX = anchor.x + (anchor.w - w) / 2, middleY = anchor.y + (anchor.h - h) / 2;
+  const xs = [middleX, anchor.x, anchor.x + anchor.w - w];
+  const ys = [middleY, anchor.y, anchor.y + anchor.h - h];
+  const candidates = [
+    ...[anchor.y - h - 4, anchor.y + anchor.h + 4, anchor.y + 4, anchor.y + anchor.h - h - 4].flatMap(y => xs.map(x => ({ x, y }))),
+    ...[anchor.x - w - 4, anchor.x + anchor.w + 4].flatMap(x => ys.map(y => ({ x, y }))),
+  ];
+  return candidates.map(({ x, y }) => ({
+    x: Math.max(3, Math.min(width - w - 3, x)), y: Math.max(3, Math.min(height - h - 3, y)), w, h,
+  })).find(box => box.x + w <= width - 3 && box.y + h <= height - 3 &&
+    !occupied.some(other => boxesOverlap(box, other)));
 }
 
 /** Black or white maintains readable numerals on arbitrary authored hex colours. */

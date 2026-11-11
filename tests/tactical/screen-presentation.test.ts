@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { coachingPresentationScene } from "../fixtures/coaching-presentation";
-import { coachingDrawingOptions } from "../../lib/tactical/coaching-view";
+import { coachingDrawingOptions, coachingScreenOptions } from "../../lib/tactical/coaching-view";
 import { drawScene, serializeDrawing, type SvgNode } from "../../lib/tactical/drawing";
 import { editorExamples } from "../../lib/tactical/editor-examples";
 import { screenToWorld } from "../../lib/tactical/viewport";
@@ -41,10 +41,42 @@ test("dense compact diagrams suppress number text while expanded inspection keep
   const expanded = drawScene(scene, { ...options, width: 900, height: 600, screen: { mode: "expanded", id: "expanded" } });
   assert.equal(compact.screen?.numbersHidden, true);
   assert.equal(compact.screen?.crowded, true);
+  assert.ok(compact.screen!.playerDiameter >= 8.5);
+  assert.equal(expanded.screen?.playerOverlaps, players.length);
+  assert.equal(expanded.screen?.details.filter(detail => detail.kind === "player").length, players.length);
   assert.equal(flatten(compact.nodes).filter(n => "data-player-number" in n.attrs).length, 0);
   assert.equal(flatten(expanded.nodes).filter(n => "data-player-number" in n.attrs).length, players.length);
   assert.deepEqual(compact.anchors.map(a => a.world), expanded.anchors.map(a => a.world));
   assert.ok(flatten(expanded.nodes).some(n => n.tag === "title" && n.text?.includes("#6")));
+});
+
+test("the same saved sizing pose keeps disc size stable while scrubbed positions change", () => {
+  const scene = coachingPresentationScene(6, 20);
+  const options = { width: 540, height: 280, screen: { mode: "standard", id: "stages", sizingSeconds: 1 } as const };
+  const first = drawScene(scene, { ...options, ...coachingScreenOptions(scene, 1) });
+  const last = drawScene(scene, { ...options, ...coachingScreenOptions(scene, 11) });
+  assert.notDeepEqual(first.anchors.find(a => a.id === "p6")?.world, last.anchors.find(a => a.id === "p6")?.world);
+  assert.equal(first.screen?.playerDiameter, last.screen?.playerDiameter);
+});
+
+test("a busy board keeps original note anchors and every complete label without painting colliding text", () => {
+  const scene = coachingPresentationScene(1, 12);
+  const text = "Receive on the half-turn and open a passing lane before the next player arrives.";
+  for (let i = 0; i < 18; i++) scene.stages[0].tracks.push({
+    id: `note-${i}`, kind: "annotation", visibleFrom: 0, visibleUntil: 2,
+    annotation: { kind: "note", position: { x: 6, y: 6 }, text: `${text} ${i}` },
+  });
+  const before = structuredClone(scene);
+  const drawing = drawScene(scene, {
+    ...coachingScreenOptions(scene, 1), width: 320, height: 150,
+    screen: { mode: "standard", id: "labels", inspected: "annotation:note-17" },
+  });
+  assert.equal(drawing.labelCollisions, 0);
+  assert.ok(drawing.screen!.deferredLabels > 0);
+  assert.ok(drawing.screen!.details.some(detail => detail.text === `${text} 17`));
+  assert.equal(flatten(drawing.nodes).filter(n => n.attrs["data-annotation-id"] === "note-17").length, 1);
+  assert.ok(flatten(drawing.nodes).some(n => n.attrs["data-inspection-highlight"] === "annotation:note-17"));
+  assert.deepEqual(scene, before);
 });
 
 test("screen treatments keep full-pitch goals and use isolated local SVG definitions", () => {

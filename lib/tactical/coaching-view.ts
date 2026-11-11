@@ -35,6 +35,16 @@ export function coachingDrawingOptions(scene: TacticalScene, seconds: number, ex
     markings: area.length < 70 && area.width < 45 && (!scene.context || scene.context.kind === "neutral" || scene.context.region === "full") ? "boundary" : "auto" };
 }
 
+/** A framing fallback is a camera target only. Draw a training boundary when the source provides it. */
+export function coachingScreenOptions(scene: TacticalScene, seconds: number, explicitArea?: TrainingArea | null, fit: FitMode = "exercise") {
+  const options = { ...coachingDrawingOptions(scene, seconds, explicitArea, fit), padding: 20 };
+  const authoredArea = explicitArea && !coachingAreaWarning(scene, explicitArea) ? explicitArea
+    : scene.context?.kind === "pitch" && scene.context.region === "custom" ? scene.context.area : undefined;
+  if (fit === "pitch") return { ...options, authoredArea, gridMetres: undefined, markings: "auto" as const,
+    rotation: (scene.field.width > scene.field.length * 1.2 ? 270 : 0) as 0 | 270 };
+  return { ...options, authoredArea, gridMetres: undefined };
+}
+
 /** Print cannot offer a Fit All control: include cropped authored content, or fail honestly. */
 export function coachingPrintDrawing(scene: TacticalScene, seconds: number, width: number, height: number, explicitArea?: TrainingArea | null) {
   const options = { width, height, ...coachingDrawingOptions(scene, seconds, explicitArea) };

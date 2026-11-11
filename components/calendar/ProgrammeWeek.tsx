@@ -6,13 +6,13 @@ import type { DomainBundle } from "@/lib/domain/validation";
 import { eventSession, localParts, sessionLabels } from "@/lib/calendar/schedule";
 import { bookingOnDay, fixtureDayLabel, programmeIllustration } from "@/lib/calendar/programme";
 import { SessionTypeIcon } from "./SessionTypeIcon";
-import { coachingDrawingOptions } from "@/lib/tactical/coaching-view";
+import { coachingScreenOptions } from "@/lib/tactical/coaching-view";
 import { SceneDiagram } from "@/components/tactical/SceneDiagram";
 
 function ProgrammeIllustration({ illustration }: { illustration: NonNullable<ReturnType<typeof programmeIllustration>> }) {
   const { activity, pin, scene } = illustration;
   return <span className="programme-card-diagram"><SceneDiagram scene={scene} title={`${activity.content.title} · saved diagram`}
-    screenMode="compact" autoFitContent options={coachingDrawingOptions(scene, pin.representativeSeconds, activity.content.area)} /></span>;
+    screenMode="compact" sizingSeconds={pin.representativeSeconds} autoFitContent options={coachingScreenOptions(scene, pin.representativeSeconds, activity.content.area)} /></span>;
 }
 
 /** Week presentation only. All selection and scheduling still use the accepted Calendar operations. */

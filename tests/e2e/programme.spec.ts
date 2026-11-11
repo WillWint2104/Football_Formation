@@ -42,7 +42,8 @@ test('Concept 01 frame, full-width seven-day week and actual fixture context at 
     });
     expect(display.widthRatio).toBeCloseTo(1, 2);
     expect(display.heightRatio).toBeCloseTo(1, 2);
-    expect(display.disc).toBeGreaterThanOrEqual(16);
+    expect(display.disc).toBeGreaterThanOrEqual(8.5);
+    expect(display.disc).toBeLessThan(14);
     expect(display.numbers.every(size => size >= 10)).toBe(true);
   } else {
     await expect(thumbnail).toBeHidden();

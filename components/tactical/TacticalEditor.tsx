@@ -106,7 +106,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
     if (!target.points.length) { frame("context"); setMessage("No visible action in this stage; showing the exercise overview."); return; }
     setCustomArea(target.area); setFit("custom"); setCamera(undefined);
     if (orientExample) {
-      const rect = surface.current?.getBoundingClientRect();
+      const rect = surface.current?.querySelector(".scene-diagram")?.getBoundingClientRect();
       if (rect && rect.width >= 120 && rect.height >= 120) {
         const options = { width: rect.width, height: rect.height, padding: 32, fit: "custom" as const, customArea: target.area };
         setRotation(fitViewport(source, { ...options, rotation: 270 }).scale > fitViewport(source, { ...options, rotation: 0 }).scale ? 270 : 0);
@@ -118,13 +118,13 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   /** Resolve the live measured SVG projection for pointer picking and keyboard camera commands. */
   function projection() {
     const el = surface.current?.querySelector(".scene-diagram"), rect = el?.getBoundingClientRect();
-    return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus }) : null;
+    return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus, includeContextGoals: true }) : null;
   }
   /** Keep the world point beneath the pointer stationary while clamping view-only zoom. */
   function zoom(factor: number, anchor?: Point) {
     const view = projection(); if (!view) return;
     const point = anchor ?? { x: view.width / 2, y: view.height / 2 }, before = screenToWorld(point, view), zoom = Math.max(.1, Math.min(8, (live.current.camera?.zoom ?? 1) * factor));
-    const projected = fitViewport(live.current.scene, { width: view.width, height: view.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, rotation: live.current.rotation, setPieceFocus: live.current.focus, camera: { center: view.center, zoom } });
+    const projected = fitViewport(live.current.scene, { width: view.width, height: view.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, rotation: live.current.rotation, setPieceFocus: live.current.focus, camera: { center: view.center, zoom }, includeContextGoals: true });
     const after = screenToWorld(point, projected);
     const next = { center: { x: view.center.x + before.x - after.x, y: view.center.y + before.y - after.y }, zoom };
     if (Math.abs(next.center.x) <= 20_000 && Math.abs(next.center.y) <= 20_000) { live.current.camera = next; setCamera(next); }
@@ -132,7 +132,13 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   useEffect(() => {
     const node = surface.current; if (!node) return;
     /** Prevent page scrolling only over the canvas and forward wheel intent to pointer-anchored zoom. */
-    const wheel = (event: WheelEvent) => { event.preventDefault(); const rect = node.getBoundingClientRect(); zoom(Math.exp(-event.deltaY * .0015), { x: event.clientX - rect.left, y: event.clientY - rect.top }); };
+    const wheel = (event: WheelEvent) => {
+      const board = node.querySelector(".scene-diagram");
+      if (!board || !(event.target instanceof Node) || !board.contains(event.target)) return;
+      event.preventDefault();
+      const rect = board.getBoundingClientRect();
+      zoom(Math.exp(-event.deltaY * .0015), { x: event.clientX - rect.left, y: event.clientY - rect.top });
+    };
     node.addEventListener("wheel", wheel, { passive: false });
     return () => node.removeEventListener("wheel", wheel);
     // The wheel callback reads the current camera/scene from live rather than retaining stale state.

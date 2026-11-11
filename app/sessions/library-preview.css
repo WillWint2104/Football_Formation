@@ -37,7 +37,9 @@
 .library-preview-activity-meta { font-size:14px; margin-bottom:14px !important; }
 .library-preview-diagram-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
 .library-preview-diagram-tabs button[aria-pressed=true] { background:var(--preview-blue); color:white; border-color:var(--preview-blue); }
-.library-preview-diagram { height:clamp(260px,32vw,430px); border:1px solid #9eb89d; background:#80ad79; border-radius:4px; overflow:hidden; }
+.library-preview-diagram { --preview-diagram-height:clamp(260px,32vw,430px); height:var(--preview-diagram-height); border:1px solid #9eb89d; background:#80ad79; border-radius:4px; overflow:hidden; }
+.library-preview-diagram:has(.screen-diagram-inspection[open]) { --inspection-space:106px; height:calc(var(--preview-diagram-height) + var(--inspection-space)); }
+.library-preview-diagram:has(.screen-diagram-inspection[open]) .screen-diagram-layout { grid-template-rows:max(120px,calc(100% - 32px - var(--inspection-space))) auto; }
 .library-preview-diagram .scene-diagram { width:100%; height:100%; position:relative; }
 .library-preview-diagram .scene-diagram-caption { display:none; }
 .library-preview-activity figcaption { margin:8px 0 16px; color:var(--preview-muted); font-size:13px; }
@@ -51,4 +53,4 @@
 .library-preview-warning { padding:14px; background:#fff6df; color:#725315 !important; border:1px solid #ddc38b; margin-bottom:18px !important; }
 .library-preview-completed { border:1px solid #afd1c4; background:#eef7f3; padding:18px; margin-bottom:22px; }
 .library-preview-completed a { display:inline-block; margin:12px 20px 0 0; }
-@media (min-width:1024px) and (max-width:1500px) { .session-library-preview { padding:20px; } .library-preview-heading { flex-direction:column; gap:12px; } .library-preview-actions { flex-direction:row; align-items:center; flex-wrap:wrap; } .library-preview-layout { grid-template-columns:175px minmax(0,1fr); gap:17px; } .library-preview-diagram { height:310px; } .library-preview-guidance { grid-template-columns:1fr; gap:0; } }
+@media (min-width:1024px) and (max-width:1500px) { .session-library-preview { padding:20px; } .library-preview-heading { flex-direction:column; gap:12px; } .library-preview-actions { flex-direction:row; align-items:center; flex-wrap:wrap; } .library-preview-layout { grid-template-columns:175px minmax(0,1fr); gap:17px; } .library-preview-diagram { --preview-diagram-height:310px; } .library-preview-guidance { grid-template-columns:1fr; gap:0; } }
