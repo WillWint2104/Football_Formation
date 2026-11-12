@@ -1,12 +1,37 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { coachingDrawingOptions, coachingExerciseArea, coachingPrintDrawing, coachingAreaWarning } from "../../lib/tactical/coaching-view";
+import { coachingDrawingOptions, coachingExerciseArea, coachingOpeningFrame, coachingPrintDrawing, coachingAreaWarning, coachingScreenOptions } from "../../lib/tactical/coaching-view";
 import { coachingPresentationScene } from "../fixtures/coaching-presentation";
 import { editorExamples } from "../../lib/tactical/editor-examples";
 import { drawScene } from "../../lib/tactical/drawing";
 import { fitViewport, worldToScreen, screenToWorld } from "../../lib/tactical/viewport";
 import { stageRanges } from "../../lib/tactical/animation";
 import { coachingLightPalette, tacticalPalette } from "../../lib/tactical/palette";
+
+test("viewer retains a complete exercise frame and fits future authored content without changing pitch context", () => {
+  const scene = coachingPresentationScene();
+  assert.equal(coachingOpeningFrame(scene, 1).fit, "exercise");
+  scene.stages.at(-1)!.tracks.push({ id: "outside-note", kind: "annotation", visibleFrom: 0, visibleUntil: 2,
+    annotation: { kind: "note", position: { x: 14, y: 7 }, text: "Keep the outside support option available." } });
+  const before = structuredClone(scene);
+  assert.deepEqual(coachingOpeningFrame(scene, 1), { fit: "all", omitArea: false, allRotation: 270 });
+  assert.deepEqual(scene, before);
+});
+
+test("viewer excludes disjoint legacy activity metadata only from the content frame", () => {
+  const scene = coachingPresentationScene();
+  delete scene.context;
+  const wrong = { origin: { x: 35, y: 20 }, length: 12, width: 12 };
+  assert.equal(coachingOpeningFrame(scene, 1, wrong).omitArea, true);
+  assert.deepEqual(coachingExerciseArea(scene, wrong), wrong);
+  const restricted = drawScene(scene, { ...coachingScreenOptions(scene, 1, wrong), width: 850, height: 340,
+    screen: { mode: "expanded", id: "viewer-restricted", viewer: true } });
+  assert.ok(restricted.screen?.details.some(detail => detail.text === "Authored zone 1"));
+  assert.ok(!restricted.nodes.some(node => node.children?.some(child => child.tag === "text" && child.text === "Authored zone 1")));
+  const full = editorExamples.find(e => e.id === "full")!.scene;
+  assert.equal(coachingOpeningFrame(full, 0, wrong).omitArea, false);
+  assert.equal(coachingOpeningFrame(full, 0, wrong).fit, "exercise");
+});
 
 test("12x12 and 12x20 practices keep uniform metres, exact boundaries and saved geometry at both preview sizes", () => {
   for (const span of [12, 20]) for (const [width,height] of [[640,300],[1000,600]]) {

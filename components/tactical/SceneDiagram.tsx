@@ -17,10 +17,11 @@ type DiagramProps = {
   screenMode?: DiagramSize;
   sizingSeconds?: number;
   autoFitContent?: boolean;
+  viewer?: { frameNote?: string; onShowAll?: () => void };
   interaction?: { down: DiagramPointer; move: DiagramPointer; up: DiagramPointer; cancel: () => void };
 };
 
-export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSeconds, autoFitContent, interaction }: DiagramProps) {
+export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSeconds, autoFitContent, viewer, interaction }: DiagramProps) {
   const ref = useRef<HTMLElement>(null), [measured, setMeasured] = useState<{ width: number; height: number }>(), id = useId();
   const [inspection, setInspection] = useState<{ source: string; id: string }>();
   const source = JSON.stringify([scene.organizationId, scene.id, scene.revision]);
@@ -42,7 +43,7 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
   let fittedAll = false;
   if (size) {
     try {
-      const screen = screenMode ? { mode: screenMode, id: id.replace(/[^\w-]/g, "_"), sizingSeconds, inspected } : undefined;
+      const screen = screenMode ? { mode: screenMode, id: id.replace(/[^\w-]/g, "_"), sizingSeconds, inspected, viewer: !!viewer } : undefined;
       const drawOptions = { ...options, ...size, screen };
       drawing = drawScene(scene, drawOptions);
       if (autoFitContent && options.fit === "exercise" && (drawing.clippedEntities || drawing.croppedDetails)) {
@@ -85,7 +86,9 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
     {board}
     <div className="screen-diagram-footer">
       <div className="screen-diagram-status">
-        <span>{cropMessage ? <span className="screen-diagram-crop" role="status">{cropMessage}{!autoFitContent && " Use Fit all content."}</span> : frameSummary}</span>
+        <span>{cropMessage ? <span className="screen-diagram-crop" role="status">{viewer ? "Current frame: " : ""}{cropMessage}{!autoFitContent && !viewer && " Use Fit all content."}</span> : frameSummary}</span>
+        {cropMessage && viewer?.onShowAll && <button className="viewer-show-all" type="button" onClick={viewer.onShowAll}>Show all</button>}
+        {!cropMessage && viewer?.frameNote && <span className="viewer-frame-note" role="status">{viewer.frameNote}</span>}
         {fittedAll && !crop && <span>Fitted all content</span>}
       </div>
       {!!screen?.details.length && <details className="screen-diagram-inspection" onToggle={event => { if (!event.currentTarget.open) setInspection(undefined); }}>

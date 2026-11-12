@@ -89,7 +89,11 @@ function SessionView({ bundle, session, booking, selection, backHref, sample }: 
 
   const heading = <div className="viewer-board-heading">
     <h2>{activity?.content.title ?? "Tactical board"}</h2>
-    {activity && <p>{activity.role[0].toUpperCase() + activity.role.slice(1).replaceAll("-", " ")}{activity.durationMinutes !== null && ` · ${activity.durationMinutes} min`}</p>}
+    {activity && <p><b>Activity {activityIndex + 1} of {activities.length}</b> · {activity.role[0].toUpperCase() + activity.role.slice(1).replaceAll("-", " ")}{activity.durationMinutes !== null && ` · ${activity.durationMinutes} min`}</p>}
+  </div>;
+  const attachments = diagrams.length > 1 && <div className="viewer-diagrams" role="group" aria-label="Attached diagrams">
+    <span>Attached diagrams</span>
+    {diagrams.map((_, index) => <button className="viewer-button" type="button" key={index} aria-pressed={diagramIndex === index} onClick={() => setDiagramIndex(index)}>Diagram {index + 1}</button>)}
   </div>;
   const fullScreenButton = <button className="viewer-button viewer-fullscreen" type="button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen tactical board"}>
     {fullscreen ? <Minimize size={17} aria-hidden="true" /> : <Maximize size={17} aria-hidden="true" />}
@@ -122,13 +126,9 @@ function SessionView({ bundle, session, booking, selection, backHref, sample }: 
     <div className="viewer-workspace">
       <section className="viewer-tactical" ref={board} aria-label="Tactical workspace">
         {fullscreenError && <p className="viewer-fullscreen-message" role="status">Fullscreen is unavailable in this browser window.</p>}
-        {diagrams.length > 1 && <div className="viewer-diagrams" role="group" aria-label="Attached diagrams">
-          <span>Diagrams</span>
-          {diagrams.map((_, index) => <button className="viewer-button" type="button" key={index} aria-pressed={diagramIndex === index} onClick={() => setDiagramIndex(index)}>Diagram {index + 1}</button>)}
-        </div>}
         {scene && pin ? <CoachingDiagramPreview key={`${activityId}:${diagramIndex}`} scene={scene} title={activity.content.title} screenMode="expanded" area={activity.content.area} seconds={pin.representativeSeconds}
-          presentation={{ heading, action: fullScreenButton }} /> :
-          <><div className="viewer-diagram-toolbar">{heading}</div><div className="viewer-board-empty">
+          presentation={{ heading, action: fullScreenButton, attachments }} /> :
+          <><div className="viewer-diagram-toolbar">{heading}</div>{attachments}<div className="viewer-board-empty">
             <p role={diagrams.length || selection && !activity ? "alert" : undefined}>{activity
               ? diagrams.length ? "The selected diagram revision is unavailable." : "No diagram attached to this activity."
               : activities.length ? "The requested activity is unavailable. Choose an activity above." : "This saved session has no activities."}</p>

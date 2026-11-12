@@ -17,6 +17,13 @@ export const screenCoachingPalette: TacticalPaint = {
   area: "#163f36",
 };
 
+export const viewerCoachingPalette: TacticalPaint = {
+  ...screenCoachingPalette,
+  field: "#567b42", stripe: "#62894c", surround: "#304538",
+  outline: "#213b2b", ink: "#132f27", line: "#f6f8e9", area: "#163c32",
+  cone: "#f7a238", equipment: "#f6d463", a: "#1558b6", b: "#b92f45",
+};
+
 /** Screen-space sizes depend on the surface, independent of projection scale and pixel density. */
 export function screenGlyphs(mode: DiagramSize, width: number, height: number) {
   const span = Math.min(width, height);

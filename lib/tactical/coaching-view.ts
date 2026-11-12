@@ -1,5 +1,5 @@
 import type { TacticalScene, TrainingArea } from "../domain/tactical-scene";
-import { areaBounds, contentBounds, type FitMode } from "./viewport";
+import { areaBounds, contentBounds, fitViewport, type FitMode } from "./viewport";
 import { contextArea } from "./context";
 import { sceneDuration } from "./evaluate";
 import { drawScene, type DrawingOptions } from "./drawing";
@@ -43,6 +43,23 @@ export function coachingScreenOptions(scene: TacticalScene, seconds: number, exp
   if (fit === "pitch") return { ...options, authoredArea, gridMetres: undefined, markings: "auto" as const,
     rotation: (scene.field.width > scene.field.length * 1.2 ? 270 : 0) as 0 | 270 };
   return { ...options, authoredArea, gridMetres: undefined };
+}
+
+/** A viewer opens on the whole authored sequence when the exercise frame would omit content. */
+export function coachingOpeningFrame(scene: TacticalScene, seconds: number, area?: TrainingArea | null) {
+  const exercise = coachingScreenOptions(scene, seconds, area);
+  const { target } = fitViewport(scene, { ...exercise, width: 480, height: 360, fit: "exercise" });
+  const content = contentBounds(scene);
+  const epsilon = 1e-6;
+  const contains = content.minX >= target.minX - epsilon && content.minY >= target.minY - epsilon &&
+    content.maxX <= target.maxX + epsilon && content.maxY <= target.maxY + epsilon;
+  const disjoint = content.minX > target.maxX || content.minY > target.maxY ||
+    content.maxX < target.minX || content.maxY < target.minY;
+  // A disjoint activity area can belong to another legacy attachment. Keep it available in
+  // Fit Exercise, but exclude it from Fit All so it doesn't shrink the actual diagram.
+  const omitArea = disjoint && !scene.context;
+  return { fit: contains ? "exercise" as const : "all" as const, omitArea,
+    allRotation: omitArea ? (content.maxY - content.minY > (content.maxX - content.minX) * 1.2 ? 270 as const : 0 as const) : exercise.rotation };
 }
 
 /** Print cannot offer a Fit All control: include cropped authored content, or fail honestly. */
