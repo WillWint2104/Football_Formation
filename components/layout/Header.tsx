@@ -18,18 +18,19 @@ export function Header() {
   const pathname = usePathname();
   const programme = ["/calendar", "/team-schedule"].includes(pathname);
   const sessions = pathname === "/sessions";
-  const programmeHeader = (programme || sessions) && <header className={`programme-frame-header${sessions ? " session-frame-header" : ""}`}>
+  const sessionViewer = pathname === "/sessions/view";
+  const programmeHeader = (programme || sessions || sessionViewer) && <header className={`programme-frame-header${sessions ? " session-frame-header" : ""}`}>
     <Link href="/calendar" className="programme-frame-brand" aria-label="Football Formation Calendar"><span className="programme-brand-shield"><Shield aria-hidden="true" /><b aria-hidden="true">F</b></span><span>FOOTBALL<br />FORMATION</span></Link>
     <MobileNavigation /><nav className="programme-primary-navigation" aria-label="Primary navigation">
       <Link href="/calendar" aria-current={programme ? "page" : undefined}><CalendarDays size={22} aria-hidden="true" /><span>Programme</span></Link>
-      <Link href="/sessions" aria-current={sessions ? "page" : undefined}><ClipboardList size={21} aria-hidden="true" /><span>Sessions</span></Link>
+      <Link href="/sessions" aria-current={sessions || sessionViewer ? "page" : undefined}><ClipboardList size={21} aria-hidden="true" /><span>Sessions</span></Link>
       <Link href="/lineup"><Workflow size={21} aria-hidden="true" /><span>Tactics</span></Link>
       <Link href="/presentations"><Presentation size={21} aria-hidden="true" /><span>Presentations</span></Link>
       <Link href="/coaches"><Users size={21} aria-hidden="true" /><span>Coaches</span></Link>
     </nav>
     <span className="programme-frame-context">Coaching workspace</span>
   </header>;
-  if (programme) return programmeHeader;
+  if (programme || sessionViewer) return programmeHeader;
   const tactics = ["/lineup", "/tactical-renderer", "/tactical-editor"].includes(pathname);
   const workspace = tactics
     ? "Tactics"

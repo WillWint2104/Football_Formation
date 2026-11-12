@@ -29,15 +29,24 @@ export function withLibraryFilters(href: string, search: string, kind: string) {
 }
 
 /** A booking preview identifies both snapshots, even when bookings share a session. */
-export function sessionPreviewHref(session: Session, booking?: CalendarEvent) {
+function sessionViewParams(session: Session, booking?: CalendarEvent, preview = false) {
   const params = new URLSearchParams({
-    session: session.id, revision: String(session.revision), organization: session.organizationId, view: "preview",
+    session: session.id, revision: String(session.revision), organization: session.organizationId,
   });
+  if (preview) params.set("view", "preview");
   if (booking) {
     params.set("booking", booking.id);
     params.set("bookingRevision", String(booking.revision));
   }
-  return `/sessions?${params}`;
+  return params;
+}
+
+export function sessionPreviewHref(session: Session, booking?: CalendarEvent) {
+  return `/sessions?${sessionViewParams(session, booking, true)}`;
+}
+
+export function sessionViewerHref(session: Session, booking?: CalendarEvent) {
+  return `/sessions/view?${sessionViewParams(session, booking)}`;
 }
 
 export function scopedSessionEditorHref(session: Session, booking?: CalendarEvent) {

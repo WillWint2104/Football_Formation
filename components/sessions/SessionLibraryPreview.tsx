@@ -14,6 +14,7 @@ import { ScheduleDialog } from "@/components/calendar/ScheduleDialog";
 import { CoachingDiagramPreview } from "@/components/tactical/CoachingDiagramPreview";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 import { sessionPreviewHref } from "@/lib/coaching/catalogue";
+import { withActivityView, type ActivityViewSelection } from "@/lib/coaching/session-view";
 
 export type CalendarPreviewNavigation = {
   date: string; previewHref: string; currentHref: string; completedHref: (event: CalendarEvent) => string;
@@ -23,12 +24,13 @@ export type CalendarPreviewNavigation = {
 /** Reuse the organisation graph's read/commit boundary; local C3 packages are never inspected. */
 export function SessionLibraryPreview({ source, copyRequest, editHref, calendar, explorer, previewHref: libraryHref, latestHref }: {
   source: Session; copyRequest?: SessionCopyRequest; editHref: string; calendar?: CalendarPreviewNavigation;
-  explorer?: { booking?: CalendarEvent; closeHref: string; editLabel: string }; previewHref?: string; latestHref?: string;
+  explorer?: { booking?: CalendarEvent; closeHref: string; editLabel: string; viewerHref: string; selection?: ActivityViewSelection }; previewHref?: string; latestHref?: string;
 }) {
   const { snapshot, scope, mode, busy, loading, blocked } = useCoaching();
   const router = useRouter(), activity = source.content.activities;
-  const [selected, setSelected] = useState(activity.find((a) => a.content.diagrams.length)?.id ?? activity[0]?.id ?? "");
-  const [diagram, setDiagram] = useState(0);
+  const initialActivity = activity.find(a => a.id === explorer?.selection?.activityId);
+  const [selected, setSelected] = useState(initialActivity?.id ?? activity.find((a) => a.content.diagrams.length)?.id ?? activity[0]?.id ?? "");
+  const [diagram, setDiagram] = useState(initialActivity ? explorer?.selection?.diagramIndex ?? 0 : 0);
   const selectedActivity = activity.find((a) => a.id === selected), total = activityTotals(activity);
   const previewHref = calendar?.previewHref ?? libraryHref ?? sessionPreviewHref(source);
   const ids = copyRequest ? sessionCopyIds(copyRequest) : null;
@@ -84,8 +86,7 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar,
       : <p className="library-preview-boundary">Scheduling copies this previewed current revision into a new identity. Choose a team eligible for all retained staff; no coach is removed automatically. Activities and exact diagram pins are retained; document associations are not copied. The source and other bookings stay unchanged. Local C3 packages remain separate.</p>}
     </div>
     {explorer && <footer className="explorer-inspector-actions">
-      <div><button type="button" disabled className="explorer-full-action" aria-describedby="explorer-viewer-status"><ArrowUpRight size={18} aria-hidden="true" />Open Full Session</button>
-        <small id="explorer-viewer-status">Full viewer coming in the next checkpoint.</small></div>
+      <Link href={withActivityView(explorer.viewerHref, selectedActivity && { activityId: selectedActivity.id, diagramIndex: pin ? diagram : undefined })} className="explorer-full-action"><ArrowUpRight size={18} aria-hidden="true" />Open Full Session</Link>
       <Link href={editHref} className="explorer-secondary-action"><Pencil size={16} aria-hidden="true" />{explorer.editLabel}</Link>
       {schedule}
     </footer>}

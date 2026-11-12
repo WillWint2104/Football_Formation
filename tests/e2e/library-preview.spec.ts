@@ -50,7 +50,7 @@ test("Explorer preserves search and exact booking identity through preview, refr
   await expect(secondBooking).toHaveAttribute("aria-current", "true");
   await expect(results.filter({ hasNotText: "2026-11-10" })).not.toHaveAttribute("aria-current", "true");
   await expect(page).toHaveURL(/booking=other-rondo-booking&bookingRevision=1&q=5v2&type=possession/);
-  await expect(preview.getByRole("button", { name: "Open Full Session" })).toBeDisabled();
+  await expect(preview.getByRole("link", { name: "Open Full Session" })).toHaveAttribute("href", /\/sessions\/view\?.*booking=other-rondo-booking&bookingRevision=1/);
   await page.reload();
   await loaded(page);
   await expect(search).toHaveValue("5v2");

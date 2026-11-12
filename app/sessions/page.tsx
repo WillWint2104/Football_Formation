@@ -11,6 +11,7 @@ import "./calendar-editing.css";
 import "../calendar/planning.css";
 import "../calendar/programme.css";
 import { parseCalendarReturn } from "@/lib/coaching/calendar-return";
+import { parseActivityView } from "@/lib/coaching/session-view";
 
 export const metadata: Metadata = { title: "Session Library | Football Formation" };
 
@@ -22,6 +23,7 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
   const revision = typeof query.revision === "string" ? revisionSchema.safeParse(Number(query.revision)) : null;
   const organization = idSchema.safeParse(query.organization);
   const preview = query.view === "preview";
+  const selection = parseActivityView(query);
   const calendar = typeof query.calendar === "string" ? parseCalendarReturn(query.calendar) : undefined;
   const hasBooking = query.booking !== undefined || query.bookingRevision !== undefined;
   const booking = hasBooking ? idSchema.safeParse(query.booking) : null;
@@ -31,11 +33,12 @@ export default async function SessionsPage({ searchParams }: { searchParams: Pro
       query.view !== undefined && !preview || preview && (!session.success || !organization.success || query.event !== undefined) ||
       query.organization !== undefined && (!organization.success || !preview && (!(event.success || session.success) || !revision?.success || !!calendar)) ||
       query.copy !== undefined && (!preview || !copy?.success) || query.calendar !== undefined && (!calendar || !event.success || !revision?.success || preview) ||
-      hasBooking && (!preview || !revision?.success || !booking?.success || !bookingRevision?.success))
+      hasBooking && (!preview || !revision?.success || !booking?.success || !bookingRevision?.success) ||
+      selection === null || selection && !preview)
     return <div className="calendar-workspace"><h1>Invalid session reference</h1><p>No requested revision was substituted.</p><Link href="/sessions">Open session library</Link></div>;
-  return <SessionsWorkspace key={JSON.stringify([query.event, query.session, query.revision, query.view, query.organization, query.booking, query.bookingRevision, query.calendar])}
+  return <SessionsWorkspace key={JSON.stringify([query.event, query.session, query.revision, query.view, query.organization, query.booking, query.bookingRevision, query.calendar, selection])}
     eventId={event.success ? event.data : undefined} sessionId={session.success ? session.data : undefined}
     revision={revision?.success ? revision.data : undefined} preview={preview} organizationId={organization.success ? organization.data : undefined}
     booking={booking?.success && bookingRevision?.success ? { id: booking.data, revision: bookingRevision.data } : undefined}
-    copyRequest={copy?.success ? copy.data : undefined} calendar={calendar ?? undefined} />;
+    copyRequest={copy?.success ? copy.data : undefined} calendar={calendar ?? undefined} selection={selection} />;
 }

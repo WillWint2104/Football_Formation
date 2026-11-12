@@ -13,13 +13,14 @@ import { SessionEditor } from "./SessionEditor";
 import { SessionLibraryPreview } from "./SessionLibraryPreview";
 import { SavedSessionExplorer } from "./SavedSessionExplorer";
 import type { SessionCopyRequest } from "@/lib/coaching/session-copy";
-import { sessionCatalogue, filterCatalogue, scopedSessionEditorHref, sessionPreviewHref, withLibraryFilters } from "@/lib/coaching/catalogue";
+import { sessionCatalogue, filterCatalogue, scopedSessionEditorHref, sessionPreviewHref, sessionViewerHref, withLibraryFilters } from "@/lib/coaching/catalogue";
+import { withActivityView, type ActivityViewSelection } from "@/lib/coaching/session-view";
 import type { RevisionRef } from "@/lib/domain/common";
 import { sessionKindSchema } from "@/lib/domain/session";
 import { calendarReturnProblem, savedCalendarHref, updatedCalendarReturn, withCalendar, type CalendarReturn } from "@/lib/coaching/calendar-return";
 
 /** Library entries resolve explicit booking pins; historical links remain read-only snapshots. */
-export function SessionsWorkspace({ eventId, sessionId, revision, preview = false, organizationId, booking, copyRequest, calendar }: { eventId?: string; sessionId?: string; revision?: number; preview?: boolean; organizationId?: string; booking?: RevisionRef; copyRequest?: SessionCopyRequest; calendar?: CalendarReturn }) {
+export function SessionsWorkspace({ eventId, sessionId, revision, preview = false, organizationId, booking, copyRequest, calendar, selection }: { eventId?: string; sessionId?: string; revision?: number; preview?: boolean; organizationId?: string; booking?: RevisionRef; copyRequest?: SessionCopyRequest; calendar?: CalendarReturn; selection?: ActivityViewSelection }) {
   const { snapshot, scope, loading, busy, blocked, dirty, markDirty } = useCoaching();
   const bundle = snapshot.bundle;
   const router = useRouter();
@@ -58,10 +59,11 @@ export function SessionsWorkspace({ eventId, sessionId, revision, preview = fals
       {selected && <SessionLibraryPreview key={JSON.stringify([scope, selected.id, selected.revision, previewBooking?.id, previewBooking?.revision])}
         source={selected} copyRequest={copyRequest} explorer={{
           booking: previewBooking, closeHref: withFilters("/sessions"),
+          viewerHref: withFilters(sessionViewerHref(selected, previewBooking)), selection,
           editLabel: (previewBooking ? bookings.find(e => e.id === previewBooking.id)?.revision !== previewBooking.revision : current?.revision !== selected.revision || bookedIds.has(selected.id))
             ? "Open saved snapshot" : "Edit session",
         }}
-        previewHref={withFilters(sessionPreviewHref(selected, previewBooking))}
+        previewHref={withActivityView(withFilters(sessionPreviewHref(selected, previewBooking)), selection)}
         latestHref={current && withFilters(sessionPreviewHref(current))}
         editHref={withFilters(scopedSessionEditorHref(selected, previewBooking))} />}
     </SavedSessionExplorer>;
