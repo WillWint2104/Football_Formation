@@ -183,23 +183,14 @@ function GridPlanBoard({ scene, stage, seconds, savedSeconds, plan, selected, di
   const drawing = useMemo(()=>{
     if(!size || size.width<120 || size.height<120) return undefined;
     // Fit in screen space once, then place every repetition by translation at exactly that metre scale.
-    const compact = isOverview && !plan.authored;
-    const pad = 32;
+    const pad = 24;
     try {
       const customArea=boundsAsArea(fitBounds);
-      if (compact) {
-        // The compact renderer reserves a smaller glyph gutter. Extend the framing area to restore room for station labels.
-        const gutter=11;
-        const targetScale=Math.min((size.width-2*pad)/customArea.length,(size.height-2*pad)/customArea.width);
-        const extra=(pad-gutter)/targetScale;
-        customArea.origin.x-=extra;customArea.origin.y-=extra;
-        customArea.length+=2*extra;customArea.width+=2*extra;
-      }
       return drawScene(scene,{...size,fit:"custom",customArea,padding:pad,seconds,poseStageId:stage||undefined,
         surface:"transparent",areaLabels:!plan.authored,markings:"none",rotation:0,paths:"stage",labels:true,paint:"coaching-light",
-        screen:{id,mode:compact?"compact":"expanded",sizingSeconds:savedSeconds,viewer:!compact}});
+        screen:{id,mode:"expanded",sizingSeconds:savedSeconds,viewer:true}});
     } catch { return undefined; }
-  },[size,scene,stage,seconds,savedSeconds,fitBounds,id,isOverview,plan.authored]);
+  },[size,scene,stage,seconds,savedSeconds,fitBounds,id,plan.authored]);
   if(!drawing||!size) return <div className="p6c-grid-board" ref={el} data-ready="false" />;
   const {view}=drawing;
   const rect=(b:Bounds)=>screenRectangle({x:b.minX,y:b.minY},gridWidth(b),gridDepth(b),view);
@@ -223,10 +214,18 @@ function GridPlanBoard({ scene, stage, seconds, savedSeconds, plan, selected, di
     if(below&&plan.clearance*view.scale>=16)gapMarks.push({x1:first.x+first.width/2,x2:first.x+first.width/2,y1:first.y+first.height,y2:displayRect(below).y});
   }
   const crop = selected && plan.authored;
+  const boundaryRects=visibleStations.map(station=>displayRect(station,true));
+  const boundaryBox={
+    x:Math.min(...boundaryRects.map(r=>r.x)), y:Math.min(...boundaryRects.map(r=>r.y)),
+    right:Math.max(...boundaryRects.map(r=>r.x+r.width)),bottom:Math.max(...boundaryRects.map(r=>r.y+r.height)),
+  };
   const data = {
     sceneId:drawing.sceneId,revision:drawing.revision,seconds:drawing.seconds,
     stage:drawing.stage,width:size.width,height:size.height, scale:view.scale, footprint:plan.extent,
     occupation:{width:frame.width/size.width,height:frame.height/size.height},
+    boundaryOccupation:{width:(boundaryBox.right-boundaryBox.x)/size.width,height:(boundaryBox.bottom-boundaryBox.y)/size.height,
+      area:boundaryRects.reduce((sum,r)=>sum+r.width*r.height,0)/(size.width*size.height)},
+    gutter:view.padding,labelCollisions:drawing.labelCollisions,overlappingPlayers:drawing.screen?.playerOverlaps,
     plan:plan.stations, clearance:plan.clearance, specific:selected?.id??null, authored:plan.authored,
     marker:drawing.screen?.playerDiameter,number:drawing.screen?.numberSize,
     clipping:crop?null:drawing.clippedEntities+drawing.croppedDetails,anchors:drawing.anchors,

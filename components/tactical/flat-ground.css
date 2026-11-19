@@ -9,6 +9,11 @@
 .p6e-station-focus button { padding:4px 8px; min-width:32px; min-height:32px; border:1px solid var(--viewer-edge); border-radius:4px; background:white; color:var(--viewer-ink); font-size:14px; }
 .p6e-station-focus button[aria-pressed=true] { background:var(--viewer-navy); color:white; }
 .p6e-focused-provenance { color:var(--viewer-ink); font-size:14px; }
+/* A near-square physical plan needs height, not non-uniform scaling into a wide strip. */
+.session-viewer:has(.p6c-grid-board[data-ready="true"]):not(:has(.p6d-overview)) { height:auto; min-height:calc(100dvh - var(--viewer-shell-height) - 22px); }
+.viewer-tactical:has(.p6c-grid-board[data-ready="true"]):not(:has(.p6d-overview)) .coaching-diagram-preview { flex:initial; height:auto; }
+.viewer-tactical:has(.p6c-grid-board[data-ready="true"]):not(:has(.p6d-overview)) .coaching-preview-surface { flex:0 0 auto; height:clamp(432px,calc(100dvh - 348px),792px); min-height:432px; }
+.ground-layout-designation select { max-width:172px; }
 .p6c-grid-board,
 .p6c-practice-surface {
   --ground-light: #6c8845;
