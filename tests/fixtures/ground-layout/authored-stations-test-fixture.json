@@ -1,0 +1,386 @@
+{
+  "session": {
+    "schemaVersion": "1.0",
+    "organizationId": "illustrative-club",
+    "id": "p6c-authored-stations-fixture",
+    "revision": 1,
+    "teamId": "first-team",
+    "coaches": [],
+    "sourceTemplate": null,
+    "content": {
+      "title": "Synthetic fixture · Two authored grids",
+      "kind": "possession",
+      "objective": "Verify two independent, simultaneously visible areas in one saved scene.",
+      "focus": [],
+      "activities": [
+        {
+          "id": "p6c-two-independent-grids",
+          "role": "exercise",
+          "durationMinutes": 15,
+          "sourceExercise": null,
+          "content": {
+            "title": "Two independently authored grids",
+            "area": null,
+            "playerCount": 10,
+            "equipment": [
+              {
+                "name": "Football",
+                "quantity": 2
+              },
+              {
+                "name": "Cones",
+                "quantity": 8
+              },
+              {
+                "name": "Bibs",
+                "quantity": null
+              }
+            ],
+            "instructions": [
+              "Synthetic test fixture. The two areas, player groups, equipment and passes were authored separately in this scene.",
+              "Use this fixture to check shared scale and inspection of independent areas."
+            ],
+            "coachingPoints": [],
+            "progressions": [],
+            "regressions": [],
+            "variations": [],
+            "diagrams": [
+              {
+                "scene": {
+                  "id": "p6c-two-authored-areas",
+                  "revision": 1
+                },
+                "representativeSeconds": 1.5
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "documents": []
+  },
+  "scene": {
+    "schemaVersion": "1.0",
+    "organizationId": "illustrative-club",
+    "id": "p6c-two-authored-areas",
+    "revision": 1,
+    "units": "metres",
+    "context": {
+      "kind": "neutral",
+      "boundary": false
+    },
+    "field": {
+      "length": 41,
+      "width": 22
+    },
+    "entities": [
+      {
+        "id": "north-grid-cone-1",
+        "kind": "equipment",
+        "position": {
+          "x": 3,
+          "y": 5
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "north-grid-cone-2",
+        "kind": "equipment",
+        "position": {
+          "x": 17,
+          "y": 5
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "north-grid-cone-3",
+        "kind": "equipment",
+        "position": {
+          "x": 17,
+          "y": 17
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "north-grid-cone-4",
+        "kind": "equipment",
+        "position": {
+          "x": 3,
+          "y": 17
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "north-grid-player-1",
+        "kind": "player",
+        "position": {
+          "x": 6,
+          "y": 9
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 1,
+        "positionLabel": null
+      },
+      {
+        "id": "north-grid-player-2",
+        "kind": "player",
+        "position": {
+          "x": 14,
+          "y": 9
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 2,
+        "positionLabel": null
+      },
+      {
+        "id": "north-grid-player-3",
+        "kind": "player",
+        "position": {
+          "x": 6,
+          "y": 14
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 3,
+        "positionLabel": null
+      },
+      {
+        "id": "north-grid-player-4",
+        "kind": "player",
+        "position": {
+          "x": 14,
+          "y": 14
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 4,
+        "positionLabel": null
+      },
+      {
+        "id": "north-grid-player-5",
+        "kind": "player",
+        "position": {
+          "x": 10,
+          "y": 11
+        },
+        "headingDegrees": 0,
+        "team": "b",
+        "number": 5,
+        "positionLabel": null
+      },
+      {
+        "id": "north-grid-ball",
+        "kind": "ball",
+        "position": {
+          "x": 6.65,
+          "y": 9.3
+        },
+        "headingDegrees": 0
+      },
+      {
+        "id": "south-grid-cone-1",
+        "kind": "equipment",
+        "position": {
+          "x": 23,
+          "y": 4
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "south-grid-cone-2",
+        "kind": "equipment",
+        "position": {
+          "x": 37,
+          "y": 4
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "south-grid-cone-3",
+        "kind": "equipment",
+        "position": {
+          "x": 37,
+          "y": 18
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "south-grid-cone-4",
+        "kind": "equipment",
+        "position": {
+          "x": 23,
+          "y": 18
+        },
+        "headingDegrees": 0,
+        "equipment": "cone"
+      },
+      {
+        "id": "south-grid-player-1",
+        "kind": "player",
+        "position": {
+          "x": 26,
+          "y": 8
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 6,
+        "positionLabel": null
+      },
+      {
+        "id": "south-grid-player-2",
+        "kind": "player",
+        "position": {
+          "x": 34,
+          "y": 8
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 7,
+        "positionLabel": null
+      },
+      {
+        "id": "south-grid-player-3",
+        "kind": "player",
+        "position": {
+          "x": 26,
+          "y": 15
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 8,
+        "positionLabel": null
+      },
+      {
+        "id": "south-grid-player-4",
+        "kind": "player",
+        "position": {
+          "x": 34,
+          "y": 15
+        },
+        "headingDegrees": 0,
+        "team": "a",
+        "number": 9,
+        "positionLabel": null
+      },
+      {
+        "id": "south-grid-player-5",
+        "kind": "player",
+        "position": {
+          "x": 30,
+          "y": 11
+        },
+        "headingDegrees": 0,
+        "team": "b",
+        "number": 10,
+        "positionLabel": null
+      },
+      {
+        "id": "south-grid-ball",
+        "kind": "ball",
+        "position": {
+          "x": 26.65,
+          "y": 8.3
+        },
+        "headingDegrees": 0
+      }
+    ],
+    "stages": [
+      {
+        "id": "parallel-grids",
+        "title": "Synthetic parallel setup",
+        "durationSeconds": 8,
+        "tracks": [
+          {
+            "id": "north-grid",
+            "kind": "annotation",
+            "visibleFrom": 0,
+            "visibleUntil": 8,
+            "annotation": {
+              "kind": "area",
+              "area": {
+                "origin": {
+                  "x": 3,
+                  "y": 5
+                },
+                "length": 14,
+                "width": 12
+              },
+              "label": "Grid A · Passing channel"
+            }
+          },
+          {
+            "id": "north-grid-pass",
+            "kind": "ball",
+            "entityId": "north-grid-ball",
+            "movement": "pass",
+            "keyframes": [
+              {
+                "seconds": 0,
+                "position": {
+                  "x": 6.65,
+                  "y": 9.3
+                }
+              },
+              {
+                "seconds": 5,
+                "position": {
+                  "x": 13.35,
+                  "y": 9.3
+                }
+              }
+            ]
+          },
+          {
+            "id": "south-grid",
+            "kind": "annotation",
+            "visibleFrom": 0,
+            "visibleUntil": 8,
+            "annotation": {
+              "kind": "area",
+              "area": {
+                "origin": {
+                  "x": 23,
+                  "y": 4
+                },
+                "length": 14,
+                "width": 14
+              },
+              "label": "Grid B · Support square"
+            }
+          },
+          {
+            "id": "south-grid-pass",
+            "kind": "ball",
+            "entityId": "south-grid-ball",
+            "movement": "pass",
+            "keyframes": [
+              {
+                "seconds": 0,
+                "position": {
+                  "x": 26.65,
+                  "y": 8.3
+                }
+              },
+              {
+                "seconds": 5,
+                "position": {
+                  "x": 33.35,
+                  "y": 8.3
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

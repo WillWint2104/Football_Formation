@@ -224,7 +224,7 @@ function SessionView({ bundle, session, booking, selection, backHref, editHref, 
       <section className="viewer-tactical" ref={board} aria-label="Tactical workspace">
         {fullscreenError && <p className="viewer-fullscreen-message" role="status">Fullscreen is unavailable in this browser window.</p>}
         {scene && pin ? <CoachingDiagramPreview key={`${activityId}:${diagramIndex}`} scene={scene} title={activity.content.title} screenMode="expanded" area={activity.content.area} seconds={pin.representativeSeconds}
-          presentation={{ heading, action: fullscreenButton, attachments }} /> :
+          presentation={{ heading, action: fullscreenButton, attachments, activityId: activity.id, diagramIndex, equipment: activity.content.equipment }} /> :
           <><div className="viewer-board-heading-row">{heading}{fullscreen && fullscreenButton}</div>
             {attachments && <div className="viewer-diagram-toolbar">{attachments}</div>}
             <div className="viewer-board-empty">
