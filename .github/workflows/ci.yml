@@ -47,6 +47,10 @@ jobs:
     name: Playwright (shard ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      # Match the locked Playwright version. The image includes Chromium and its system dependencies.
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f
+      options: --user 1001 --init --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -65,8 +69,6 @@ jobs:
         run: npm ci
       - name: Build application for browser tests (default Turbopack)
         run: npm run build
-      - name: Install desktop test browser
-        run: npx playwright install --with-deps chromium
       - name: Desktop calendar, session, guide, renderer and editor interactions
         run: npm run test:e2e -- --workers=3 --shard=${{ matrix.shard }}/2
 
