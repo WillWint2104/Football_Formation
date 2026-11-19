@@ -68,3 +68,33 @@ test("another organisation cannot open the pinned grid or fall back to sample ge
   expect(fixture.writes()).toBe(0);
   expect(JSON.stringify(fixture.bundle)).toBe(fixture.original);
 });
+
+test("four-station framing uses a readable surface and reports actual boundaries without stretching metres",async({page})=>{
+  const fixture=await groundLayoutFixture(page);
+  await page.goto(fixture.url);
+  const workspace=page.getByRole("region",{name:"Tactical workspace"});
+  await workspace.getByRole("combobox",{name:"Scene presentation"}).selectOption("grid");
+  await workspace.getByRole("button",{name:"Grid plan",exact:true}).click();
+  await workspace.getByRole("combobox",{name:"Station count"}).selectOption("4");
+  await workspace.getByRole("combobox",{name:"Station arrangement"}).selectOption("grid");
+  const board=workspace.locator(".p6c-grid-board[data-ready=true]");
+  await expect.poll(async()=>JSON.parse((await board.getAttribute("data-plan-metrics"))!).height).toBeGreaterThanOrEqual(400);
+  const value=JSON.parse((await board.getAttribute("data-plan-metrics"))!);
+  expect(value.gutter).toBe(24);
+  expect(value.boundaryOccupation.height).toBeGreaterThan(.80);
+  expect(value.clipping).toBe(0);
+  expect(value.footprint.maxX-value.footprint.minX).toBe(28);
+  expect(value.footprint.maxY-value.footprint.minY).toBe(29.5);
+  const rectangles=await board.locator(".p6c-grid-area").evaluateAll(nodes=>nodes.map(node=>({width:Number(node.getAttribute("width")),height:Number(node.getAttribute("height"))})));
+  expect(rectangles).toHaveLength(4);
+  for(const rectangle of rectangles)expect(rectangle.width/rectangle.height).toBeCloseTo(1,6);
+  const cropped=await board.evaluate(node=>{
+    const outer=node.getBoundingClientRect();
+    return [...node.querySelectorAll('[data-station-drawing]')].filter(part=>{
+      const box=part.getBoundingClientRect();
+      return box.left<outer.left-1||box.top<outer.top-1||box.right>outer.right+1||box.bottom>outer.bottom+1;
+    }).length;
+  });
+  expect(cropped).toBe(0);
+  expect(fixture.writes()).toBe(0);expect(JSON.stringify(fixture.bundle)).toBe(fixture.original);
+});
