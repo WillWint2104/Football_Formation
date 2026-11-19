@@ -1,0 +1,100 @@
+import { expect,test } from "@playwright/test";
+import { groundLayoutFixture } from "../fixtures/ground-layout";
+
+test("exact grid attachment supports station inspection and independent dimensions without writes",async({page})=>{
+  const fixture=await groundLayoutFixture(page,true);
+  await page.goto(fixture.url);
+  const workspace=page.getByRole("region",{name:"Tactical workspace"});
+  await workspace.getByRole("button",{name:"Grid plan",exact:true}).click();
+  await workspace.getByRole("combobox",{name:"Station count"}).selectOption("4");
+  await workspace.getByRole("combobox",{name:"Station arrangement"}).selectOption("grid");
+  const board=workspace.locator(".p6c-grid-board[data-ready=true]");
+  const before=JSON.parse((await board.getAttribute("data-plan-metrics"))!);
+  expect(before.sceneId).toBe("example-rondo");expect(before.revision).toBe(1);expect(before.seconds).toBe(2);
+  await workspace.locator(".p6d-display summary").click();
+  await workspace.getByRole("checkbox",{name:"Overall footprint",exact:true}).uncheck();
+  await workspace.getByRole("checkbox",{name:"Station spacing",exact:true}).uncheck();
+  await expect(board.locator("[data-measurement]")).toHaveCount(0);
+  await expect(board.locator(".p6c-grid-area")).toHaveCount(4);
+  await expect(board.locator("[data-station-drawing]")).toHaveCount(4);
+  await workspace.getByRole("checkbox",{name:"Individual practice dimensions",exact:true}).check();
+  await expect(board.locator('[data-measurement="practice"]')).toHaveCount(4);
+  await workspace.locator(".p6d-display summary").click();
+  await workspace.getByRole("button",{name:"Coaching Overview",exact:true}).click();
+  await expect(workspace.locator(".p6d-overview-panel")).toHaveCount(4);
+  const quick=workspace.getByRole("group",{name:"Station quick focus"});
+  await quick.getByRole("button",{name:"Focus Station A",exact:true}).focus();
+  await page.keyboard.press("Enter");
+  await expect(board.locator("[data-station-drawing]")).toHaveCount(1);
+  const focused=JSON.parse((await board.getAttribute("data-plan-metrics"))!);
+  expect(focused.anchors.map((a:{id:string;world:unknown})=>({id:a.id,world:a.world}))).toEqual(before.anchors.map((a:{id:string;world:unknown})=>({id:a.id,world:a.world})));
+  await expect(quick.getByRole("button",{name:"Focus Station A",exact:true})).toBeFocused();
+  await quick.getByRole("button",{name:"All stations",exact:true}).click();
+  await workspace.getByRole("button",{name:"Ground Layout",exact:true}).click();
+  await expect(board.locator("[data-station-drawing]")).toHaveCount(4);
+  await workspace.getByRole("button",{name:"Next scene stage",exact:true}).click();
+  const nextStageTime=fixture.bundle.scenes.find(scene=>scene.id==="example-rondo"&&scene.revision===1)!.stages[0].durationSeconds;
+  await expect(board).toHaveAttribute("data-plan-metrics",new RegExp('"seconds":'+nextStageTime));
+  await page.getByRole("link",{name:"Saved Sessions",exact:true}).click();
+  await expect(page).toHaveURL(/q=Break&type=possession/);
+  await expect(page.getByRole("searchbox",{name:"Find sessions"})).toHaveValue("Break");
+  expect(fixture.writes()).toBe(0);expect(JSON.stringify(fixture.bundle)).toBe(fixture.original);
+});
+
+test("legacy grid choice is temporary and an unavailable pin never substitutes another revision",async({page})=>{
+  const fixture=await groundLayoutFixture(page);
+  await page.goto(fixture.url);
+  const workspace=page.getByRole("region",{name:"Tactical workspace"});
+  await expect(workspace.getByRole("button",{name:"Grid plan",exact:true})).toHaveCount(0);
+  await workspace.getByRole("combobox",{name:"Scene presentation"}).selectOption("grid");
+  await workspace.getByRole("button",{name:"Grid plan",exact:true}).click();
+  await expect(workspace.locator(".p6c-grid-board[data-ready=true]")).toBeVisible();
+  await page.reload();
+  await expect(workspace.getByRole("combobox",{name:"Scene presentation"})).toHaveValue("");
+  fixture.withoutScene();
+  await page.reload();
+  await expect(page.getByRole("heading",{name:"Saved session unavailable",exact:true})).toBeVisible();
+  await expect(workspace.locator(".p6c-grid-board")).toHaveCount(0);
+  expect(fixture.writes()).toBe(0);expect(JSON.stringify(fixture.bundle)).toBe(fixture.original);
+});
+
+test("another organisation cannot open the pinned grid or fall back to sample geometry",async({page})=>{
+  const fixture=await groundLayoutFixture(page,true);
+  const url=new URL(fixture.url,"http://127.0.0.1");
+  url.searchParams.set("organization","another-club");
+  await page.goto(url.pathname+url.search);
+  await expect(page.getByRole("heading",{name:"Saved session unavailable",exact:true})).toBeVisible();
+  await expect(page.locator(".scene-diagram,.p6c-grid-board")).toHaveCount(0);
+  expect(fixture.writes()).toBe(0);
+  expect(JSON.stringify(fixture.bundle)).toBe(fixture.original);
+});
+
+test("four-station framing uses a readable surface and reports actual boundaries without stretching metres",async({page})=>{
+  const fixture=await groundLayoutFixture(page);
+  await page.goto(fixture.url);
+  const workspace=page.getByRole("region",{name:"Tactical workspace"});
+  await workspace.getByRole("combobox",{name:"Scene presentation"}).selectOption("grid");
+  await workspace.getByRole("button",{name:"Grid plan",exact:true}).click();
+  await workspace.getByRole("combobox",{name:"Station count"}).selectOption("4");
+  await workspace.getByRole("combobox",{name:"Station arrangement"}).selectOption("grid");
+  const board=workspace.locator(".p6c-grid-board[data-ready=true]");
+  await expect.poll(async()=>JSON.parse((await board.getAttribute("data-plan-metrics"))!).height).toBeGreaterThanOrEqual(400);
+  const value=JSON.parse((await board.getAttribute("data-plan-metrics"))!);
+  expect(value.gutter).toBe(24);
+  expect(value.boundaryOccupation.height).toBeGreaterThan(.80);
+  expect(value.clipping).toBe(0);
+  expect(value.footprint.maxX-value.footprint.minX).toBe(28);
+  expect(value.footprint.maxY-value.footprint.minY).toBe(29.5);
+  const rectangles=await board.locator(".p6c-grid-area").evaluateAll(nodes=>nodes.map(node=>({width:Number(node.getAttribute("width")),height:Number(node.getAttribute("height"))})));
+  expect(rectangles).toHaveLength(4);
+  for(const rectangle of rectangles)expect(rectangle.width/rectangle.height).toBeCloseTo(1,6);
+  const cropped=await board.evaluate(node=>{
+    const outer=node.getBoundingClientRect();
+    return [...node.querySelectorAll('[data-station-drawing]')].filter(part=>{
+      const box=part.getBoundingClientRect();
+      return box.left<outer.left-1||box.top<outer.top-1||box.right>outer.right+1||box.bottom>outer.bottom+1;
+    }).length;
+  });
+  expect(cropped).toBe(0);
+  expect(fixture.writes()).toBe(0);expect(JSON.stringify(fixture.bundle)).toBe(fixture.original);
+});

@@ -138,10 +138,10 @@ export function Sidebar() {
 }
 
 /** Uses the shared Sheet primitive for modal focus management and closes on navigation. */
-export function MobileNavigation() {
+export function MobileNavigation({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="lg:hidden">
+    <div className={cn("lg:hidden", className)}>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={
