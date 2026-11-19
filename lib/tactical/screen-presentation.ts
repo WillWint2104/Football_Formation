@@ -19,7 +19,7 @@ export const screenCoachingPalette: TacticalPaint = {
 
 export const viewerCoachingPalette: TacticalPaint = {
   ...screenCoachingPalette,
-  field: "#567b42", stripe: "#62894c", surround: "#304538",
+  field: "#4e7638", stripe: "#5f8543", surround: "#6d8557",
   outline: "#213b2b", ink: "#132f27", line: "#f6f8e9", area: "#163c32",
   cone: "#f7a238", equipment: "#f6d463", a: "#1558b6", b: "#b92f45",
 };

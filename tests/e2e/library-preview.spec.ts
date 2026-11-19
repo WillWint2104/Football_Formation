@@ -195,7 +195,9 @@ test("review B distinguishes an invalid diagram index and keeps the exact attach
   const board = page.getByRole("region", { name: "Tactical workspace" });
   await expect(board.getByRole("alert")).toHaveText("The selected diagram revision is unavailable.");
   await expect(board.locator(".scene-diagram")).toHaveCount(0);
-  await board.getByRole("button", { name: "Diagram 1", exact: true }).click();
+  const recovery = board.getByRole("combobox", { name: "Attached diagram" });
+  await expect(recovery).toHaveValue("-1");
+  await recovery.selectOption("0");
   await expect(board.locator(".scene-diagram")).toHaveAttribute("data-time", "2");
   await page.goBack();
   await expect(diagram).toHaveAttribute("aria-pressed", "false");

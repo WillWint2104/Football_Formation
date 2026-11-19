@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { coachingPresentationBundle } from "../fixtures/coaching-presentation";
 import { domainBundleSchema } from "../../lib/domain/validation";
 
-async function viewerFixture(page: Page, areaLength?: number) {
+async function viewerFixture(page: Page, { activityCount, areaLength }: { activityCount?: number; areaLength?: number } = {}) {
   const { bundle, session, scene } = coachingPresentationBundle();
   const activity = session.content.activities[1];
   if (areaLength !== undefined && activity.content.area) activity.content.area.length = areaLength;
@@ -11,6 +11,12 @@ async function viewerFixture(page: Page, areaLength?: number) {
   activity.content.instructions = Array.from({ length: 18 }, (_, i) => `Step ${i + 1}. Check shoulders before receiving and support the spare player to break the line.`);
   scene.stages[0].tracks.push({ id: "coach-note", kind: "annotation", visibleFrom: 0, visibleUntil: 2,
     annotation: { kind: "note", position: { x: 15, y: 7 }, text: "Turn out of pressure before looking forward." } });
+  if (activityCount) {
+    const activities = session.content.activities;
+    session.content.activities = [...activities, ...Array.from({ length: activityCount - activities.length }, (_, index) => ({
+      ...structuredClone(activity), id: `viewer-check-${index + 1}`,
+    }))];
+  }
   bundle.sessions.push({ ...structuredClone(session), revision: 2, content: { ...structuredClone(session.content), title: "Revised plan" } });
   const snapshot = domainBundleSchema.parse(bundle);
   const original = structuredClone(snapshot);
@@ -71,15 +77,17 @@ test("separates activity, diagram and authored stages and keeps the pitch stable
   await expect(board).toHaveAttribute("data-frame-width", "20");
   await expect(board.locator("[data-entity-id=p6]")).toHaveAttribute("data-world-x", "3.5");
   await expect(board.locator("[data-entity-id=cone]")).toHaveCount(1);
+  const savedBounds = await board.boundingBox();
   await tactical.getByRole("button", { name: "Next scene stage" }).click();
   await expect(board).toHaveAttribute("data-time", "2");
   await expect(board).toHaveAttribute("data-frame-fit", "exercise");
   await expect(board.locator("[data-entity-id=p6]")).toHaveAttribute("data-world-x", "4");
   await expect(board.locator("[data-entity-id=cone]")).toHaveCount(0);
-  const stage = tactical.getByRole("button", { name: "Stage 3: Authored phase 3" });
+  expect(await board.boundingBox()).toEqual(savedBounds);
+  const stage = tactical.getByRole("combobox", { name: "Scene stage" });
   await stage.focus();
-  await page.keyboard.press("Enter");
-  await expect(stage).toHaveAttribute("aria-current", "step");
+  await page.keyboard.press("ArrowDown");
+  await expect(stage.locator("option:checked")).toHaveText("3 of 6 · Authored phase 3");
   await expect(board.locator("[data-entity-id=p6]")).toHaveAttribute("data-world-x", "5");
   await expect(board).toHaveAttribute("data-frame-fit", "exercise");
   await tactical.getByRole("button", { name: "Saved view" }).click();
@@ -96,12 +104,14 @@ test("separates activity, diagram and authored stages and keeps the pitch stable
   expect(bounds.height).toBeGreaterThan(320);
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   const guidance = page.getByRole("complementary", { name: "Coaching information" });
-  const instructions = guidance.getByRole("tabpanel", { name: "Instructions", exact: true });
+  const instructions = guidance.getByRole("tabpanel", { name: "Coaching", exact: true });
+  await expect(instructions.getByRole("heading", { name: "How to run" })).toBeVisible();
+  await expect(instructions.getByText("Step 18. Check shoulders before receiving and support the spare player to break the line.")).toBeAttached();
   await instructions.focus();
   await page.keyboard.press("PageDown");
   await expect.poll(() => instructions.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
   expect(await board.boundingBox()).toEqual(bounds);
-  await guidance.getByRole("tab", { name: "Instructions" }).focus();
+  await guidance.getByRole("tab", { name: "Coaching" }).focus();
   await page.keyboard.press("ArrowRight");
   const equipment = guidance.getByRole("tab", { name: "Equipment" });
   await expect(equipment).toBeFocused();
@@ -118,7 +128,10 @@ test("separates activity, diagram and authored stages and keeps the pitch stable
   await tactical.getByRole("button", { name: "Exit fullscreen" }).click();
   await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
   await expect(board).toHaveAttribute("data-time", "1");
-  await tactical.getByRole("button", { name: "Diagram 2" }).click();
+  await expect(tactical.getByRole("button", { name: "Fullscreen tactical board" })).toBeFocused();
+  const nextDiagram = tactical.getByRole("button", { name: "Next diagram" });
+  await nextDiagram.click();
+  await expect(nextDiagram).toBeFocused();
   await expect(board).toHaveAttribute("data-time", "4");
   await expect(board).toHaveAttribute("data-revision", "2");
   await expect(board).toHaveAttribute("data-frame-fit", "all");
@@ -139,7 +152,7 @@ test("an unavailable attachment, booking or invalid snapshot never substitutes a
   await page.goto(fixture.url.replace("diagram=1", "diagram=9"));
   await expect(page.getByRole("region", { name: "Tactical workspace" }).getByRole("alert")).toHaveText("The selected diagram revision is unavailable.");
   await expect(page.locator(".scene-diagram")).toHaveCount(0);
-  await page.getByRole("button", { name: "Diagram 1", exact: true }).click();
+  await page.getByRole("combobox", { name: "Attached diagram" }).selectOption("0");
   await expect(page.locator(".scene-diagram")).toHaveAttribute("data-revision", "3");
   await page.goto(fixture.url.replace("bookingRevision=1", "bookingRevision=99"));
   await expect(page.getByRole("heading", { name: "Saved session unavailable" })).toBeVisible();
@@ -151,6 +164,58 @@ test("an unavailable attachment, booking or invalid snapshot never substitutes a
   await expect(page.getByRole("heading", { name: "Saved session unavailable" })).toBeVisible();
   await expect(page.locator(".scene-diagram")).toHaveCount(0);
   expect(fixture.writes()).toBe(0);
+});
+
+test("keeps a long activity sequence in one row and reveals selection without losing keyboard focus", async ({ page }) => {
+  const fixture = await viewerFixture(page, { activityCount: 12 });
+  await page.goto(fixture.url);
+  const sequence = page.getByRole("navigation", { name: "Activity sequence" });
+  const strip = sequence.locator(".viewer-activity-steps");
+  const cards = strip.getByRole("button");
+  const next = page.getByRole("button", { name: "Next activity" });
+  const visible = (index: number) => cards.nth(index).evaluate(card => {
+    const item = card.getBoundingClientRect(), viewport = card.parentElement!.getBoundingClientRect();
+    return item.left >= viewport.left - 1 && item.right <= viewport.right + 1;
+  });
+  await expect(cards).toHaveCount(12);
+  await expect.poll(() => visible(11)).toBe(false);
+  const stripHeight = (await strip.boundingBox())!.height;
+  await next.focus();
+  for (let step = 2; step < 12; step++) await page.keyboard.press("Enter");
+  await expect(cards.last()).toHaveAttribute("aria-current", "step");
+  await expect.poll(() => visible(11)).toBe(true);
+  await expect(next).toBeFocused();
+  await expect(next).toBeDisabled();
+  expect((await strip.boundingBox())!.height).toEqual(stripHeight);
+  await cards.last().focus();
+  await page.keyboard.press("Home");
+  await expect(cards.first()).toBeFocused();
+  await expect(cards.first()).toHaveAttribute("aria-current", "step");
+  await expect.poll(() => visible(0)).toBe(true);
+  expect(fixture.writes()).toBe(0);
+});
+
+test("header actions use the existing exact editor and copy confirmation without writing from the viewer", async ({ page }) => {
+  const fixture = await viewerFixture(page);
+  await page.goto(`${fixture.url}&q=Rondos&type=possession`);
+  const editor = page.getByRole("link", { name: "Edit Session" });
+  await expect(editor).toHaveAttribute("href", /\/sessions\?event=sample-4&revision=1&organization=.*&q=Rondos&type=possession/);
+  await expect(page.getByRole("button", { name: "Schedule independent copy" })).toHaveCount(0);
+  await editor.click();
+  await expect(page.locator(".coaching-editor")).toBeVisible();
+  const current = new URL(fixture.url, page.url());
+  current.searchParams.set("revision", "2");
+  current.searchParams.delete("booking");
+  current.searchParams.delete("bookingRevision");
+  current.searchParams.set("q", "Revised plan");
+  await page.goto(current.href);
+  await page.getByRole("button", { name: "Schedule independent copy" }).click();
+  await expect(page.getByRole("dialog", { name: "Schedule independent copy" })).toBeVisible();
+  await page.getByRole("button", { name: "Close scheduling form" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("searchbox", { name: "Find sessions" })).toHaveValue("Revised plan");
+  expect(fixture.writes()).toBe(0);
+  expect(fixture.snapshot).toEqual(fixture.original);
 });
 
 test("review A opens a saved-session link for a second membership and refuses an unlisted organisation", async ({ page }) => {
@@ -197,7 +262,7 @@ test("review A opens a saved-session link for a second membership and refuses an
 });
 
 test("review D shows a framing warning and renders the exact diagram with its saved context", async ({ page }) => {
-  const fixture = await viewerFixture(page, 0.005);
+  const fixture = await viewerFixture(page, { areaLength: 0.005 });
   await page.goto(fixture.url);
   const tactical = page.getByRole("region", { name: "Tactical workspace" });
   await expect(tactical.getByText(/Activity dimensions cannot frame this diagram/)).toBeVisible();

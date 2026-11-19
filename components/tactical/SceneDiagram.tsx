@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import type { Projection } from "@/lib/tactical/viewport";
 import { drawScene, type DrawingOptions, type SceneDrawing } from "@/lib/tactical/drawing";
 import { renderDrawingNode } from "./DrawingNodes";
@@ -17,7 +17,7 @@ type DiagramProps = {
   screenMode?: DiagramSize;
   sizingSeconds?: number;
   autoFitContent?: boolean;
-  viewer?: { frameNote?: string; onShowAll?: () => void };
+  viewer?: { caption?: ReactNode; frameNote?: string; onShowAll?: () => void };
   interaction?: { down: DiagramPointer; move: DiagramPointer; up: DiagramPointer; cancel: () => void };
 };
 
@@ -85,6 +85,7 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
   return <div className="screen-diagram-layout">
     {board}
     <div className="screen-diagram-footer">
+      {viewer?.caption}
       <div className="screen-diagram-status">
         <span>{cropMessage ? <span className="screen-diagram-crop" role="status">{viewer ? "Current frame: " : ""}{cropMessage}{!autoFitContent && !viewer && " Use Fit all content."}</span> : frameSummary}</span>
         {cropMessage && viewer?.onShowAll && <button className="viewer-show-all" type="button" onClick={viewer.onShowAll}>Show all</button>}
