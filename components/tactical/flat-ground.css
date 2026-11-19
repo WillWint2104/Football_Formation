@@ -1,0 +1,177 @@
+/* Accepted P6d flat turf, shared by the measured board and practice panels. */
+.ground-layout-tools { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:0 2px 7px; flex:none; }
+.ground-layout-tools .p6a-choices { display:flex; flex-wrap:wrap; align-items:center; gap:4px; padding:2px; border:1px solid var(--viewer-edge); border-radius:6px; background:white; }
+.ground-layout-tools .p6a-choices button,
+.ground-layout-designation select { min-height:32px; padding:4px 9px; border:1px solid var(--viewer-edge); border-radius:4px; background:white; color:var(--viewer-ink); font-size:14px; font-weight:650; }
+.ground-layout-tools .p6a-choices button[aria-pressed=true] { background:var(--viewer-navy); color:white; }
+.ground-layout-designation select { max-width:100%; }
+.p6e-station-focus { display:flex; gap:3px; }
+.p6e-station-focus button { padding:4px 8px; min-width:32px; min-height:32px; border:1px solid var(--viewer-edge); border-radius:4px; background:white; color:var(--viewer-ink); font-size:14px; }
+.p6e-station-focus button[aria-pressed=true] { background:var(--viewer-navy); color:white; }
+.p6e-focused-provenance { color:var(--viewer-ink); font-size:14px; }
+.p6c-grid-board,
+.p6c-practice-surface {
+  --ground-light: #6c8845;
+  --ground-dark: #6a8644;
+  --ground-band: 6.25%;
+  background-color: var(--ground-dark);
+  background-image: url("/ground-layout/grain.png"),
+    repeating-linear-gradient(
+      90deg,
+      var(--ground-light) 0 var(--ground-band),
+      var(--ground-dark) var(--ground-band) calc(2 * var(--ground-band))
+    );
+  background-position: center;
+  background-size: cover, 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.p6c-practice-surface {
+  --ground-band: 25%;
+}
+
+/* Station outlines carry meaning independently from the continuous turf. */
+.p6c-grid-board .p6c-grid-area,
+.p6c-grid-board .p6c-grid-area[data-area-source] {
+  fill: none;
+  stroke: #fbf7db;
+}
+
+.p6d-display > div > label {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+  gap: 8px;
+}
+
+.p6d-display input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #175d91;
+}
+
+.p6d-measurement line {
+  stroke: #fffbe8;
+  stroke-width: 1.4;
+}
+
+.p6d-measurement text,
+.p6d-measurement-label {
+  text-anchor: middle;
+  fill: white;
+  stroke: #1c3d2e;
+  stroke-width: 3px;
+  paint-order: stroke;
+  font: 700 12px system-ui, sans-serif;
+}
+
+.p6d-overview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  background: #e7eff5;
+  color: #193b54;
+}
+
+.p6d-overview > p {
+  flex: none;
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+
+.p6d-overview-panels {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+}
+
+.p6d-overview-panel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #acc3d5;
+  border-radius: 6px;
+  background: white;
+}
+
+.p6d-overview-panel > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 6px;
+  padding: 7px 8px;
+  font-size: 12px;
+}
+
+.p6d-overview-panel > header span {
+  font-size: 11px;
+  color: #3b5c73;
+}
+
+.p6d-panel-board {
+  position: relative;
+  height: clamp(145px, 25vh, 330px);
+}
+
+.p6d-panel-board .p6c-grid-board {
+  --ground-band: 25%;
+}
+
+.p6d-panel-inspect {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  padding: 3px 7px;
+  background: #f7fbff;
+  color: #143c5b;
+  border: 1px solid #a4bcd0;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.p6c-controls { display:flex; flex-wrap:wrap; align-items:center; gap:4px 7px; color:var(--viewer-muted); font-size:12px; font-weight:650; }
+.p6c-controls label { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+.p6c-controls select,.p6c-controls input,.p6c-panel summary {
+  min-height:31px; padding:4px 6px; border:1px solid var(--viewer-edge); border-radius:5px;
+  color:var(--viewer-ink); background:white; font:inherit;
+}
+.p6c-controls input[type=number] { width:58px; }
+.p6c-controls select { max-width:169px; }
+.p6c-controls :is(button,input,select,summary):focus-visible,.p6c-map-tag:focus-visible { outline:2px solid #1a73b8; outline-offset:2px; }
+.p6c-panel { position:relative; }
+.p6c-panel summary { display:flex; align-items:center; gap:5px; cursor:pointer; list-style:none; }
+.p6c-panel summary::after { content:"▾"; font-size:11px; }
+.p6c-panel>div {
+  position:absolute; z-index:7; top:calc(100% + 6px); right:0; width:max-content; min-width:232px; max-width:min(390px,85vw);
+  padding:10px; border:1px solid #ccdbe6; border-radius:7px; background:#fff; box-shadow:0 9px 22px #142c4930; color:var(--viewer-ink);
+}
+.p6c-panel table { border-collapse:collapse; width:100%; margin-top:6px; }
+.p6c-panel td,.p6c-panel th { text-align:left; padding:5px 6px; border-bottom:1px solid #e1e9f1; }
+.p6c-names-row { display:flex; gap:7px; margin-top:7px; }
+.p6c-names-row label { display:grid; flex:1; }
+.p6c-names-row input { width:132px; }
+.p6c-grid-board {
+  position:absolute; inset:0; overflow:hidden; border-radius:4px;
+}
+.p6c-grid-board[data-ready="false"] { visibility:hidden; }
+.scene-diagram:has(.p6c-grid-board[data-ready="true"])>svg { visibility:hidden; }
+.viewer-tactical:has(.p6c-grid-board[data-ready="true"]) .viewer-framing-controls :is(.coaching-fit-controls,.viewer-tool-label) { display:none; }
+.p6c-grid-board svg { position:absolute; inset:0; display:block; }
+.p6c-grid-area { fill:none; stroke:#fbf7db; stroke-width:1.7; stroke-dasharray:7 4; }
+.p6c-grid-area[data-area-source="authored"] { stroke-dasharray:none; }
+.p6c-gap line { stroke:#edf5d6; stroke-width:1; }
+.p6c-gap circle { fill:#edf5d6; }
+.p6c-gap text { fill:#fff; paint-order:stroke; stroke:#2e4c2e; stroke-width:3; text-anchor:middle; font:700 10px system-ui,sans-serif; }
+.p6c-map-tag {
+  position:absolute; display:inline-flex; align-items:center; gap:5px; min-height:20px; padding:2px 6px;
+  border-radius:4px; border:1px solid #e3ecc474; background:#193b32; color:#fff;
+  font:600 11px/1.15 system-ui,sans-serif; white-space:nowrap; cursor:pointer; overflow:hidden;
+}
+.p6c-map-tag strong { overflow:hidden; text-overflow:ellipsis; }
+.p6c-map-tag span { color:#deedd3; flex:none; }
+.p6c-map-tag[data-station-kind="repeat"] { background:#173c54; border-color:#b8def1a1; }
+.p6c-map-tag[data-station-kind="repeat"] span { color:#d5ebf9; }
+.p6c-map-tag:disabled { cursor:default; opacity:1; }

@@ -192,6 +192,29 @@
 .viewer-tactical:fullscreen { width:100%; height:100%; padding:12px; background:#f3f6fb; }
 .viewer-tactical:fullscreen > .viewer-activity-arrows { justify-content:end; padding-top:7px; }
 
+/* Native browser zoom reduces CSS width: let this viewer scroll instead of squeezing its title and board. */
+@media (max-width:1050px) {
+  #main-content:has(.session-viewer) { padding:10px 16px 16px; }
+  .session-viewer { height:auto; min-height:calc(100dvh - var(--viewer-shell-height)); grid-template-rows:auto auto minmax(520px,auto) auto; }
+  .session-viewer:not(:has(.viewer-activity-navigation)) { grid-template-rows:auto minmax(520px,auto); }
+  .viewer-session-header { display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 12px; }
+  .viewer-session-title { grid-column:1 / -1; grid-row:2; border:0; padding:0; }
+  .viewer-session-title h1 { font-size:30px; line-height:1.12; overflow-wrap:normal; }
+  .viewer-session-actions { grid-column:2; grid-row:1; }
+  .viewer-session-actions .viewer-button { white-space:normal; text-align:left; }
+  .viewer-workspace { grid-template-columns:minmax(0,1fr); }
+  .viewer-tactical .coaching-preview-surface { min-height:420px; flex:0 0 420px; }
+  .viewer-tactical .scene-diagram { min-height:340px; }
+  .viewer-guidance { min-height:360px; max-height:560px; }
+  .viewer-tactical:fullscreen { overflow:auto; display:block; }
+  .viewer-tactical:fullscreen .coaching-diagram-preview { height:auto; min-height:0; }
+  .viewer-tactical:fullscreen > .viewer-activity-arrows { padding-bottom:12px; }
+  .viewer-tactical .p6d-overview { overflow:auto; }
+  .viewer-tactical .p6d-overview-panels { flex-wrap:wrap; align-content:start; align-items:stretch; }
+  .viewer-tactical .p6d-overview-panel { flex:0 0 calc(50% - 5px); }
+  .viewer-tactical .p6d-panel-board { height:230px; }
+}
+
 .viewer-activity-footer {
   display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:46px;
   padding:4px 0 0; border-top:1px solid var(--viewer-edge);

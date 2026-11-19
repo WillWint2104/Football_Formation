@@ -8,6 +8,8 @@ import { evaluateScene } from "@/lib/tactical/evaluate";
 import { stageRanges } from "@/lib/tactical/animation";
 import type { DiagramSize } from "@/lib/tactical/screen-presentation";
 import { SceneDiagram } from "./SceneDiagram";
+import { GroundLayoutPresentation } from "./GroundLayoutPresentation";
+import type { InventoryItem } from "@/lib/tactical/grid-plan";
 import "./coaching-preview.css";
 
 type Frame = "exercise" | "all" | "pitch";
@@ -19,7 +21,8 @@ const frames: { value: Frame; label: string; short: string }[] = [
 type Props = {
   scene: TacticalScene; title: string; seconds: number; area?: TrainingArea | null;
   fit?: Frame; screenMode: DiagramSize; onFitChange?: (fit: Frame) => void;
-  presentation?: { heading: ReactNode; action: ReactNode; attachments: ReactNode };
+  presentation?: { heading: ReactNode; action: ReactNode; attachments: ReactNode; activityId: string; diagramIndex: number;
+    equipment?: readonly InventoryItem[] };
 };
 
 /** Accept only an already resolved owner snapshot; this adapter has no storage or save operation. */
@@ -70,6 +73,11 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   }} aria-label={presentation ? "Saved view" : undefined} title={presentation ? "Return to saved view" : undefined}>
     {presentation ? <RotateCcw size={15} aria-hidden="true" /> : `Saved moment · ${savedSeconds} s`}
   </button>;
+  const drawing = (overlay?: ReactNode, coachingFrame?: string) => <div className="coaching-preview-surface"><SceneDiagram scene={scene} title={title} screenMode={screenMode} sizingSeconds={savedSeconds} options={options}
+    viewer={presentation ? { overlay, coachingFrame, caption: presentation.heading, onShowAll: frame !== "all" ? () => chooseFrame("all") : undefined,
+      frameNote: frame === "all" && opening?.fit === "all"
+        ? opening.omitArea ? "Fit all · This attachment sits outside the activity area." : "Fit all · Includes content beyond the exercise boundary."
+        : undefined } : undefined} /></div>;
   return <div className="coaching-diagram-preview" data-saved-time={savedSeconds}>
     {presentation ? <div className="viewer-diagram-toolbar">
         {presentation.attachments}
@@ -96,11 +104,11 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
         {range && <label className="coaching-stage-time">Pose <input aria-label="Scene stage pose seconds" type="range" min={0} max={range.stage.durationSeconds} step={0.01} value={Math.max(0, seconds - range.start)} onChange={e => setSeconds(range.start + Number(e.target.value))} /><span>{(seconds - range.start).toFixed(1)} s</span></label>}
         {fitControls}{reset}</div>}
     {coachingAreaWarning(scene, area) && <p className="coaching-area-warning" role="status">{coachingAreaWarning(scene, area)}</p>}
-    <div className="coaching-preview-surface"><SceneDiagram scene={scene} title={title} screenMode={screenMode} sizingSeconds={savedSeconds} options={options}
-      viewer={presentation ? { caption: presentation.heading, onShowAll: frame !== "all" ? () => chooseFrame("all") : undefined,
-        frameNote: frame === "all" && opening?.fit === "all"
-          ? opening.omitArea ? "Fit all · This attachment sits outside the activity area." : "Fit all · Includes content beyond the exercise boundary."
-          : undefined } : undefined} /></div>
+    {presentation ? <GroundLayoutPresentation scene={scene}
+      identity={JSON.stringify([presentation.activityId,presentation.diagramIndex,scene.organizationId,scene.id,scene.revision,savedSeconds,area])}
+      seconds={seconds} savedSeconds={savedSeconds} stage={selected} options={options} equipment={presentation.equipment ?? []}>
+      {drawing}
+    </GroundLayoutPresentation> : drawing()}
     {!presentation && <span className="coaching-preview-provenance">r{scene.revision} · Saved moment {savedSeconds} s · Viewing {seconds.toFixed(1)} s{!atSavedMoment ? " · view only; saved pin unchanged" : ""}</span>}
   </div>;
 }
