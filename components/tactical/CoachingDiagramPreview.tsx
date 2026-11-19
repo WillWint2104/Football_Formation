@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Layers2, RotateCcw } from "lucide-react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import type { TacticalScene, TrainingArea } from "@/lib/domain/tactical-scene";
 import { coachingScreenOptions, coachingAreaWarning, coachingOpeningFrame } from "@/lib/tactical/coaching-view";
 import { evaluateScene } from "@/lib/tactical/evaluate";
@@ -10,10 +11,10 @@ import { SceneDiagram } from "./SceneDiagram";
 import "./coaching-preview.css";
 
 type Frame = "exercise" | "all" | "pitch";
-const frames: { value: Frame; label: string }[] = [
-  { value: "exercise", label: "Fit exercise" },
-  { value: "pitch", label: "Fit pitch" },
-  { value: "all", label: "Fit all content" },
+const frames: { value: Frame; label: string; short: string }[] = [
+  { value: "exercise", label: "Fit exercise", short: "Exercise" },
+  { value: "pitch", label: "Fit pitch", short: "Pitch" },
+  { value: "all", label: "Fit all content", short: "All" },
 ];
 type Props = {
   scene: TacticalScene; title: string; seconds: number; area?: TrainingArea | null;
@@ -40,6 +41,7 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   const frame = onFitChange ? fit : manualFrame ?? opening?.fit ?? fit;
   const chooseFrame = onFitChange ?? setManualFrame;
   const ranges = stageRanges(scene), index = ranges.findIndex(r => r.stage.id === selected), range = ranges[index];
+  const stageSelect = useRef<HTMLSelectElement>(null);
   const atSavedMoment = seconds === savedSeconds && selected === savedStage;
   const choose = (next: number) => { const r = ranges[next]; if (r) { setSelected(r.stage.id); setSeconds(r.start); } };
   const options = { ...coachingScreenOptions(scene, seconds, area, frame), poseStageId: selected || undefined };
@@ -57,39 +59,48 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
     <button type="button" aria-label="Next scene stage" disabled={index === ranges.length - 1} onClick={() => choose(index + 1)}>›</button>
   </> : <strong>Static diagram</strong>;
   const fitControls = <div className="coaching-fit-controls" role="group" aria-label="Fit diagram">
-    {frames.map(({ value, label }) => <button key={value} type="button" aria-pressed={frame === value}
-      onClick={() => chooseFrame(value)}>{presentation && value === "all" ? "Fit all" : label}</button>)}
+    {frames.map(({ value, label, short }) => <button key={value} type="button" aria-pressed={frame === value}
+      aria-label={presentation ? value === "all" ? "Fit all" : label : undefined}
+      onClick={() => chooseFrame(value)}>{presentation ? short : label}</button>)}
   </div>;
-  const reset = !atSavedMoment && <button type="button" onClick={() => { setSeconds(savedSeconds); setSelected(savedStage); }}>{presentation ? "Saved view" : `Saved moment · ${savedSeconds} s`}</button>;
+  const reset = !atSavedMoment && <button className={presentation ? "viewer-button" : undefined} type="button" onClick={() => {
+    stageSelect.current?.focus();
+    setSeconds(savedSeconds);
+    setSelected(savedStage);
+  }} aria-label={presentation ? "Saved view" : undefined} title={presentation ? "Return to saved view" : undefined}>
+    {presentation ? <RotateCcw size={15} aria-hidden="true" /> : `Saved moment · ${savedSeconds} s`}
+  </button>;
   return <div className="coaching-diagram-preview" data-saved-time={savedSeconds}>
-    {presentation ? <><div className="viewer-diagram-toolbar">{presentation.heading}{fitControls}{presentation.action}</div>{presentation.attachments}</>
+    {presentation ? <div className="viewer-diagram-toolbar">
+        {presentation.attachments}
+        <div className="viewer-stage-toolbar viewer-tool-group" role="group" aria-label="Authored stage navigation">
+          <span className="viewer-tool-label" aria-hidden="true"><Layers2 size={15} />Stage</span>
+          {range && ranges.length > 1 ? <>
+            <select ref={stageSelect} aria-label="Scene stage" value={selected} title={range.stage.title}
+              onChange={e => choose(ranges.findIndex(r => r.stage.id === e.target.value))}>
+              {ranges.map((item, i) => <option key={item.stage.id} value={item.stage.id}>
+                {i + 1} of {ranges.length} · {item.stage.title}
+              </option>)}
+            </select>
+            <button type="button" aria-label="Previous scene stage" aria-disabled={index <= 0} onClick={() => choose(index - 1)}><ChevronLeft size={16} aria-hidden="true" /></button>
+            <button type="button" aria-label="Next scene stage" aria-disabled={index === ranges.length - 1} onClick={() => choose(index + 1)}><ChevronRight size={16} aria-hidden="true" /></button>
+            <span className="sr-only" aria-live="polite">Stage {index + 1} of {ranges.length} · {range.stage.title}</span>
+          </> : <span className="viewer-tool-status" title={range?.stage.title}>{range ? `1 of 1 · ${range.stage.title}` : "Static diagram"}</span>}
+          {reset}
+        </div>
+        <div className="viewer-framing-controls viewer-tool-group" role="group" aria-label="Pitch view">
+          <span className="viewer-tool-label" aria-hidden="true">Fit</span>{fitControls}{presentation.action}
+        </div>
+      </div>
       : <div className="coaching-scene-controls">{stageNavigation}
         {range && <label className="coaching-stage-time">Pose <input aria-label="Scene stage pose seconds" type="range" min={0} max={range.stage.durationSeconds} step={0.01} value={Math.max(0, seconds - range.start)} onChange={e => setSeconds(range.start + Number(e.target.value))} /><span>{(seconds - range.start).toFixed(1)} s</span></label>}
         {fitControls}{reset}</div>}
     {coachingAreaWarning(scene, area) && <p className="coaching-area-warning" role="status">{coachingAreaWarning(scene, area)}</p>}
     <div className="coaching-preview-surface"><SceneDiagram scene={scene} title={title} screenMode={screenMode} sizingSeconds={savedSeconds} options={options}
-      viewer={isViewer ? { onShowAll: frame !== "all" ? () => chooseFrame("all") : undefined,
+      viewer={presentation ? { caption: presentation.heading, onShowAll: frame !== "all" ? () => chooseFrame("all") : undefined,
         frameNote: frame === "all" && opening?.fit === "all"
           ? opening.omitArea ? "Fit all · This attachment sits outside the activity area." : "Fit all · Includes content beyond the exercise boundary."
           : undefined } : undefined} /></div>
-    {presentation ? <div className="viewer-stage-toolbar" role="group" aria-label="Authored stage navigation">
-      {range && ranges.length > 1 ? <>
-        <button type="button" aria-label="Previous scene stage" disabled={index <= 0} onClick={() => choose(index - 1)}>‹</button>
-        <div className="viewer-stage-current">
-          <span aria-live="polite">Stage {index + 1} of {ranges.length}</span>
-          {ranges.length <= 8 ? <strong title={range.stage.title}>{range.stage.title}</strong> :
-            <select aria-label="Scene stage" value={selected} onChange={e => choose(ranges.findIndex(r => r.stage.id === e.target.value))}>
-              {ranges.map(r => <option key={r.stage.id} value={r.stage.id}>{r.stage.title}</option>)}
-            </select>}
-        </div>
-        {ranges.length <= 8 && <div className="viewer-stage-steps" role="group" aria-label="Go to stage">
-          {ranges.map((r, i) => <button key={r.stage.id} type="button" title={r.stage.title} aria-label={`Stage ${i + 1}: ${r.stage.title}`}
-            aria-current={i === index ? "step" : undefined} onClick={() => choose(i)}>{i + 1}</button>)}
-        </div>}
-        <button type="button" aria-label="Next scene stage" disabled={index === ranges.length - 1} onClick={() => choose(index + 1)}>›</button>
-      </> : <strong>{range?.stage.title ?? "Static diagram"}</strong>}
-      {reset}
-    </div>
-      : <span className="coaching-preview-provenance">r{scene.revision} · Saved moment {savedSeconds} s · Viewing {seconds.toFixed(1)} s{!atSavedMoment ? " · view only; saved pin unchanged" : ""}</span>}
+    {!presentation && <span className="coaching-preview-provenance">r{scene.revision} · Saved moment {savedSeconds} s · Viewing {seconds.toFixed(1)} s{!atSavedMoment ? " · view only; saved pin unchanged" : ""}</span>}
   </div>;
 }
