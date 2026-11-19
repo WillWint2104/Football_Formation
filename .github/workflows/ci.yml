@@ -12,13 +12,14 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
 jobs:
-  validate:
-    name: Lint, types, tests and production build
+  build:
+    name: Audit, lint, types, unit tests and production build
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -41,7 +42,44 @@ jobs:
         run: npm test
       - name: Production build (default Turbopack)
         run: npm run build
+
+  browser:
+    name: Playwright (shard ${{ matrix.shard }}/2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build application for browser tests (default Turbopack)
+        run: npm run build
       - name: Install desktop test browser
         run: npx playwright install --with-deps chromium
       - name: Desktop calendar, session, guide, renderer and editor interactions
-        run: npm run test:e2e -- --workers=3
+        run: npm run test:e2e -- --workers=3 --shard=${{ matrix.shard }}/2
+
+  validate:
+    # Preserve the existing check name and require every validation job to succeed.
+    name: Lint, types, tests and production build
+    needs: [build, browser]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Require build validation and all browser shards
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: test "$BUILD_RESULT" = success && test "$BROWSER_RESULT" = success
