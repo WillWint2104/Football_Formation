@@ -1,0 +1,81 @@
+name: CI recovery fullscreen probe
+
+on:
+  push:
+    branches: [codex/c5-ci-recovery-preflight]
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  pinned:
+    name: Fullscreen in pinned Playwright image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f
+      options: --user 1001 --init --ipc=host
+    steps:
+      - name: Check out exact CI candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 40661d3ba46063b65d9f4e3c1fe8933289568f43
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build application (default Turbopack)
+        run: npm run build
+      - name: Repeat the exact fullscreen viewer scenario
+        run: npm run test:e2e -- tests/e2e/session-viewer.spec.ts --grep 'keeps the pitch stable' --workers=3 --repeat-each=5
+      - name: Retain synthetic Playwright failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fullscreen-pinned-failure
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  original:
+    name: Fullscreen on original Ubuntu runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact CI candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 40661d3ba46063b65d9f4e3c1fe8933289568f43
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build application (default Turbopack)
+        run: npm run build
+      - name: Install desktop test browser
+        run: npx playwright install --with-deps chromium
+      - name: Repeat the exact fullscreen viewer scenario
+        run: npm run test:e2e -- tests/e2e/session-viewer.spec.ts --grep 'keeps the pitch stable' --workers=3 --repeat-each=5
+      - name: Retain synthetic Playwright failure evidence
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fullscreen-original-failure
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
