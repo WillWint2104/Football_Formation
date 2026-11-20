@@ -22,7 +22,7 @@ jobs:
       - name: Check out exact CI candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: 40661d3ba46063b65d9f4e3c1fe8933289568f43
+          ref: ea94b531ba297ef92b8108fe79ed9faf2724a54a
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -54,7 +54,7 @@ jobs:
       - name: Check out exact CI candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: 40661d3ba46063b65d9f4e3c1fe8933289568f43
+          ref: ea94b531ba297ef92b8108fe79ed9faf2724a54a
           persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
