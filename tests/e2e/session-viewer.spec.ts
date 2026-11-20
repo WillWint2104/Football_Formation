@@ -96,7 +96,7 @@ test("separates activity, diagram and authored stages and keeps the pitch stable
   expect(bounds.height).toBeGreaterThan(320);
   expect(bounds.y + bounds.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   const guidance = page.getByRole("complementary", { name: "Coaching information" });
-  const instructions = guidance.getByRole("tabpanel");
+  const instructions = guidance.getByRole("tabpanel", { name: "Instructions", exact: true });
   await instructions.focus();
   await page.keyboard.press("PageDown");
   await expect.poll(() => instructions.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
@@ -106,9 +106,12 @@ test("separates activity, diagram and authored stages and keeps the pitch stable
   const equipment = guidance.getByRole("tab", { name: "Equipment" });
   await expect(equipment).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(guidance.getByRole("tabpanel")).toContainText("Balls");
-  await guidance.getByRole("tab", { name: "Notes" }).click();
-  await expect(guidance.getByRole("tabpanel")).toContainText("Turn out of pressure");
+  await expect(equipment).toHaveAttribute("aria-selected", "true");
+  await expect(guidance.getByRole("tabpanel", { name: "Equipment", exact: true })).toContainText("Balls");
+  const notes = guidance.getByRole("tab", { name: "Notes", exact: true });
+  await notes.click();
+  await expect(notes).toHaveAttribute("aria-selected", "true");
+  await expect(guidance.getByRole("tabpanel", { name: "Notes", exact: true })).toContainText("Turn out of pressure");
   await tactical.getByRole("button", { name: "Fullscreen tactical board" }).click();
   await expect.poll(() => page.evaluate(() => document.fullscreenElement?.getAttribute("aria-label"))).toBe("Tactical workspace");
   await expect.poll(async () => (await board.boundingBox())!.height).toBeGreaterThan(bounds.height);
