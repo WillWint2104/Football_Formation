@@ -1,0 +1,62 @@
+.screen-diagram-layout {
+  height: 100%;
+  min-width: 0;
+  display: grid;
+  /* Opening inspection or crossing a crop threshold must not change the camera. */
+  grid-template-rows: max(120px, calc(100% - 32px)) auto;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.screen-diagram-footer {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-top: 1px solid #bdcbb9;
+  background: #f4f7f1;
+  color: #294539;
+  font-size: 12px;
+}
+
+.screen-diagram-status {
+  display: flex;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.screen-diagram-crop { color: #654315; font-weight: 650; }
+.screen-diagram-inspection[open] { flex: 1 1 100%; }
+.screen-diagram-inspection > summary { cursor: pointer; min-height: 23px; padding: 3px 0; }
+.screen-diagram-inspection > ul {
+  list-style: none;
+  padding: 2px;
+  margin: 0;
+  max-height: 96px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.screen-diagram-inspection li > button {
+  width: 100%;
+  padding: 4px 8px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.screen-diagram-inspection li > button[aria-pressed="true"] {
+  background: #fff4c6;
+  border-color: #a68b43;
+}
+
+.screen-diagram-inspection :focus-visible { outline: 2px solid #075e89; outline-offset: -2px; }
+.calendar-scene-preview .screen-diagram-inspection > ul { max-height: 48px; }

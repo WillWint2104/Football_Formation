@@ -149,7 +149,8 @@ test("directory coaches can be assigned and reopened; historical team links cann
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("coaches.png"), fullPage: true });
   await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Sessions", exact: true }).click();
-  await page.locator(".coaching-catalog").getByRole("link", { name: /Rondos & Positional Play/ }).click();
+  await page.locator(".explorer-list").getByRole("link", { name: /Rondos & Positional Play/ }).click();
+  await page.getByRole("link", { name: "Edit session", exact: true }).click();
   await page.getByLabel("J. Specialist", { exact: true }).check();
   await page.getByLabel("Role for J. Specialist").selectOption("specialist");
   await page.getByRole("button", { name: "Save session", exact: true }).click();

@@ -27,6 +27,27 @@ test('Concept 01 frame, full-width seven-day week and actual fixture context at 
   await expect(page.locator('.calendar-week .scene-diagram')).toHaveCount(1);
   await expect(page.locator('.calendar-week .scene-diagram')).toHaveAttribute('data-revision','1');
   await expect(page.locator('.calendar-week .scene-diagram')).toHaveAttribute('data-time','2');
+  const thumbnail = page.locator('.programme-card-diagram .scene-diagram');
+  await expect(thumbnail).toHaveAttribute('data-screen-mode', 'compact');
+  if (info.project.name === 'desktop') {
+    const svg = thumbnail.locator('svg');
+    await expect(svg).toBeVisible();
+    const display = await svg.evaluate((el: SVGSVGElement) => {
+      const frame = el.getBoundingClientRect(), view = el.viewBox.baseVal;
+      return {
+        widthRatio: frame.width / view.width, heightRatio: frame.height / view.height,
+        disc: el.querySelector('[data-player-disc]')?.getBoundingClientRect().width,
+        numbers: [...el.querySelectorAll('[data-player-number]')].map(text => parseFloat(getComputedStyle(text).fontSize) * Math.min(frame.width / view.width, frame.height / view.height)),
+      };
+    });
+    expect(display.widthRatio).toBeCloseTo(1, 2);
+    expect(display.heightRatio).toBeCloseTo(1, 2);
+    expect(display.disc).toBeGreaterThanOrEqual(8.5);
+    expect(display.disc).toBeLessThan(14);
+    expect(display.numbers.every(size => size >= 10)).toBe(true);
+  } else {
+    await expect(thumbnail).toBeHidden();
+  }
   await expect(page.locator('.calendar-week img')).toHaveCount(0);
   await expect(page.getByRole('navigation',{name:'Primary navigation',exact:true}).getByRole('link')).toHaveCount(5);
   await expect(page.getByRole('navigation',{name:'Main navigation',exact:true}).getByRole('link')).toHaveCount(5);
@@ -105,10 +126,13 @@ test('week controls keep actual dates, team/type filtering, native picker and co
   await page.screenshot({path:info.outputPath('programme-month-preserved.png')});expect(m.writes()).toBe(0);
 });
 
-test('Calendar frame is scoped and existing C3 / native session routes retain their shell',async({page})=>{
+test('Calendar and Saved Sessions share the navy frame while editors retain their existing shell',async({page})=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);
   await page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Sessions',exact:true}).click();await expect(page).toHaveURL(/\/sessions$/);
-  await expect(page.locator('.programme-frame-header')).toHaveCount(0);expect(await page.locator('body > aside').evaluate(e=>getComputedStyle(e).width)).toBe('240px');
+  await expect(page.locator('.programme-frame-header')).toBeVisible();
+  await expect(page.getByRole('navigation',{name:'Primary navigation'}).getByRole('link',{name:'Sessions',exact:true})).toHaveAttribute('aria-current','page');
+  await page.goto('/sessions?event=sample-4&revision=1');
+  await expect(page.locator('.programme-frame-header')).toBeHidden();expect(await page.locator('body > aside').evaluate(e=>getComputedStyle(e).width)).toBe('240px');
   await page.goto('/session-designer');await expect(page.locator('.programme-frame-header')).toHaveCount(0);await expect(page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Session Designer',exact:true})).toHaveAttribute('aria-current','page');
   expect(m.writes()).toBe(0);
 });

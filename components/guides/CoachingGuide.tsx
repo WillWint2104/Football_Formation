@@ -4,6 +4,7 @@ import type { Session } from "@/lib/domain/session";
 import { localParts, sessionLabels } from "@/lib/calendar/schedule";
 import { activityTotals } from "@/lib/coaching/sessions";
 import { SceneDiagram } from "@/components/tactical/SceneDiagram";
+import { coachingDrawingOptions } from "@/lib/tactical/coaching-view";
 
 /** Present every coaching field from the exact saved revision; diagram slots retain stable activity identities. */
 export function CoachingGuide({ bundle, session, event }: { bundle: DomainBundle; session: Session; event?: CalendarEvent }) {
@@ -30,7 +31,7 @@ export function CoachingGuide({ bundle, session, event }: { bundle: DomainBundle
             <aside className="guide-diagram-slot" aria-label={`Diagram position for ${content.title}`}><strong>Activity diagram</strong>
               {content.diagrams.length ? content.diagrams.map((diagram, n) => {
                 const scene = bundle.scenes.find((s) => s.id === diagram.scene.id && s.revision === diagram.scene.revision);
-                return <figure className="guide-saved-diagram" key={n}>{scene ? <div className="guide-diagram-canvas"><SceneDiagram scene={scene} title={`${content.title} · diagram ${n + 1}`} options={{ fit: "exercise", exerciseArea: content.area ?? undefined, seconds: diagram.representativeSeconds }} /></div> : <p role="alert">The referenced scene revision is unavailable.</p>}<figcaption>Scene {diagram.scene.id} · revision {diagram.scene.revision} · {diagram.representativeSeconds}s</figcaption></figure>;
+                return <figure className="guide-saved-diagram" key={n}>{scene ? <div className="guide-diagram-canvas"><SceneDiagram scene={scene} title={`${content.title} · diagram ${n + 1}`} options={coachingDrawingOptions(scene, diagram.representativeSeconds, content.area)} /></div> : <p role="alert">The referenced scene revision is unavailable.</p>}<figcaption>Scene {diagram.scene.id} · revision {diagram.scene.revision} · {diagram.representativeSeconds}s</figcaption></figure>;
               }) : <p>No diagram attached to this activity.</p>}</aside></div>
           <section><h3>Setup & delivery instructions</h3>{content.instructions.length ? <ol>{content.instructions.map((line, n) => <li key={n}>{line}</li>)}</ol> : <p className="calendar-muted">Not specified</p>}</section>
           <div className="guide-coaching-notes">{([ ["Coaching points", content.coachingPoints], ["Progressions", content.progressions], ["Regressions", content.regressions], ["Variations", content.variations] ] as const).map(([title, lines]) => <section key={title}><h3>{title}</h3>{lines.length ? <ul>{lines.map((line, n) => <li key={n}>{line}</li>)}</ul> : <p className="calendar-muted">Not specified</p>}</section>)}</div>

@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { CoachingProvider } from "@/components/coaching/CoachingProvider";
 import { LocalHistoryGuard } from "@/components/designer/LocalHistoryGuard";
 import "./globals.css";
+import "../components/tactical/screen-diagram.css";
 
 const inter = Inter({
   variable: "--font-inter",

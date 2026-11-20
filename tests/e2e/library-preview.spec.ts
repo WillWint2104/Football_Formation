@@ -4,8 +4,14 @@ import { domainBundleSchema } from "../../lib/domain/validation";
 import { sessionCopyIds, type SessionCopyRequest } from "../../lib/coaching/session-copy";
 
 /** Contract stand-in only: no authentication, hosted calls, credentials or C3 package writes. */
-async function storage(page: Page, failure?: number | "lost-ack") {
+async function storage(page: Page, failure?: number | "lost-ack", multipleBookings = false) {
   let bundle = libraryPreviewExample(), version = 4, writes = 0;
+  if (multipleBookings) {
+    const original = bundle.events.find(e => e.id === "sample-4")!;
+    bundle.events.push({ ...structuredClone(original), id: "other-rondo-booking", localDate: "2026-11-10",
+      startsAt: "2026-11-10T06:00:00Z", endsAt: "2026-11-10T07:20:00Z" });
+    bundle = domainBundleSchema.parse(bundle);
+  }
   await page.context().route("**/*", (r) => ["127.0.0.1", "localhost"].includes(new URL(r.request().url()).hostname) ? r.continue() : r.abort());
   await page.route("**/api/**", (r) => r.abort());
   await page.route("**/api/organizations", (r) => r.fulfill({ json: { organizations: [{ id: bundle.organizationId, name: "Synthetic B1 coaching club", version }] } }));
@@ -24,6 +30,58 @@ async function storage(page: Page, failure?: number | "lost-ack") {
   return { source, before: structuredClone(bundle), href: `/sessions?session=${source.id}&revision=1&organization=${bundle.organizationId}&view=preview`, bundle: () => bundle, writes: () => writes,
     newer() { bundle.sessions.push({ ...structuredClone(source), revision: 2, content: { ...structuredClone(source.content), objective: "A newer source objective" } }); version++; } };
 }
+
+test("Explorer preserves search and exact booking identity through preview, refresh, edit, copy cancellation and close", async ({ page }) => {
+  const m = await storage(page, undefined, true);
+  await page.goto("/sessions");
+  await loaded(page);
+  const search = page.getByRole("searchbox", { name: "Find sessions" });
+  const type = page.getByRole("combobox", { name: "Filter session type" });
+  await search.fill("5v2");
+  await type.selectOption("possession");
+  const results = page.locator(".explorer-list").getByRole("link", { name: /Rondos & Positional Play/ });
+  await expect(results).toHaveCount(2);
+  const secondBooking = results.filter({ hasText: "2026-11-10" });
+  await secondBooking.focus();
+  await page.keyboard.press("Enter");
+  const preview = page.getByRole("region", { name: "Saved session preview" });
+  await expect(preview).toBeVisible();
+  await expect(page.locator(".coaching-editor")).toHaveCount(0);
+  await expect(secondBooking).toHaveAttribute("aria-current", "true");
+  await expect(results.filter({ hasNotText: "2026-11-10" })).not.toHaveAttribute("aria-current", "true");
+  await expect(page).toHaveURL(/booking=other-rondo-booking&bookingRevision=1&q=5v2&type=possession/);
+  await expect(preview.getByRole("link", { name: "Open Full Session" })).toHaveAttribute("href", /\/sessions\/view\?.*booking=other-rondo-booking&bookingRevision=1/);
+  await page.reload();
+  await loaded(page);
+  await expect(search).toHaveValue("5v2");
+  await expect(type).toHaveValue("possession");
+  const edit = preview.getByRole("link", { name: "Edit session", exact: true });
+  await expect(edit).toHaveAttribute("href", `/sessions?event=other-rondo-booking&revision=1&organization=${m.source.organizationId}&q=5v2&type=possession`);
+  await edit.click();
+  await expect(page.locator(".coaching-editor")).toBeVisible();
+  await page.getByRole("link", { name: "Preview saved session", exact: true }).click();
+  await expect(secondBooking).toHaveAttribute("aria-current", "true");
+  await preview.getByRole("button", { name: "Schedule independent copy" }).click();
+  await page.getByRole("button", { name: "Close scheduling form" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(secondBooking).toHaveAttribute("aria-current", "true");
+  await preview.getByRole("link", { name: "Close preview" }).click();
+  await expect(preview).toHaveCount(0);
+  await expect(search).toHaveValue("5v2");
+  await page.goBack();
+  await expect(secondBooking).toHaveAttribute("aria-current", "true");
+  const missingBooking = new URL(page.url());
+  missingBooking.searchParams.set("bookingRevision", "999");
+  await page.goto(missingBooking.toString());
+  await expect(page.getByRole("heading", { name: "Requested revision is unavailable" })).toBeVisible();
+  await expect(preview).toHaveCount(0);
+  await page.goto("/sessions?event=other-rondo-booking&revision=1&organization=another-club");
+  await loaded(page);
+  await expect(page.getByRole("heading", { name: "Requested revision is unavailable" })).toBeVisible();
+  await expect(page.locator(".coaching-editor")).toHaveCount(0);
+  expect(m.writes()).toBe(0);
+  expect(m.bundle()).toEqual(m.before);
+});
 async function loaded(page: Page) { await expect(page.locator(".calendar-connection [role=status]")).toContainText("Loaded saved organisation snapshot"); }
 async function slot(page: Page) {
   const dialog = page.getByRole("dialog");
@@ -116,4 +174,35 @@ test("wrong organisation, missing and stale revisions cannot schedule; C3 local 
   await expect(page.getByRole("region", { name: "Saved session preview" })).toContainText("A newer source objective");
   expect(await page.evaluate(() => localStorage.getItem('c4-local-boundary-sentinel'))).toBe('synthetic local package remains separate'); expect(m.writes()).toBe(0);
   await page.goto(m.href+'&copy=invalid'); await expect(page.getByRole("heading", { name: "Invalid session reference" })).toBeVisible();
+});
+
+test("review B distinguishes an invalid diagram index and keeps the exact attachments selectable", async ({ page }) => {
+  const m = await storage(page);
+  const links = m.source.content.activities[1];
+  await page.goto(`${m.href}&activity=${links.id}&diagram=2`);
+  const preview = page.getByRole("region", { name: "Saved session preview" });
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-revision", "2");
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-time", "4");
+
+  links.content.diagrams.pop();
+  await page.reload();
+  await expect(preview.getByRole("alert")).toHaveText("The requested diagram is unavailable. Choose an attached diagram.");
+  await expect(preview.locator(".scene-diagram")).toHaveCount(0);
+  const diagram = preview.getByRole("button", { name: "Diagram 1 · r1" });
+  const open = preview.getByRole("link", { name: "Open Full Session" });
+  await expect(open).toHaveAttribute("href", /[?&]diagram=2(?:&|$)/);
+  await open.click();
+  const board = page.getByRole("region", { name: "Tactical workspace" });
+  await expect(board.getByRole("alert")).toHaveText("The selected diagram revision is unavailable.");
+  await expect(board.locator(".scene-diagram")).toHaveCount(0);
+  await board.getByRole("button", { name: "Diagram 1", exact: true }).click();
+  await expect(board.locator(".scene-diagram")).toHaveAttribute("data-time", "2");
+  await page.goBack();
+  await expect(diagram).toHaveAttribute("aria-pressed", "false");
+  await diagram.click();
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-revision", "1");
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-time", "2");
+  await preview.getByRole("navigation", { name: "Preview activity sequence" }).getByRole("button").first().click();
+  await expect(preview.getByText("No diagram attached to this activity.")).toBeVisible();
+  expect(m.writes()).toBe(0);
 });

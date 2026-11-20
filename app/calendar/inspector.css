@@ -33,7 +33,9 @@
 .programme-section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; }
 .calendar-programme .programme-section-heading h3 { margin:0; }
 .programme-section-heading > span { font-size:12px; color:#526f84; white-space:nowrap; }
-.calendar-programme .programme-inspector .calendar-scene-preview { width:100%; height:200px; border:1px solid #b5cba7; border-radius:4px; overflow:hidden; background:#dcebc1; }
+.calendar-programme .programme-inspector .calendar-scene-preview { --inspector-board-height:198px; width:100%; height:200px; border:1px solid #b5cba7; border-radius:4px; overflow:hidden; background:#dcebc1; }
+.calendar-programme .programme-inspector .calendar-scene-preview:has(.screen-diagram-layout) { height:auto; }
+.calendar-scene-preview .screen-diagram-layout { height:auto; grid-template-rows:var(--inspector-board-height,198px) auto; overflow:visible; scrollbar-gutter:auto; }
 .programme-inspector .scene-diagram-caption { display:none; }
 .programme-diagram-activity { display:flex; align-items:center; gap:8px; margin:0; font-size:12px; flex:1; max-width:180px; min-width:0; }
 .calendar-programme .programme-diagram-activity select { min-width:0; flex:1; width:100%; background:white; font-size:13px; padding:5px 7px; }
@@ -96,7 +98,7 @@
   .programme-inspector-heading { padding:12px; }
   .calendar-programme .programme-inspector h2 { font-size:23px; }
   .programme-inspector-scroll { padding-inline:12px; }
-  .calendar-programme .programme-inspector .calendar-scene-preview { height:190px; }
+  .calendar-programme .programme-inspector .calendar-scene-preview { --inspector-board-height:188px; height:190px; }
   .calendar-programme .programme-primary-actions a { font-size:13px; gap:5px; }
 }
 @media(max-width:1023px){

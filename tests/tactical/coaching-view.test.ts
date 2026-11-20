@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { tacticalExamples } from "../../lib/tactical/examples";
 import { drawScene, serializeDrawing } from "../../lib/tactical/drawing";
-import { coachingExerciseArea } from "../../lib/tactical/coaching-view";
+import { coachingAreaWarning, coachingExerciseArea, coachingPrintDrawing, coachingScreenOptions } from "../../lib/tactical/coaching-view";
 import { areaBounds, contentBounds, fitViewport, screenToWorld, worldToScreen } from "../../lib/tactical/viewport";
 import { coachingLightPalette, tacticalPalette } from "../../lib/tactical/palette";
 import { contextArea } from "../../lib/tactical/context";
@@ -13,7 +13,7 @@ test("light paint changes presentation while preserving evaluated geometry, time
     const dark = drawScene(scene, options), light = drawScene(scene, { ...options, paint: "coaching-light" });
     assert.deepEqual(light.view, dark.view); assert.deepEqual(light.anchors, dark.anchors);
     assert.equal(light.sceneId, dark.sceneId); assert.equal(light.revision, dark.revision); assert.equal(light.seconds, dark.seconds);
-    assert.deepEqual(scene, before); assert.equal(light.nodes[0].attrs.fill, coachingLightPalette.field);
+    assert.deepEqual(scene, before); assert.equal(light.nodes[0].attrs.fill, scene.context?.kind === "neutral" ? coachingLightPalette.field : coachingLightPalette.surround);
     assert.equal(dark.nodes[0].attrs.fill, scene.context?.kind === "neutral" ? tacticalPalette.field : tacticalPalette.surround);
     assert.notEqual(serializeDrawing(light), serializeDrawing(dark));
   }
@@ -45,4 +45,18 @@ test("light tactical arrows have contrasting outlines and distinct semantic pain
   assert.ok(light.includes(coachingLightPalette.pass)); assert.ok(light.includes(coachingLightPalette.press));
   assert.equal(new Set([coachingLightPalette.pass, coachingLightPalette.run, coachingLightPalette.press, coachingLightPalette.rotation, coachingLightPalette.dribble]).size, 5);
   assert.equal(tacticalPalette.field, "#285a3b"); assert.equal(tacticalPalette.pass, "#72dce8");
+});
+
+test("review D keeps authored context and exact drawing when activity framing is too small", () => {
+  const scene = tacticalExamples[4].scene;
+  const before = structuredClone(scene);
+  const requested = { origin: { x: 0, y: 0 }, length: 0.005, width: 20 };
+  const options = { width: 900, height: 500, seconds: 0 };
+  assert.match(coachingAreaWarning(scene, requested) ?? "", /Activity dimensions cannot frame this diagram/);
+  assert.deepEqual(coachingExerciseArea(scene, requested), contextArea(scene));
+  assert.deepEqual(coachingScreenOptions(scene, 0, requested), coachingScreenOptions(scene, 0));
+  assert.deepEqual(coachingPrintDrawing(scene, 0, options.width, options.height, requested),
+    coachingPrintDrawing(scene, 0, options.width, options.height));
+  assert.deepEqual(scene, before);
+  assert.equal(requested.length, 0.005);
 });

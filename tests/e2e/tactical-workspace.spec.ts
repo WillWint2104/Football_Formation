@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { buildSync } from "esbuild";
 import { writeFile } from "node:fs/promises";
 import { attachmentExample } from "../fixtures/attachments";
@@ -60,7 +61,7 @@ test("diagram selection survives activity navigation; coaching panels scroll ind
 test("focused presentation contains coaching guidance, traps keyboard focus and preserves the exact pin",async({page},info)=>{
   await open(page);await panel(page).getByRole("button",{name:"Expand diagram",exact:true}).click();
   const modal=page.getByRole("dialog",{name:"Expanded activity diagram",exact:true});
-  await page.keyboard.press("Tab");await expect(modal.getByText("Coaching guidance",{exact:true})).toBeFocused();await page.keyboard.press("Enter");
+  await assertDialogTabCycle(page,modal);await modal.getByText("Coaching guidance",{exact:true}).focus();await page.keyboard.press("Enter");
   await expect(modal.getByText("Receive with an open body shape.",{exact:true})).toBeVisible();
   await page.keyboard.press("Tab");await page.keyboard.press("Tab");await expect(modal.getByRole("button",{name:"Close diagram · Esc",exact:true})).toBeFocused();
   await expect(modal.locator(".scene-diagram")).toHaveAttribute("data-time","2");await capture(page,info,"focused-guidance",modal.locator(".scene-diagram"));
@@ -95,4 +96,28 @@ test("local authoring uses the visible projection, optional properties, unsaved 
   await host.getByRole("button",{name:"Save Local Copy",exact:true}).click();await expect(host.locator(".local-authoring-message")).toContainText("Local copy saved");
   await page.reload();await page.getByRole("button",{name:"Recover Saved Candidate",exact:true}).click();await expect(host.getByRole("heading",{name:"Review local diagram",exact:true})).toBeVisible();
   await expect(host.getByRole("button",{name:"Accept Diagram",exact:true})).toBeEnabled();await capture(page,info,"candidate-review",host.locator(".scene-diagram"));
+});
+
+test("review C inspection arrows leave the player fixed and the board still supports editing shortcuts", async ({ page }) => {
+  await open(page);
+  await panel(page).getByRole("button", { name: "Edit Diagram", exact: true }).click();
+  const editor = page.getByRole("region", { name: "Tactical diagram editor", exact: true });
+  const player = editor.locator('g[data-entity-id="a3"]');
+  const initialY = (await player.getAttribute("data-world-y"))!;
+  const circle = await player.locator("circle").first().boundingBox();
+  expect(circle).not.toBeNull();
+  await page.mouse.click(circle!.x + circle!.width / 2, circle!.y + circle!.height / 2);
+
+  await editor.getByLabel("Inspect diagram labels and players").click();
+  const list = editor.getByRole("list", { name: "Diagram labels and players" });
+  await list.focus();
+  await expect(list).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(player).toHaveAttribute("data-world-y", initialY);
+  await page.keyboard.press("ArrowDown");
+  await expect(player).toHaveAttribute("data-world-y", initialY);
+
+  await editor.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(player).not.toHaveAttribute("data-world-y", initialY);
 });

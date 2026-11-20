@@ -106,7 +106,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
     if (!target.points.length) { frame("context"); setMessage("No visible action in this stage; showing the exercise overview."); return; }
     setCustomArea(target.area); setFit("custom"); setCamera(undefined);
     if (orientExample) {
-      const rect = surface.current?.getBoundingClientRect();
+      const rect = surface.current?.querySelector(".scene-diagram")?.getBoundingClientRect();
       if (rect && rect.width >= 120 && rect.height >= 120) {
         const options = { width: rect.width, height: rect.height, padding: 32, fit: "custom" as const, customArea: target.area };
         setRotation(fitViewport(source, { ...options, rotation: 270 }).scale > fitViewport(source, { ...options, rotation: 0 }).scale ? 270 : 0);
@@ -118,13 +118,13 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   /** Resolve the live measured SVG projection for pointer picking and keyboard camera commands. */
   function projection() {
     const el = surface.current?.querySelector(".scene-diagram"), rect = el?.getBoundingClientRect();
-    return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus }) : null;
+    return rect && rect.width >= 120 && rect.height >= 120 ? fitViewport(live.current.scene, { width: rect.width, height: rect.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, camera: live.current.camera, rotation: live.current.rotation, setPieceFocus: live.current.focus, includeContextGoals: true }) : null;
   }
   /** Keep the world point beneath the pointer stationary while clamping view-only zoom. */
   function zoom(factor: number, anchor?: Point) {
     const view = projection(); if (!view) return;
     const point = anchor ?? { x: view.width / 2, y: view.height / 2 }, before = screenToWorld(point, view), zoom = Math.max(.1, Math.min(8, (live.current.camera?.zoom ?? 1) * factor));
-    const projected = fitViewport(live.current.scene, { width: view.width, height: view.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, rotation: live.current.rotation, setPieceFocus: live.current.focus, camera: { center: view.center, zoom } });
+    const projected = fitViewport(live.current.scene, { width: view.width, height: view.height, padding: live.current.padding, fit: live.current.fit, exerciseArea: live.current.exerciseArea, customArea: live.current.customArea, rotation: live.current.rotation, setPieceFocus: live.current.focus, camera: { center: view.center, zoom }, includeContextGoals: true });
     const after = screenToWorld(point, projected);
     const next = { center: { x: view.center.x + before.x - after.x, y: view.center.y + before.y - after.y }, zoom };
     if (Math.abs(next.center.x) <= 20_000 && Math.abs(next.center.y) <= 20_000) { live.current.camera = next; setCamera(next); }
@@ -132,7 +132,13 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   useEffect(() => {
     const node = surface.current; if (!node) return;
     /** Prevent page scrolling only over the canvas and forward wheel intent to pointer-anchored zoom. */
-    const wheel = (event: WheelEvent) => { event.preventDefault(); const rect = node.getBoundingClientRect(); zoom(Math.exp(-event.deltaY * .0015), { x: event.clientX - rect.left, y: event.clientY - rect.top }); };
+    const wheel = (event: WheelEvent) => {
+      const board = node.querySelector(".scene-diagram");
+      if (!board || !(event.target instanceof Node) || !board.contains(event.target)) return;
+      event.preventDefault();
+      const rect = board.getBoundingClientRect();
+      zoom(Math.exp(-event.deltaY * .0015), { x: event.clientX - rect.left, y: event.clientY - rect.top });
+    };
     node.addEventListener("wheel", wheel, { passive: false });
     return () => node.removeEventListener("wheel", wheel);
     // The wheel callback reads the current camera/scene from live rather than retaining stale state.
@@ -223,7 +229,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       else if (!event.shiftKey && document.activeElement === nodes.at(-1)) { event.preventDefault(); nodes[0]?.focus(); }
       return;
     }
-    if (event.target instanceof Element && event.target.closest("input,select,textarea,button,a")) return;
+    if (event.target instanceof Element && event.target.closest("input,select,textarea,button,a,.screen-diagram-inspection")) return;
     if (event.key === "Escape") { cancel(); setSelected([]); setTool("select"); return; }
     if (readOnly) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") { event.preventDefault(); setSelected([...scene.entities.filter((e) => !animation || e.kind !== "equipment").map((e) => `entity:${e.id}`), ...((animation ? stage : scene.stages[0])?.tracks.filter((t) => t.kind === "annotation").map((t) => `annotation:${t.id}`) ?? [])]); }
@@ -256,7 +262,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
         {scene.context?.kind === "pitch" && scene.context.region === "set-piece" && <label>Focus<select aria-label="Set-piece focus" value={focus} onChange={(e) => { setFocus(e.target.value as typeof focus); frame("context"); }}><option value="delivery">Delivery + box</option><option value="box">Penalty box</option></select></label>}
         <span className="editor-spacer" /><button onClick={() => zoom(.8)} aria-label="Zoom out">−</button><button onClick={() => zoom(1.25)} aria-label="Zoom in">+</button><button ref={expandButton} onClick={() => setExpanded(!expanded)}>{expanded ? "Exit board" : "Expand board"}</button></div>
       <div ref={surface} className={`editor-surface editor-tool-${tool}`} style={coaching ? undefined : { height: canvasHeight }}>
-        <SceneDiagram scene={scene} title="Editable tactical diagram" options={{ padding, fit, paint: coaching ? "coaching-light" : undefined, exerciseArea, customArea, camera, rotation, setPieceFocus: focus, seconds: time, poseStageId: animation && !playing ? stage?.id : undefined, gridMetres: showGrid ? grid : undefined, guides, labels: true, paths: animation ? paths : "stage", selectedIds: selected, ghosts: ghostPositions }} interaction={{ down, move, up, cancel }} />
+        <SceneDiagram scene={scene} title="Editable tactical diagram" screenMode={coaching || expanded ? "expanded" : "standard"} options={{ padding, fit, paint: coaching ? "coaching-light" : undefined, exerciseArea, customArea, camera, rotation, setPieceFocus: focus, seconds: time, poseStageId: animation && !playing ? stage?.id : undefined, gridMetres: showGrid ? grid : undefined, guides, labels: true, paths: animation ? paths : "stage", selectedIds: selected, ghosts: ghostPositions }} interaction={{ down, move, up, cancel }} />
       </div>
       <div className="editor-status"><span>{animation ? `${framing}${camera ? " · manual" : ""}` : "Blue / red · yellow neutral"}</span><span>→ Pass · ⇢ Run · Press · ↝ Rotation</span><span>{scene.entities.length} objects · {selected.length} selected · {Math.round((camera?.zoom ?? 1) * 100)}% · {rotation}°</span></div>
       {animation && <AnimationTimeline scene={scene} selected={stage?.id ?? ""} seconds={time} playing={playing} speed={speed} disabled={readOnly} onSeek={seek} onStage={(id) => { const r = stageRanges(scene).find((s) => s.stage.id === id)!; seek(r.start, false); setStageId(id); }} onPlay={() => { if (playing) setPlaying(false); else { clock.current = time >= duration ? 0 : time; setSeconds(clock.current); setPlaying(true); } }} onRestart={() => seek(0)} onSpeed={setSpeed} onAdd={() => { try { const next = appendStage(scene); edit(next); const r = stageRanges(next).at(-1)!; setStageId(r.stage.id); clock.current = r.start; setSeconds(r.start); } catch { setMessage("Stage limit reached."); } }} />}

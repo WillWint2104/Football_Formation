@@ -15,10 +15,11 @@ import { calendarHref } from "@/lib/calendar/navigation";
 import { withCalendar, type CalendarReturn } from "@/lib/coaching/calendar-return";
 
 /** Edit a local draft and publish one immutable version, advancing only the selected booking. */
-export function SessionEditor({ source, event, historical, isNew, navigating, onSaved, onTemplate, calendar }: {
+export function SessionEditor({ source, event, historical, isNew, navigating, onSaved, onTemplate, calendar, previewHref }: {
   source: Session; event?: CalendarEvent; historical: boolean; isNew: boolean; navigating: boolean;
   onSaved: (session: Session, event?: CalendarEvent) => void; onTemplate: (id: string) => void;
   calendar?: CalendarReturn;
+  previewHref: string;
 }) {
   const { snapshot, mode, busy, loading, blocked, commit } = useCoaching();
   const [base] = useState(snapshot);
@@ -38,7 +39,7 @@ export function SessionEditor({ source, event, historical, isNew, navigating, on
       {event && <Link href={calendar ? calendarHref(calendar) : `/calendar?date=${event.localDate}&event=${encodeURIComponent(event.id)}`}>{calendar ? "Cancel / Return to Calendar" : "Back to booking"}</Link>}</div>
     {calendar && <p className="coaching-notice">Editing coaching content for this booking only. Dates and times remain unchanged. Earlier saved versions and other bookings remain intact.</p>}
     {!isNew && <Link href={withCalendar(guideHref({ session: source.id, revision: source.revision, ...(event ? { event: event.id, bookingRevision: event.revision } : {}) }), calendar)}>Open saved coaching guide →</Link>}
-    {!isNew && <Link href={`/sessions?session=${encodeURIComponent(source.id)}&revision=${source.revision}&organization=${encodeURIComponent(source.organizationId)}&view=preview`}>Preview saved session</Link>}
+    {!isNew && <Link href={previewHref}>Preview saved session</Link>}
     {!isNew && !dirty && <Link href={`/presentations?session=${encodeURIComponent(source.id)}&revision=${source.revision}`}>Create presentation from this saved session →</Link>}
     {!event && !isNew && !historical && !dirty && <Link href={`/calendar?plan=${encodeURIComponent(source.id)}`}>Schedule this saved session →</Link>}
     {historical && <p className="coaching-notice">Historical snapshot · read only. Open the current booking/session to make a new edit.</p>}
