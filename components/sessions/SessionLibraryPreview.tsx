@@ -38,7 +38,9 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar,
   const completed = !!existingEvent;
   const used = !!ids && (snapshot.bundle.events.some((e) => e.id === ids.eventId) || snapshot.bundle.sessions.some((s) => s.id === ids.sessionId));
   const current = Math.max(...snapshot.bundle.sessions.filter((s) => s.id === source.id).map((s) => s.revision)) === source.revision;
-  const pin = selectedActivity?.content.diagrams[diagram];
+  const diagrams = selectedActivity?.content.diagrams ?? [];
+  const pin = diagrams[diagram];
+  const invalidDiagram = diagrams.length > 0 && !pin;
   const scene = pin && snapshot.bundle.scenes.find((s) => s.organizationId === source.organizationId && s.id === pin.scene.id && s.revision === pin.scene.revision);
   const count = activity.reduce((n, a) => n + a.content.diagrams.length, 0);
   const team = snapshot.bundle.teams.find(t => t.id === source.teamId)?.name ?? "Team unavailable";
@@ -71,9 +73,11 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar,
     <div className="library-preview-layout">{sequence}
       {selectedActivity && <article className="library-preview-activity" aria-label="Preview activity details"><h3>{selectedActivity.content.title}</h3>
         <p className="library-preview-activity-meta">{selectedActivity.role.replaceAll("-", " ")} · {selectedActivity.durationMinutes === null ? "Duration not specified" : `${selectedActivity.durationMinutes} min`} · {selectedActivity.content.playerCount === null ? "Participants not specified" : `${selectedActivity.content.playerCount} participants`}</p>
-        {selectedActivity.content.diagrams.length > (explorer ? 1 : 0) && <div className="library-preview-diagram-tabs" role="group" aria-label="Preview diagrams">{selectedActivity.content.diagrams.map((p, i) => <button key={i} aria-pressed={i === diagram} onClick={() => setDiagram(i)}>Diagram {i + 1} · r{p.scene.revision}</button>)}</div>}
+        {(invalidDiagram || diagrams.length > (explorer ? 1 : 0)) && <div className="library-preview-diagram-tabs" role="group" aria-label="Preview diagrams">{diagrams.map((p, i) => <button key={i} aria-pressed={i === diagram} onClick={() => setDiagram(i)}>Diagram {i + 1} · r{p.scene.revision}</button>)}</div>}
         {pin ? <figure><div className="library-preview-diagram">{scene ? <CoachingDiagramPreview scene={scene} screenMode="standard" title={`${selectedActivity.content.title} · diagram ${diagram + 1}`} area={selectedActivity.content.area} seconds={pin.representativeSeconds} /> : <p role="alert">The exact diagram revision is unavailable. No substitute was selected.</p>}</div>
-          <figcaption>{!explorer && `Saved diagram revision ${pin.scene.revision} · snapshot ${pin.representativeSeconds}s`}<details><summary>Exact source</summary>{source.organizationId} · {pin.scene.id} · r{pin.scene.revision} · {pin.representativeSeconds}s</details></figcaption></figure> : <p className="library-preview-empty">No diagram attached to this activity.</p>}
+          <figcaption>{!explorer && `Saved diagram revision ${pin.scene.revision} · snapshot ${pin.representativeSeconds}s`}<details><summary>Exact source</summary>{source.organizationId} · {pin.scene.id} · r{pin.scene.revision} · {pin.representativeSeconds}s</details></figcaption></figure> : invalidDiagram
+          ? <p className="library-preview-empty" role="alert">The requested diagram is unavailable. Choose an attached diagram.</p>
+          : <p className="library-preview-empty">No diagram attached to this activity.</p>}
         {explorer && summary}
         <div className="library-preview-guidance"><section><h4>Setup & equipment</h4><p>{selectedActivity.content.area ? `${selectedActivity.content.area.length} × ${selectedActivity.content.area.width} m` : "Field dimensions not specified"}</p>
           {selectedActivity.content.equipment.length ? <ul>{selectedActivity.content.equipment.map((e, i) => <li key={i}>{e.name} · {e.quantity === null ? "quantity not specified" : e.quantity}</li>)}</ul> : <p>Equipment not specified</p>}
@@ -86,7 +90,7 @@ export function SessionLibraryPreview({ source, copyRequest, editHref, calendar,
       : <p className="library-preview-boundary">Scheduling copies this previewed current revision into a new identity. Choose a team eligible for all retained staff; no coach is removed automatically. Activities and exact diagram pins are retained; document associations are not copied. The source and other bookings stay unchanged. Local C3 packages remain separate.</p>}
     </div>
     {explorer && <footer className="explorer-inspector-actions">
-      <Link href={withActivityView(explorer.viewerHref, selectedActivity && { activityId: selectedActivity.id, diagramIndex: pin ? diagram : undefined })} className="explorer-full-action"><ArrowUpRight size={18} aria-hidden="true" />Open Full Session</Link>
+      <Link href={withActivityView(explorer.viewerHref, selectedActivity && { activityId: selectedActivity.id, diagramIndex: diagrams.length ? diagram : undefined })} className="explorer-full-action"><ArrowUpRight size={18} aria-hidden="true" />Open Full Session</Link>
       <Link href={editHref} className="explorer-secondary-action"><Pencil size={16} aria-hidden="true" />{explorer.editLabel}</Link>
       {schedule}
     </footer>}

@@ -1,5 +1,5 @@
 import type { TacticalScene, TrainingArea } from "../domain/tactical-scene";
-import { areaBounds, contentBounds, fitViewport, type FitMode } from "./viewport";
+import { areaBounds, contentBounds, fitViewport, type Bounds, type FitMode } from "./viewport";
 import { contextArea } from "./context";
 import { sceneDuration } from "./evaluate";
 import { drawScene, type DrawingOptions } from "./drawing";
@@ -7,7 +7,7 @@ import { drawScene, type DrawingOptions } from "./drawing";
 /** Prefer an applicable declared practice/context; only legacy scenes use all-stage content extents.
  * A full-field formation retains its football context. No authored coordinates are rewritten. */
 export function coachingExerciseArea(scene: TacticalScene, explicitArea?: TrainingArea | null): TrainingArea {
-  if (explicitArea && !coachingAreaWarning(scene, explicitArea)) { areaBounds(explicitArea); return structuredClone(explicitArea); }
+  if (explicitArea && !coachingAreaWarning(scene, explicitArea)) return structuredClone(explicitArea);
   if (scene.context) return contextArea(scene);
   const b = contentBounds(scene), length = b.maxX - b.minX, width = b.maxY - b.minY;
   if (length >= scene.field.length * .75 || width >= scene.field.width * .85) return contextArea(scene);
@@ -17,7 +17,13 @@ export function coachingExerciseArea(scene: TacticalScene, explicitArea?: Traini
 /** Shared activity metadata can belong to another attached diagram. Never override authored full-field intent. */
 export function coachingAreaWarning(scene: TacticalScene, area?: TrainingArea | null): string | null {
   if (!area) return null;
-  const b = areaBounds(area);
+  let b: Bounds;
+  try {
+    b = areaBounds(area);
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return "Activity dimensions cannot frame this diagram. Using the diagram’s own framing; scene coordinates are unchanged.";
+  }
   if (!scene.context) return null;
   const c = areaBounds(contextArea(scene));
   const outside = b.minX < c.minX || b.minY < c.minY || b.maxX > c.maxX || b.maxY > c.maxY;

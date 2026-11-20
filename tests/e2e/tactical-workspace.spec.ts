@@ -97,3 +97,27 @@ test("local authoring uses the visible projection, optional properties, unsaved 
   await page.reload();await page.getByRole("button",{name:"Recover Saved Candidate",exact:true}).click();await expect(host.getByRole("heading",{name:"Review local diagram",exact:true})).toBeVisible();
   await expect(host.getByRole("button",{name:"Accept Diagram",exact:true})).toBeEnabled();await capture(page,info,"candidate-review",host.locator(".scene-diagram"));
 });
+
+test("review C inspection arrows leave the player fixed and the board still supports editing shortcuts", async ({ page }) => {
+  await open(page);
+  await panel(page).getByRole("button", { name: "Edit Diagram", exact: true }).click();
+  const editor = page.getByRole("region", { name: "Tactical diagram editor", exact: true });
+  const player = editor.locator('g[data-entity-id="a3"]');
+  const initialY = (await player.getAttribute("data-world-y"))!;
+  const circle = await player.locator("circle").first().boundingBox();
+  expect(circle).not.toBeNull();
+  await page.mouse.click(circle!.x + circle!.width / 2, circle!.y + circle!.height / 2);
+
+  await editor.getByLabel("Inspect diagram labels and players").click();
+  const list = editor.getByRole("list", { name: "Diagram labels and players" });
+  await list.focus();
+  await expect(list).toBeFocused();
+  await page.keyboard.press("ArrowUp");
+  await expect(player).toHaveAttribute("data-world-y", initialY);
+  await page.keyboard.press("ArrowDown");
+  await expect(player).toHaveAttribute("data-world-y", initialY);
+
+  await editor.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(player).not.toHaveAttribute("data-world-y", initialY);
+});

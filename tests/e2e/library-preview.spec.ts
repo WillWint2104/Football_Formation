@@ -175,3 +175,34 @@ test("wrong organisation, missing and stale revisions cannot schedule; C3 local 
   expect(await page.evaluate(() => localStorage.getItem('c4-local-boundary-sentinel'))).toBe('synthetic local package remains separate'); expect(m.writes()).toBe(0);
   await page.goto(m.href+'&copy=invalid'); await expect(page.getByRole("heading", { name: "Invalid session reference" })).toBeVisible();
 });
+
+test("review B distinguishes an invalid diagram index and keeps the exact attachments selectable", async ({ page }) => {
+  const m = await storage(page);
+  const links = m.source.content.activities[1];
+  await page.goto(`${m.href}&activity=${links.id}&diagram=2`);
+  const preview = page.getByRole("region", { name: "Saved session preview" });
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-revision", "2");
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-time", "4");
+
+  links.content.diagrams.pop();
+  await page.reload();
+  await expect(preview.getByRole("alert")).toHaveText("The requested diagram is unavailable. Choose an attached diagram.");
+  await expect(preview.locator(".scene-diagram")).toHaveCount(0);
+  const diagram = preview.getByRole("button", { name: "Diagram 1 · r1" });
+  const open = preview.getByRole("link", { name: "Open Full Session" });
+  await expect(open).toHaveAttribute("href", /[?&]diagram=2(?:&|$)/);
+  await open.click();
+  const board = page.getByRole("region", { name: "Tactical workspace" });
+  await expect(board.getByRole("alert")).toHaveText("The selected diagram revision is unavailable.");
+  await expect(board.locator(".scene-diagram")).toHaveCount(0);
+  await board.getByRole("button", { name: "Diagram 1", exact: true }).click();
+  await expect(board.locator(".scene-diagram")).toHaveAttribute("data-time", "2");
+  await page.goBack();
+  await expect(diagram).toHaveAttribute("aria-pressed", "false");
+  await diagram.click();
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-revision", "1");
+  await expect(preview.locator(".scene-diagram")).toHaveAttribute("data-time", "2");
+  await preview.getByRole("navigation", { name: "Preview activity sequence" }).getByRole("button").first().click();
+  await expect(preview.getByText("No diagram attached to this activity.")).toBeVisible();
+  expect(m.writes()).toBe(0);
+});

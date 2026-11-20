@@ -2,9 +2,10 @@ import { expect, test, type Page } from "@playwright/test";
 import { coachingPresentationBundle } from "../fixtures/coaching-presentation";
 import { domainBundleSchema } from "../../lib/domain/validation";
 
-async function viewerFixture(page: Page) {
+async function viewerFixture(page: Page, areaLength?: number) {
   const { bundle, session, scene } = coachingPresentationBundle();
   const activity = session.content.activities[1];
+  if (areaLength !== undefined && activity.content.area) activity.content.area.length = areaLength;
   const sibling = bundle.scenes.find(s => s.id === "example-rondo" && s.revision === 2)!;
   activity.content.diagrams.push({ scene: { id: sibling.id, revision: sibling.revision }, representativeSeconds: 4 });
   activity.content.instructions = Array.from({ length: 18 }, (_, i) => `Step ${i + 1}. Check shoulders before receiving and support the spare player to break the line.`);
@@ -147,4 +148,63 @@ test("an unavailable attachment, booking or invalid snapshot never substitutes a
   await expect(page.getByRole("heading", { name: "Saved session unavailable" })).toBeVisible();
   await expect(page.locator(".scene-diagram")).toHaveCount(0);
   expect(fixture.writes()).toBe(0);
+});
+
+test("review A opens a saved-session link for a second membership and refuses an unlisted organisation", async ({ page }) => {
+  const fixture = await viewerFixture(page);
+  const firstId = fixture.snapshot.organizationId;
+  const secondId = "synthetic-second-club";
+  const second = domainBundleSchema.parse(JSON.parse(JSON.stringify(fixture.snapshot).replaceAll(`"${firstId}"`, `"${secondId}"`)));
+  second.sessions.find(session => session.id === new URL(fixture.url, "http://localhost").searchParams.get("session") && session.revision === 1)!.content.title = "Second club coaching session";
+  const reads: string[] = [];
+  let rejectSecond = false;
+  await page.route("**/api/organizations", r => r.fulfill({ json: { organizations: [
+    { id: firstId, name: "First synthetic club", version: 4 },
+    { id: secondId, name: "Second synthetic club", version: 4 },
+  ] } }));
+  await page.route("**/api/organizations/*/snapshot", r => {
+    if (r.request().method() !== "GET") return r.fallback();
+    const id = new URL(r.request().url()).pathname.split("/").at(-2)!;
+    reads.push(id);
+    if (id === firstId) return r.fulfill({ json: { version: 4, bundle: fixture.snapshot } });
+    if (id === secondId && !rejectSecond) return r.fulfill({ json: { version: 4, bundle: second } });
+    return r.fulfill({ status: 404, json: { error: "Saved records are unavailable" } });
+  });
+  const target = fixture.url.replace(`organization=${firstId}`, `organization=${secondId}`);
+  await page.goto(target);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Second club coaching session");
+  await expect(page.locator(".viewer-tactical .scene-diagram")).toHaveAttribute("data-revision", "3");
+  expect(reads).toContain(secondId);
+
+  rejectSecond = true;
+  await page.reload();
+  const load = page.getByRole("button", { name: "Load Second synthetic club" });
+  await expect(load).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Saved session unavailable");
+  await expect(page.locator(".scene-diagram")).toHaveCount(0);
+  rejectSecond = false;
+  await load.click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Second club coaching session");
+
+  await page.goto(target.replace(secondId, "unlisted-club"));
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Saved session unavailable");
+  await expect(page.getByRole("button", { name: /^Load / })).toHaveCount(0);
+  expect(reads).not.toContain("unlisted-club");
+  expect(fixture.writes()).toBe(0);
+});
+
+test("review D shows a framing warning and renders the exact diagram with its saved context", async ({ page }) => {
+  const fixture = await viewerFixture(page, 0.005);
+  await page.goto(fixture.url);
+  const tactical = page.getByRole("region", { name: "Tactical workspace" });
+  await expect(tactical.getByText(/Activity dimensions cannot frame this diagram/)).toBeVisible();
+  await tactical.getByRole("button", { name: "Fit exercise", exact: true }).click();
+  const board = tactical.locator(".scene-diagram");
+  await expect(board).toHaveAttribute("data-frame-length", "12");
+  await expect(board).toHaveAttribute("data-frame-width", "20");
+  await expect(board).toHaveAttribute("data-revision", "3");
+  await expect(board).toHaveAttribute("data-time", "1");
+  await expect(board.locator("[data-entity-id=p6]")).toHaveAttribute("data-world-x", "3.5");
+  expect(fixture.writes()).toBe(0);
+  expect(fixture.snapshot).toEqual(fixture.original);
 });

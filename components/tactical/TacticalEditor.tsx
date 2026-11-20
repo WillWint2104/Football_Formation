@@ -229,7 +229,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
       else if (!event.shiftKey && document.activeElement === nodes.at(-1)) { event.preventDefault(); nodes[0]?.focus(); }
       return;
     }
-    if (event.target instanceof Element && event.target.closest("input,select,textarea,button,a")) return;
+    if (event.target instanceof Element && event.target.closest("input,select,textarea,button,a,.screen-diagram-inspection")) return;
     if (event.key === "Escape") { cancel(); setSelected([]); setTool("select"); return; }
     if (readOnly) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") { event.preventDefault(); setSelected([...scene.entities.filter((e) => !animation || e.kind !== "equipment").map((e) => `entity:${e.id}`), ...((animation ? stage : scene.stages[0])?.tracks.filter((t) => t.kind === "annotation").map((t) => `annotation:${t.id}`) ?? [])]); }

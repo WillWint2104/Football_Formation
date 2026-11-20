@@ -17,7 +17,15 @@ import { resolveDiagramTarget } from "@/lib/tactical/persistence";
 import { SessionViewerGuidance } from "./SessionViewerGuidance";
 
 export function SessionViewer({ reference }: { reference: SessionViewReference | null }) {
-  const { snapshot, loading, mode, organization, organizations, reload, scope, message } = useCoaching();
+  const { snapshot, loading, mode, organization, organizations, reload, scope, message, busy, dirty } = useCoaching();
+  const membership = organizations.find(item => item.id === reference?.organizationId);
+  const attemptedOrganization = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!membership || loading || busy || dirty || organization === membership.id || attemptedOrganization.current === membership.id) return;
+    attemptedOrganization.current = membership.id;
+    void reload(membership.id);
+  }, [membership, loading, busy, dirty, organization, reload]);
+
   const bundle = snapshot.bundle;
   const canShowBundle = mode === "saved" || !organization;
   const exact = !loading && reference && canShowBundle ? resolveSessionView(bundle, reference) : null;
@@ -25,7 +33,6 @@ export function SessionViewer({ reference }: { reference: SessionViewReference |
     const backHref = withActivityView(withLibraryFilters(sessionPreviewHref(exact.session, exact.booking), reference.search, reference.kind), reference.selection);
     return <SessionView key={scope} bundle={bundle} session={exact.session} booking={exact.booking} selection={reference.selection} backHref={backHref} sample={mode === "sample"} />;
   }
-  const membership = organizations.find(item => item.id === reference?.organizationId);
   return <div className="session-viewer">
     <Link className="viewer-back" href={withLibraryFilters("/sessions", reference?.search ?? "", reference?.kind ?? "")}><ArrowLeft size={17} aria-hidden="true" /> Saved Sessions</Link>
     <section className="viewer-unavailable">
@@ -91,7 +98,7 @@ function SessionView({ bundle, session, booking, selection, backHref, sample }: 
     <h2>{activity?.content.title ?? "Tactical board"}</h2>
     {activity && <p><b>Activity {activityIndex + 1} of {activities.length}</b> · {activity.role[0].toUpperCase() + activity.role.slice(1).replaceAll("-", " ")}{activity.durationMinutes !== null && ` · ${activity.durationMinutes} min`}</p>}
   </div>;
-  const attachments = diagrams.length > 1 && <div className="viewer-diagrams" role="group" aria-label="Attached diagrams">
+  const attachments = (diagrams.length > 1 || diagrams.length === 1 && !pin) && <div className="viewer-diagrams" role="group" aria-label="Attached diagrams">
     <span>Attached diagrams</span>
     {diagrams.map((_, index) => <button className="viewer-button" type="button" key={index} aria-pressed={diagramIndex === index} onClick={() => setDiagramIndex(index)}>Diagram {index + 1}</button>)}
   </div>;
