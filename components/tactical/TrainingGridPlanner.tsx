@@ -50,6 +50,7 @@ export function TrainingGridPlanner(props: PlannerProps) {
     presentation:"ground", dimensions:{overall:true,spacing:true,practice:false},
   };
   const [state, setState] = useState<PlanSettings>(defaults);
+  const stationPicker = useRef<HTMLSelectElement>(null);
   const settings = state.identity === identity ? state : defaults;
   const open = active && settings.open;
   const change = (values: Partial<PlanSettings>) =>
@@ -66,6 +67,10 @@ export function TrainingGridPlanner(props: PlannerProps) {
   const inventoryTitle = plan?.authored ? "Recorded setup" : plan && plan.stations.length > 1 ? "Repeated setup estimate" : "Saved setup";
   const setDetail = (id: string, key: keyof StationDetails, value: string) =>
     change({ details:{ ...settings.details, [id]:{ ...settings.details[id], [key]:value } } });
+  function inspectStation(id: string) {
+    change({ focused:id });
+    stationPicker.current?.focus();
+  }
   const controls = <>
     <div className="p6a-choices" role="group" aria-label="Training grid view">
       <button type="button" aria-pressed={!open} onClick={()=>change({open:false})}>SVG diagram</button>
@@ -85,7 +90,7 @@ export function TrainingGridPlanner(props: PlannerProps) {
             onChange={e=>change({spacing:Math.min(20,Math.max(0,Number(e.target.value)))})} /><span>m</span></label>
         </>}
       </>}
-      {plan.stations.length>1 && <label><span className="sr-only">Inspect station</span><select aria-label="Inspect station" value={selected?.id??""}
+      {plan.stations.length>1 && <label><span className="sr-only">Inspect station</span><select ref={stationPicker} aria-label="Inspect station" value={selected?.id??""}
         onChange={e=>change({focused:e.target.value})}>
         <option value="">All {plan.authored ? "areas" : "stations"}</option>
         {plan.stations.map(s=><option key={s.id} value={s.id}>{displayLabel(s)}</option>)}
@@ -147,13 +152,13 @@ export function TrainingGridPlanner(props: PlannerProps) {
             <header><strong>{displayLabel(station)}</strong><span>{stationType[station.kind]}</span></header>
             <div className="p6d-panel-board p6c-practice-surface"><GridPlanBoard scene={scene} stage={stage} seconds={seconds} savedSeconds={savedSeconds}
               plan={plan} selected={station} displayLabel={displayLabel} details={settings.details}
-              focus={id=>change({focused:id})} dimensions={{overall:false,spacing:false,practice:settings.dimensions.practice}} panel/></div>
+              focus={inspectStation} dimensions={{overall:false,spacing:false,practice:settings.dimensions.practice}} panel/></div>
           </section>)}
         </div>
       </div>
     : <GridPlanBoard scene={scene} stage={stage} seconds={seconds} savedSeconds={savedSeconds}
         plan={plan} selected={selected} displayLabel={displayLabel} details={settings.details}
-        focus={id=>change({focused:id})} dimensions={settings.dimensions}/>;
+        focus={inspectStation} dimensions={settings.dimensions}/>;
   return children(controls, drawing, caption);
 }
 

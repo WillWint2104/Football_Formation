@@ -163,6 +163,7 @@
 }
 .p6c-grid-board[data-ready="false"] { visibility:hidden; }
 .scene-diagram:has(.p6c-grid-board[data-ready="true"])>svg { visibility:hidden; }
+.screen-diagram-layout:has(.p6c-grid-board[data-ready="true"]) .screen-diagram-inspection { display:none; }
 .viewer-tactical:has(.p6c-grid-board[data-ready="true"]) .viewer-framing-controls :is(.coaching-fit-controls,.viewer-tool-label) { display:none; }
 .p6c-grid-board svg { position:absolute; inset:0; display:block; }
 .p6c-grid-area { fill:none; stroke:#fbf7db; stroke-width:1.7; stroke-dasharray:7 4; }
