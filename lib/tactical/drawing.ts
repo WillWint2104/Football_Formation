@@ -9,7 +9,7 @@ import { boxesOverlap, grassGrain, numberInk, screenCoachingPalette, screenGlyph
 export const TACTICAL_RENDERER_VERSION = "svg-2d/1.3.0";
 
 export type SvgNode = { tag: "g" | "rect" | "line" | "circle" | "path" | "polyline" | "polygon" | "text" | "title" | "defs" | "pattern" | "linearGradient" | "stop"; attrs: Record<string, string | number>; children?: SvgNode[]; text?: string };
-export type DrawingOptions = { width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; authoredArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; contextMask?: boolean; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[]; paint?: "coaching-light"; screen?: { mode: DiagramSize; id: string; sizingSeconds?: number; inspected?: string; viewer?: boolean } };
+export type DrawingOptions = { surface?: "transparent"; areaLabels?: boolean; width: number; height: number; padding?: number; fit?: FitMode; exerciseArea?: TrainingArea; authoredArea?: TrainingArea; customArea?: TrainingArea; camera?: Camera; seconds?: number; poseStageId?: string; gridMetres?: number; guides?: boolean; labels?: boolean; paths?: "stage" | "active" | "none"; markings?: "auto" | "football" | "boundary" | "none"; rotation?: Rotation; setPieceFocus?: "delivery" | "box"; contextMask?: boolean; selectedIds?: string[]; ghosts?: { id: string; position: Point; label: string }[]; paint?: "coaching-light"; screen?: { mode: DiagramSize; id: string; sizingSeconds?: number; inspected?: string; viewer?: boolean } };
 export type DiagramDetail = { id: string; kind: "annotation" | "player"; text: string };
 export type SceneDrawing = { nodes: SvgNode[]; view: Projection; sceneId: string; revision: number; seconds: number; stage: string | null; gridSpacing: number | null; clippedEntities: number; croppedDetails: number; outsideField: number; labelCollisions: number; anchors: { id: string; world: Point; screen: Point }[]; screen?: { numberSize: number; playerDiameter: number; numbersHidden: boolean; crowded: boolean; playerOverlaps: number; deferredLabels: number; details: DiagramDetail[] } };
 const node = (tag: SvgNode["tag"], attrs: SvgNode["attrs"], text?: string, children?: SvgNode[]): SvgNode => ({ tag, attrs, ...(text === undefined ? {} : { text }), ...(children ? { children } : {}) });
@@ -54,8 +54,9 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
   const worldLine = (from: Point, to: Point, attrs: SvgNode["attrs"]) => line(p(from), p(to), attrs);
   const text = (at: Point, value: string, attrs: SvgNode["attrs"] = {}) => node("text", { x: at.x, y: at.y, fill: c.label, fontSize: 11, fontFamily: "Arial, sans-serif", ...attrs }, value);
   const neutral = scene.context?.kind === "neutral";
-  nodes.push(node("rect", { width: view.width, height: view.height, fill: neutral ? c.field : c.surround }));
-  nodes.push(rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { fill: c.field }));
+  const drawGround = options.surface !== "transparent";
+  if (drawGround) nodes.push(node("rect", { width: view.width, height: view.height, fill: neutral ? c.field : c.surround }));
+  if (drawGround) nodes.push(rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { fill: c.field }));
   const shine = profile ? `url(#${profile.id}-disc)` : "";
   if (profile) {
     const origin = p({ x: 0, y: 0 });
@@ -86,12 +87,12 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       ]),
     );
     nodes.push(node("defs", {}, undefined, definitions));
-    nodes.push(rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { fill: `url(#${profile.id}-mow)` }));
-    if (!compact) nodes.push(
+    if (drawGround) nodes.push(rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { fill: `url(#${profile.id}-mow)` }));
+    if (drawGround && !compact) nodes.push(
       rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { fill: `url(#${profile.id}-light)` }),
       rect({ x: 0, y: 0 }, scene.field.length, scene.field.width, { fill: `url(#${profile.id}-grain)` }),
     );
-  } else {
+  } else if (drawGround) {
     for (let i = 0; i < 10; i += 2) nodes.push(rect({ x: scene.field.length * i / 10, y: 0 }, scene.field.length / 10, scene.field.width, { fill: c.stripe }));
   }
   let gridSpacing: number | null = null;
@@ -179,7 +180,9 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       overlappingPlayers.add(other.entity.id);
     }
   }
-  const numbersHidden = compact && (radius < 8.5 || overlappingPlayers.size > 0);
+  const stationNumbers = compact && options.surface === "transparent";
+  const numbersHidden = compact && !stationNumbers && (radius < 8.5 || overlappingPlayers.size > 0);
+  const jerseySize = stationNumbers ? Math.min(numberSize, Math.max(9, radius * 1.35)) : numberSize;
   const details: DiagramDetail[] = [];
   let labelCollisions = 0;
   let deferredLabels = 0;
@@ -204,6 +207,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       if (inspected) overlays.push(node("rect", { ...shape.attrs, fill: "none", stroke: "#ffe072", strokeWidth: 3, pointerEvents: "none", "data-inspection-highlight": key }));
       if (compact) continue;
       if (profile) details.push({ id: key, kind: "annotation", text: a.label });
+      if (options.areaLabels === false) continue;
       const at = p(a.area.origin);
       const bounds = screenRectangle(a.area.origin, a.area.length, a.area.width, view);
       if (viewer && (bounds.x >= view.width || bounds.y >= view.height || bounds.x + bounds.width <= 0 || bounds.y + bounds.height <= 0)) continue;
@@ -252,7 +256,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
       if (!compact) group.push(node("polygon", { points: facing, fill }));
       group.push(node("circle", { cx: at.x, cy: at.y, r: radius, fill, stroke: c.line, strokeWidth: compact ? 1 : glyphs ? 1.45 : 1.2, ...(glyphs ? { "data-player-disc": "" } : {}) }));
       if (glyphs && !compact) group.push(node("circle", { cx: at.x, cy: at.y, r: radius - .8, fill: shine, pointerEvents: "none" }));
-      if (!numbersHidden) group.push(text({ x: at.x, y: at.y + (glyphs ? numberSize * .35 : 4.5) }, String(entity.number), { textAnchor: "middle", fontSize: numberSize, fontWeight: 700, fill: glyphs ? numberInk(fill) : entity.team === "neutral" ? c.ink : c.number, ...(glyphs ? { "data-player-number": "", pointerEvents: "none" } : {}) }));
+      if (!numbersHidden) group.push(text({ x: at.x, y: at.y + (glyphs ? jerseySize * .35 : 4.5) }, String(entity.number), { textAnchor: "middle", fontSize: jerseySize, fontWeight: 700, fill: glyphs ? numberInk(fill) : entity.team === "neutral" ? c.ink : c.number, ...(glyphs ? { "data-player-number": "", pointerEvents: "none" } : {}) }));
       if (!compact && options.labels && entity.positionLabel) {
         const label = shorten(entity.positionLabel, 18), w = label.length * 6 + 8;
         const gap = glyphs ? markerExtent - 19 : 0;
@@ -288,7 +292,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
     const a = track.annotation, points = a.kind === "arrow" ? [a.from, a.to] : a.kind === "note" ? [a.position] : [a.area.origin, { x: a.area.origin.x + a.area.length, y: a.area.origin.y + a.area.width }];
     points.map(p).forEach((q) => nodes.push(node("circle", { cx: q.x, cy: q.y, r: 5, fill: c.guide, stroke: c.ink, strokeWidth: 1, pointerEvents: "none" })));
   }
-  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities, croppedDetails, outsideField: displayed.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: displayed.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })), ...(glyphs ? { screen: { numberSize, playerDiameter: radius * 2, numbersHidden, crowded: compact && overlappingPlayers.size > 0, playerOverlaps: overlappingPlayers.size, deferredLabels, details } } : {}) };
+  return { nodes, view, sceneId: scene.id, revision: scene.revision, seconds: evaluated.seconds, stage: evaluated.stage?.title ?? null, gridSpacing, clippedEntities, croppedDetails, outsideField: displayed.filter(({ position: q }) => q.x < 0 || q.x > scene.field.length || q.y < 0 || q.y > scene.field.width).length, labelCollisions, anchors: displayed.map((e) => ({ id: e.id, world: { ...e.position }, screen: p(e.position) })), ...(glyphs ? { screen: { numberSize: jerseySize, playerDiameter: radius * 2, numbersHidden, crowded: compact && overlappingPlayers.size > 0, playerOverlaps: overlappingPlayers.size, deferredLabels, details } } : {}) };
 }
 
 function equipmentFrame(corners: Point[], c: TacticalPaint, kind: "goal" | "ladder", compact: boolean, contextual = false): SvgNode[] {

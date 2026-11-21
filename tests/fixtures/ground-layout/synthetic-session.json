@@ -1,0 +1,3114 @@
+{
+  "format": "football-formation-domain",
+  "schemaVersion": "1.0",
+  "organizationId": "illustrative-club",
+  "teams": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "first-team",
+      "name": "First Team",
+      "ageGroup": null
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "youth-team",
+      "name": "U18 Squad",
+      "ageGroup": "U18"
+    }
+  ],
+  "coaches": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "coach-carter",
+      "displayName": "A. Carter",
+      "teamIds": [
+        "first-team",
+        "youth-team"
+      ],
+      "membershipId": null
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "coach-lopez",
+      "displayName": "M. Lopez",
+      "teamIds": [
+        "first-team"
+      ],
+      "membershipId": null
+    }
+  ],
+  "events": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-2",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Intervals & acceleration",
+      "status": "draft",
+      "localDate": "2026-11-02",
+      "startsAt": "2026-11-01T23:00:00Z",
+      "endsAt": "2026-11-02T00:00:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-1",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-4",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Break the Press, Attack the Space",
+      "status": "draft",
+      "localDate": "2026-11-03",
+      "startsAt": "2026-11-02T23:00:00Z",
+      "endsAt": "2026-11-03T00:20:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-3",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-6",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "GK handling & distribution",
+      "status": "draft",
+      "localDate": "2026-11-03",
+      "startsAt": "2026-11-03T00:30:00Z",
+      "endsAt": "2026-11-03T01:15:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "GK area",
+      "kind": "training",
+      "session": {
+        "id": "sample-5",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-8",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Defensive organisation",
+      "status": "draft",
+      "localDate": "2026-11-04",
+      "startsAt": "2026-11-03T23:00:00Z",
+      "endsAt": "2026-11-04T00:15:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-7",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-10",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Preseason baseline testing",
+      "status": "draft",
+      "localDate": "2026-11-05",
+      "startsAt": "2026-11-04T22:00:00Z",
+      "endsAt": "2026-11-04T23:30:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "testing",
+      "session": {
+        "id": "sample-9",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-12",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "First touch & finishing",
+      "status": "draft",
+      "localDate": "2026-11-06",
+      "startsAt": "2026-11-05T23:00:00Z",
+      "endsAt": "2026-11-06T00:00:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-11",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-14",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Mobility & recovery",
+      "status": "draft",
+      "localDate": "2026-11-09",
+      "startsAt": "2026-11-08T22:00:00Z",
+      "endsAt": "2026-11-08T22:45:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-13",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-16",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Build through the thirds",
+      "status": "draft",
+      "localDate": "2026-11-10",
+      "startsAt": "2026-11-09T23:00:00Z",
+      "endsAt": "2026-11-10T00:15:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-15",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-18",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Pressing triggers",
+      "status": "draft",
+      "localDate": "2026-11-12",
+      "startsAt": "2026-11-11T23:00:00Z",
+      "endsAt": "2026-11-12T00:15:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-17",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-20",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Running mechanics",
+      "status": "draft",
+      "localDate": "2026-11-16",
+      "startsAt": "2026-11-15T23:00:00Z",
+      "endsAt": "2026-11-16T00:00:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-19",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-22",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Small-sided combinations",
+      "status": "draft",
+      "localDate": "2026-11-17",
+      "startsAt": "2026-11-16T23:00:00Z",
+      "endsAt": "2026-11-17T00:20:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-21",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-24",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Goalkeeper reactions",
+      "status": "draft",
+      "localDate": "2026-11-18",
+      "startsAt": "2026-11-17T23:00:00Z",
+      "endsAt": "2026-11-18T00:00:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "GK area",
+      "kind": "training",
+      "session": {
+        "id": "sample-23",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-26",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Training review",
+      "status": "draft",
+      "localDate": "2026-11-20",
+      "startsAt": "2026-11-19T23:00:00Z",
+      "endsAt": "2026-11-19T23:30:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-25",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-28",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Mobility & circulation",
+      "status": "draft",
+      "localDate": "2026-11-23",
+      "startsAt": "2026-11-22T22:00:00Z",
+      "endsAt": "2026-11-22T22:45:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-27",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-30",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Possession under pressure",
+      "status": "draft",
+      "localDate": "2026-11-24",
+      "startsAt": "2026-11-23T23:00:00Z",
+      "endsAt": "2026-11-24T00:20:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-29",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-32",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Game scenarios",
+      "status": "draft",
+      "localDate": "2026-11-26",
+      "startsAt": "2026-11-25T23:00:00Z",
+      "endsAt": "2026-11-26T00:15:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "training",
+      "session": {
+        "id": "sample-31",
+        "revision": 1
+      }
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-34",
+      "revision": 1,
+      "teamId": "first-team",
+      "title": "Testing follow-up",
+      "status": "draft",
+      "localDate": "2026-11-30",
+      "startsAt": "2026-11-29T22:00:00Z",
+      "endsAt": "2026-11-29T23:00:00Z",
+      "timeZone": "Australia/Sydney",
+      "venue": "Training Ground A",
+      "areaLabel": "Zone B",
+      "kind": "testing",
+      "session": {
+        "id": "sample-33",
+        "revision": 1
+      }
+    }
+  ],
+  "sessions": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-1",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Intervals & acceleration",
+        "kind": "conditioning",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-3",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        },
+        {
+          "coachId": "coach-lopez",
+          "role": "assistant"
+        }
+      ],
+      "sourceTemplate": {
+        "id": "sample-possession-template",
+        "revision": 1
+      },
+      "content": {
+        "title": "Break the Press, Attack the Space",
+        "kind": "possession",
+        "objective": "Play through the first line of pressure, connect through midfield and attack with purpose before the opposition recovers.",
+        "focus": [
+          "Support angles",
+          "Third-player combinations",
+          "Counter-press on loss"
+        ],
+        "activities": [
+          {
+            "id": "review-activity-0",
+            "role": "warm-up",
+            "durationMinutes": 15,
+            "sourceExercise": null,
+            "content": {
+              "title": "Arrival Rondo",
+              "area": {
+                "origin": {
+                  "x": 20,
+                  "y": 15
+                },
+                "length": 12,
+                "width": 12
+              },
+              "playerCount": 7,
+              "equipment": [
+                {
+                  "name": "Football",
+                  "quantity": 4
+                },
+                {
+                  "name": "Cones",
+                  "quantity": 4
+                },
+                {
+                  "name": "Bibs",
+                  "quantity": 2
+                }
+              ],
+              "instructions": [
+                "Set four cones around the square. Keep five players around the outside and two in the middle. Place spare balls just outside the area.",
+                "Keep the ball moving around the outside. Defenders press as a pair and swap with the player who loses possession.",
+                "Progress to two-touch when the outside players can receive and release without losing their support angles."
+              ],
+              "coachingPoints": [
+                "Scan both defenders before the pass arrives.",
+                "Show a passing angle on either side of the ball."
+              ],
+              "progressions": [
+                "Award a point for a pass that splits both defenders."
+              ],
+              "regressions": [],
+              "variations": [],
+              "diagrams": [
+                {
+                  "scene": {
+                    "id": "example-rondo",
+                    "revision": 1
+                  },
+                  "representativeSeconds": 2
+                }
+              ]
+            }
+          },
+          {
+            "id": "review-activity-1",
+            "role": "exercise",
+            "durationMinutes": 20,
+            "sourceExercise": null,
+            "content": {
+              "title": "Positional Play Through Thirds",
+              "area": {
+                "origin": {
+                  "x": 0,
+                  "y": 0
+                },
+                "length": 12,
+                "width": 20
+              },
+              "playerCount": 10,
+              "equipment": [
+                {
+                  "name": "Football",
+                  "quantity": 12
+                },
+                {
+                  "name": "Flat markers",
+                  "quantity": 24
+                },
+                {
+                  "name": "Training bibs",
+                  "quantity": 18
+                },
+                {
+                  "name": "Mini goals",
+                  "quantity": 2
+                },
+                {
+                  "name": "Ball bag",
+                  "quantity": 1
+                },
+                {
+                  "name": "Portable tactics board",
+                  "quantity": 1
+                }
+              ],
+              "instructions": [
+                "Set the 12 × 20 m area and walk the group through the starting positions. Use the marked zone as the first connection point and restart from spare balls on the side.",
+                "Invite pressure on the first pass. The player beyond the first line checks their shoulder and moves as the pass travels so the ball carrier has two distinct options.",
+                "Restart from the opposite side after each block. Leave the far-side option open and let the players decide when to use it.",
+                "When a player receives between the lines, ask a third player to support beyond the ball. If that route closes, recycle and change the point of attack.",
+                "On a turnover, the closest player presses immediately and the next two players narrow their angles to close the forward pass.",
+                "Finish with a player-led recap. Ask each unit for one early cue, one support movement and one reason to recycle possession."
+              ],
+              "coachingPoints": [
+                "Scan before receiving and open up to the next line.",
+                "Keep supporting angles staggered.",
+                "React immediately when possession turns over."
+              ],
+              "progressions": [
+                "Introduce a recovering defender on the second pass.",
+                "Limit touches once the group consistently finds the spare player."
+              ],
+              "regressions": [],
+              "variations": [
+                "Score for receiving beyond the first line on both sides."
+              ],
+              "diagrams": [
+                {
+                  "scene": {
+                    "id": "presentation-practice",
+                    "revision": 3
+                  },
+                  "representativeSeconds": 1
+                },
+                {
+                  "scene": {
+                    "id": "example-rondo",
+                    "revision": 2
+                  },
+                  "representativeSeconds": 4
+                }
+              ]
+            }
+          },
+          {
+            "id": "review-activity-2",
+            "role": "exercise",
+            "durationMinutes": 20,
+            "sourceExercise": null,
+            "content": {
+              "title": "Half-pitch Attacking Combinations",
+              "area": {
+                "origin": {
+                  "x": 52.5,
+                  "y": 0
+                },
+                "length": 52.5,
+                "width": 68
+              },
+              "playerCount": 14,
+              "equipment": [
+                {
+                  "name": "Football",
+                  "quantity": 8
+                },
+                {
+                  "name": "Cones",
+                  "quantity": 12
+                },
+                {
+                  "name": "Bibs",
+                  "quantity": 14
+                },
+                {
+                  "name": "Full-size goal",
+                  "quantity": 1
+                }
+              ],
+              "instructions": [
+                "Start attacks just inside the half. Keep one wide option and a supporting player underneath the ball on each restart.",
+                "Combine through a third player or switch to the far side. Finish the move with a runner attacking the space between defenders.",
+                "Reset from the opposite flank and repeat. Defenders can counter to the halfway line on a regain."
+              ],
+              "coachingPoints": [
+                "Delay the final run until the passer can play forward.",
+                "Keep the weak-side runner connected to the goal."
+              ],
+              "progressions": [
+                "Allow a recovering defender to enter on the first forward pass."
+              ],
+              "regressions": [],
+              "variations": [],
+              "diagrams": [
+                {
+                  "scene": {
+                    "id": "example-half",
+                    "revision": 1
+                  },
+                  "representativeSeconds": 0
+                }
+              ]
+            }
+          },
+          {
+            "id": "review-activity-3",
+            "role": "exercise",
+            "durationMinutes": 20,
+            "sourceExercise": null,
+            "content": {
+              "title": "Full-pitch Defensive Organisation",
+              "area": {
+                "origin": {
+                  "x": 0,
+                  "y": 0
+                },
+                "length": 105,
+                "width": 68
+              },
+              "playerCount": 22,
+              "equipment": [
+                {
+                  "name": "Football",
+                  "quantity": 10
+                },
+                {
+                  "name": "Training bibs",
+                  "quantity": 22
+                },
+                {
+                  "name": "Full-size goals",
+                  "quantity": 2
+                }
+              ],
+              "instructions": [
+                "Start from the opposition back line with both units in their match shape. Show the central compactness zone before the first restart.",
+                "Move as the ball travels. Press on a slow square pass and keep cover behind the first defender.",
+                "On a regain, look forward immediately. If the first option is closed, retain possession and reset the block."
+              ],
+              "coachingPoints": [
+                "Keep distances between the midfield and back line short.",
+                "Use the far-side player to protect the centre."
+              ],
+              "progressions": [
+                "Play continuously after each regain."
+              ],
+              "regressions": [],
+              "variations": [],
+              "diagrams": [
+                {
+                  "scene": {
+                    "id": "editor-full",
+                    "revision": 1
+                  },
+                  "representativeSeconds": 0
+                }
+              ]
+            }
+          },
+          {
+            "id": "review-activity-4",
+            "role": "exercise",
+            "durationMinutes": 10,
+            "sourceExercise": null,
+            "content": {
+              "title": "Attacking Corner Routine",
+              "area": {
+                "origin": {
+                  "x": 67,
+                  "y": 0
+                },
+                "length": 38,
+                "width": 58
+              },
+              "playerCount": 16,
+              "equipment": [
+                {
+                  "name": "Football",
+                  "quantity": 8
+                },
+                {
+                  "name": "Training bibs",
+                  "quantity": 16
+                },
+                {
+                  "name": "Full-size goal",
+                  "quantity": 1
+                }
+              ],
+              "instructions": [
+                "Set the corner delivery, starting positions and rest defence. Walk the first run before serving a live ball.",
+                "Start the near-side movement on the kicker’s signal. Attack the second ball as soon as the delivery clears the first defender.",
+                "Reset the defensive cover before repeating from the opposite side."
+              ],
+              "coachingPoints": [
+                "Time the run to arrive with the ball.",
+                "Keep a player available for the short option and protect the counter."
+              ],
+              "progressions": [
+                "Allow live defenders to track or pass on runners."
+              ],
+              "regressions": [],
+              "variations": [],
+              "diagrams": [
+                {
+                  "scene": {
+                    "id": "editor-corner-left",
+                    "revision": 1
+                  },
+                  "representativeSeconds": 0
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-5",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-lopez",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "GK handling & distribution",
+        "kind": "goalkeeper",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-7",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Defensive organisation",
+        "kind": "tactical",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-9",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Preseason baseline testing",
+        "kind": "testing",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-11",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "First touch & finishing",
+        "kind": "technical",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-13",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Mobility & recovery",
+        "kind": "recovery",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-15",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Build through the thirds",
+        "kind": "possession",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-17",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Pressing triggers",
+        "kind": "tactical",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-19",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Running mechanics",
+        "kind": "conditioning",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-21",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Small-sided combinations",
+        "kind": "combined",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-23",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-lopez",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Goalkeeper reactions",
+        "kind": "goalkeeper",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-25",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Training review",
+        "kind": "other",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-27",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Mobility & circulation",
+        "kind": "recovery",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-29",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Possession under pressure",
+        "kind": "possession",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-31",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Game scenarios",
+        "kind": "tactical",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-33",
+      "revision": 1,
+      "teamId": "first-team",
+      "coaches": [
+        {
+          "coachId": "coach-carter",
+          "role": "lead"
+        }
+      ],
+      "sourceTemplate": null,
+      "content": {
+        "title": "Testing follow-up",
+        "kind": "testing",
+        "objective": null,
+        "focus": [],
+        "activities": []
+      },
+      "documents": []
+    }
+  ],
+  "templates": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-possession-template",
+      "revision": 1,
+      "content": {
+        "title": "Rondos & Positional Play",
+        "kind": "possession",
+        "objective": "Improve passing speed, support angles and decision making under pressure before progressing into positional play.",
+        "focus": [
+          "Possession",
+          "Support play",
+          "Press resistance"
+        ],
+        "activities": [
+          {
+            "id": "activity-0",
+            "role": "warm-up",
+            "durationMinutes": 15,
+            "sourceExercise": null,
+            "content": {
+              "title": "Dynamic passing",
+              "area": null,
+              "playerCount": null,
+              "equipment": [
+                {
+                  "name": "Balls",
+                  "quantity": 6
+                },
+                {
+                  "name": "Cones",
+                  "quantity": 4
+                }
+              ],
+              "instructions": [
+                "Maintain support angles and rotate regularly."
+              ],
+              "coachingPoints": [
+                "Scan before receiving; play with an open body shape."
+              ],
+              "progressions": [],
+              "regressions": [],
+              "variations": [],
+              "diagrams": []
+            }
+          },
+          {
+            "id": "activity-1",
+            "role": "exercise",
+            "durationMinutes": 20,
+            "sourceExercise": null,
+            "content": {
+              "title": "5v2 Rondo",
+              "area": null,
+              "playerCount": null,
+              "equipment": [
+                {
+                  "name": "Balls",
+                  "quantity": 6
+                },
+                {
+                  "name": "Cones",
+                  "quantity": 4
+                }
+              ],
+              "instructions": [
+                "Maintain support angles and rotate regularly."
+              ],
+              "coachingPoints": [
+                "Scan before receiving; play with an open body shape."
+              ],
+              "progressions": [],
+              "regressions": [],
+              "variations": [],
+              "diagrams": []
+            }
+          },
+          {
+            "id": "activity-2",
+            "role": "exercise",
+            "durationMinutes": 30,
+            "sourceExercise": null,
+            "content": {
+              "title": "Positional play",
+              "area": null,
+              "playerCount": null,
+              "equipment": [
+                {
+                  "name": "Balls",
+                  "quantity": 6
+                },
+                {
+                  "name": "Cones",
+                  "quantity": 4
+                }
+              ],
+              "instructions": [
+                "Maintain support angles and rotate regularly."
+              ],
+              "coachingPoints": [
+                "Scan before receiving; play with an open body shape."
+              ],
+              "progressions": [],
+              "regressions": [],
+              "variations": [],
+              "diagrams": []
+            }
+          },
+          {
+            "id": "activity-3",
+            "role": "cool-down",
+            "durationMinutes": 15,
+            "sourceExercise": null,
+            "content": {
+              "title": "Mobility & circulation",
+              "area": null,
+              "playerCount": null,
+              "equipment": [
+                {
+                  "name": "Balls",
+                  "quantity": 6
+                },
+                {
+                  "name": "Cones",
+                  "quantity": 4
+                }
+              ],
+              "instructions": [
+                "Maintain support angles and rotate regularly."
+              ],
+              "coachingPoints": [
+                "Scan before receiving; play with an open body shape."
+              ],
+              "progressions": [],
+              "regressions": [],
+              "variations": [],
+              "diagrams": []
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "exercises": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "sample-rondo-exercise",
+      "revision": 1,
+      "content": {
+        "title": "5v2 Rondo",
+        "area": null,
+        "playerCount": null,
+        "equipment": [
+          {
+            "name": "Balls",
+            "quantity": 6
+          },
+          {
+            "name": "Cones",
+            "quantity": 4
+          }
+        ],
+        "instructions": [
+          "Maintain support angles and rotate regularly."
+        ],
+        "coachingPoints": [
+          "Scan before receiving; play with an open body shape."
+        ],
+        "progressions": [],
+        "regressions": [],
+        "variations": [],
+        "diagrams": []
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "example-rondo",
+      "revision": 1,
+      "units": "metres",
+      "field": {
+        "length": 105,
+        "width": 68
+      },
+      "entities": [
+        {
+          "id": "a1",
+          "position": {
+            "x": 21,
+            "y": 25
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 1,
+          "positionLabel": "Support"
+        },
+        {
+          "id": "a2",
+          "position": {
+            "x": 25.5,
+            "y": 26
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 2,
+          "positionLabel": null
+        },
+        {
+          "id": "a3",
+          "position": {
+            "x": 21,
+            "y": 19
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 3,
+          "positionLabel": null
+        },
+        {
+          "id": "a4",
+          "position": {
+            "x": 26,
+            "y": 16
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "a5",
+          "position": {
+            "x": 31,
+            "y": 20
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 5,
+          "positionLabel": null
+        },
+        {
+          "id": "b1",
+          "position": {
+            "x": 25,
+            "y": 21
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 7,
+          "positionLabel": "Press"
+        },
+        {
+          "id": "b2",
+          "position": {
+            "x": 28,
+            "y": 23
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "ball",
+          "position": {
+            "x": 21.5,
+            "y": 24.5
+          },
+          "headingDegrees": 0,
+          "kind": "ball"
+        },
+        {
+          "id": "cone-0",
+          "position": {
+            "x": 20,
+            "y": 15
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        },
+        {
+          "id": "cone-1",
+          "position": {
+            "x": 32,
+            "y": 15
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        },
+        {
+          "id": "cone-2",
+          "position": {
+            "x": 32,
+            "y": 27
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        },
+        {
+          "id": "cone-3",
+          "position": {
+            "x": 20,
+            "y": 27
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        }
+      ],
+      "stages": [
+        {
+          "id": "stage-1",
+          "title": "Establish & connect",
+          "durationSeconds": 6,
+          "tracks": [
+            {
+              "id": "zone",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 6,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 20,
+                    "y": 15
+                  },
+                  "length": 12,
+                  "width": 12
+                },
+                "label": "POSSESSION · 12 × 12 m"
+              }
+            },
+            {
+              "id": "pass",
+              "entityId": "ball",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 21.5,
+                    "y": 24.5
+                  }
+                },
+                {
+                  "seconds": 3,
+                  "position": {
+                    "x": 26,
+                    "y": 16
+                  }
+                }
+              ],
+              "kind": "ball",
+              "movement": "pass"
+            },
+            {
+              "id": "support",
+              "entityId": "a1",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 21,
+                    "y": 25
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 23,
+                    "y": 26
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "rotation"
+            },
+            {
+              "id": "press",
+              "entityId": "b1",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 25,
+                    "y": 21
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 23,
+                    "y": 19
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "press"
+            }
+          ]
+        },
+        {
+          "id": "stage-2",
+          "title": "Release & support",
+          "durationSeconds": 6,
+          "tracks": [
+            {
+              "id": "second-pass",
+              "entityId": "ball",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 26,
+                    "y": 16
+                  }
+                },
+                {
+                  "seconds": 3,
+                  "position": {
+                    "x": 31,
+                    "y": 20
+                  }
+                }
+              ],
+              "kind": "ball",
+              "movement": "pass"
+            },
+            {
+              "id": "run",
+              "entityId": "a4",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 26,
+                    "y": 16
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 29,
+                    "y": 16
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "note",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 6,
+              "annotation": {
+                "kind": "note",
+                "position": {
+                  "x": 22,
+                  "y": 28
+                },
+                "text": "Find the spare player"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "example-rondo",
+      "revision": 2,
+      "units": "metres",
+      "field": {
+        "length": 105,
+        "width": 68
+      },
+      "entities": [
+        {
+          "id": "a1",
+          "position": {
+            "x": 21,
+            "y": 25
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 1,
+          "positionLabel": "Support"
+        },
+        {
+          "id": "a2",
+          "position": {
+            "x": 25.5,
+            "y": 26
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 2,
+          "positionLabel": null
+        },
+        {
+          "id": "a3",
+          "position": {
+            "x": 21,
+            "y": 19
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 3,
+          "positionLabel": null
+        },
+        {
+          "id": "a4",
+          "position": {
+            "x": 26,
+            "y": 16
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "a5",
+          "position": {
+            "x": 31,
+            "y": 20
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 5,
+          "positionLabel": null
+        },
+        {
+          "id": "b1",
+          "position": {
+            "x": 25,
+            "y": 21
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 7,
+          "positionLabel": "Press"
+        },
+        {
+          "id": "b2",
+          "position": {
+            "x": 28,
+            "y": 23
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "ball",
+          "position": {
+            "x": 21.5,
+            "y": 24.5
+          },
+          "headingDegrees": 0,
+          "kind": "ball"
+        },
+        {
+          "id": "cone-0",
+          "position": {
+            "x": 20,
+            "y": 15
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        },
+        {
+          "id": "cone-1",
+          "position": {
+            "x": 32,
+            "y": 15
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        },
+        {
+          "id": "cone-2",
+          "position": {
+            "x": 32,
+            "y": 27
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        },
+        {
+          "id": "cone-3",
+          "position": {
+            "x": 20,
+            "y": 27
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        }
+      ],
+      "stages": [
+        {
+          "id": "stage-1",
+          "title": "Establish & connect",
+          "durationSeconds": 6,
+          "tracks": [
+            {
+              "id": "zone",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 6,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 20,
+                    "y": 15
+                  },
+                  "length": 12,
+                  "width": 12
+                },
+                "label": "POSSESSION · 12 × 12 m"
+              }
+            },
+            {
+              "id": "pass",
+              "entityId": "ball",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 21.5,
+                    "y": 24.5
+                  }
+                },
+                {
+                  "seconds": 3,
+                  "position": {
+                    "x": 26,
+                    "y": 16
+                  }
+                }
+              ],
+              "kind": "ball",
+              "movement": "pass"
+            },
+            {
+              "id": "support",
+              "entityId": "a1",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 21,
+                    "y": 25
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 23,
+                    "y": 26
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "rotation"
+            },
+            {
+              "id": "press",
+              "entityId": "b1",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 25,
+                    "y": 21
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 23,
+                    "y": 19
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "press"
+            }
+          ]
+        },
+        {
+          "id": "stage-2",
+          "title": "Release & support",
+          "durationSeconds": 6,
+          "tracks": [
+            {
+              "id": "second-pass",
+              "entityId": "ball",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 26,
+                    "y": 16
+                  }
+                },
+                {
+                  "seconds": 3,
+                  "position": {
+                    "x": 31,
+                    "y": 20
+                  }
+                }
+              ],
+              "kind": "ball",
+              "movement": "pass"
+            },
+            {
+              "id": "run",
+              "entityId": "a4",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 26,
+                    "y": 16
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 29,
+                    "y": 16
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "note",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 6,
+              "annotation": {
+                "kind": "note",
+                "position": {
+                  "x": 22,
+                  "y": 28
+                },
+                "text": "Find the spare player"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "presentation-practice",
+      "revision": 3,
+      "units": "metres",
+      "context": {
+        "kind": "neutral",
+        "boundary": true
+      },
+      "field": {
+        "length": 12,
+        "width": 20
+      },
+      "entities": [
+        {
+          "id": "p6",
+          "position": {
+            "x": 3,
+            "y": 4
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "p7",
+          "position": {
+            "x": 9,
+            "y": 8
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 7,
+          "positionLabel": null
+        },
+        {
+          "id": "p1",
+          "position": {
+            "x": 2,
+            "y": 14
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 1,
+          "positionLabel": null
+        },
+        {
+          "id": "p2",
+          "position": {
+            "x": 10,
+            "y": 2
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 2,
+          "positionLabel": null
+        },
+        {
+          "id": "p3",
+          "position": {
+            "x": 10,
+            "y": 18
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 3,
+          "positionLabel": null
+        },
+        {
+          "id": "p4",
+          "position": {
+            "x": 4,
+            "y": 17
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "p8",
+          "position": {
+            "x": 6,
+            "y": 8
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "b",
+          "number": 8,
+          "positionLabel": null
+        },
+        {
+          "id": "cone",
+          "position": {
+            "x": 1,
+            "y": 1
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        }
+      ],
+      "stages": [
+        {
+          "id": "phase-1",
+          "title": "Authored phase 1",
+          "durationSeconds": 2,
+          "tracks": [
+            {
+              "id": "move-0",
+              "entityId": "p6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 3,
+                    "y": 4
+                  }
+                },
+                {
+                  "seconds": 2,
+                  "position": {
+                    "x": 4,
+                    "y": 6
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "zone-0",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 2,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 1,
+                    "y": 2
+                  },
+                  "length": 10,
+                  "width": 2
+                },
+                "label": "Authored zone 1"
+              }
+            }
+          ],
+          "hiddenEntityIds": []
+        },
+        {
+          "id": "phase-2",
+          "title": "Authored phase 2",
+          "durationSeconds": 2,
+          "tracks": [
+            {
+              "id": "move-1",
+              "entityId": "p6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 4,
+                    "y": 4
+                  }
+                },
+                {
+                  "seconds": 2,
+                  "position": {
+                    "x": 5,
+                    "y": 6
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "zone-1",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 2,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 1,
+                    "y": 3
+                  },
+                  "length": 10,
+                  "width": 2
+                },
+                "label": "Authored zone 2"
+              }
+            }
+          ],
+          "hiddenEntityIds": [
+            "cone"
+          ]
+        },
+        {
+          "id": "phase-3",
+          "title": "Authored phase 3",
+          "durationSeconds": 2,
+          "tracks": [
+            {
+              "id": "move-2",
+              "entityId": "p6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 5,
+                    "y": 4
+                  }
+                },
+                {
+                  "seconds": 2,
+                  "position": {
+                    "x": 6,
+                    "y": 6
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "zone-2",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 2,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 1,
+                    "y": 4
+                  },
+                  "length": 10,
+                  "width": 2
+                },
+                "label": "Authored zone 3"
+              }
+            }
+          ],
+          "hiddenEntityIds": []
+        },
+        {
+          "id": "phase-4",
+          "title": "Authored phase 4",
+          "durationSeconds": 2,
+          "tracks": [
+            {
+              "id": "move-3",
+              "entityId": "p6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 6,
+                    "y": 4
+                  }
+                },
+                {
+                  "seconds": 2,
+                  "position": {
+                    "x": 7,
+                    "y": 6
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "zone-3",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 2,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 1,
+                    "y": 5
+                  },
+                  "length": 10,
+                  "width": 2
+                },
+                "label": "Authored zone 4"
+              }
+            }
+          ],
+          "hiddenEntityIds": [
+            "cone"
+          ]
+        },
+        {
+          "id": "phase-5",
+          "title": "Authored phase 5",
+          "durationSeconds": 2,
+          "tracks": [
+            {
+              "id": "move-4",
+              "entityId": "p6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 7,
+                    "y": 4
+                  }
+                },
+                {
+                  "seconds": 2,
+                  "position": {
+                    "x": 8,
+                    "y": 6
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "zone-4",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 2,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 1,
+                    "y": 6
+                  },
+                  "length": 10,
+                  "width": 2
+                },
+                "label": "Authored zone 5"
+              }
+            }
+          ],
+          "hiddenEntityIds": []
+        },
+        {
+          "id": "phase-6",
+          "title": "Authored phase 6",
+          "durationSeconds": 2,
+          "tracks": [
+            {
+              "id": "move-5",
+              "entityId": "p6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 8,
+                    "y": 4
+                  }
+                },
+                {
+                  "seconds": 2,
+                  "position": {
+                    "x": 9,
+                    "y": 6
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "run"
+            },
+            {
+              "id": "zone-5",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 2,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 1,
+                    "y": 7
+                  },
+                  "length": 10,
+                  "width": 2
+                },
+                "label": "Authored zone 6"
+              }
+            }
+          ],
+          "hiddenEntityIds": [
+            "cone"
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "example-half",
+      "revision": 1,
+      "units": "metres",
+      "field": {
+        "length": 105,
+        "width": 68
+      },
+      "entities": [
+        {
+          "id": "goal",
+          "position": {
+            "x": 105,
+            "y": 34
+          },
+          "headingDegrees": 180,
+          "kind": "equipment",
+          "equipment": "goal"
+        },
+        {
+          "id": "a6",
+          "position": {
+            "x": 60,
+            "y": 34
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 6,
+          "positionLabel": "Pivot"
+        },
+        {
+          "id": "a8",
+          "position": {
+            "x": 73,
+            "y": 23
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 8,
+          "positionLabel": null
+        },
+        {
+          "id": "a10",
+          "position": {
+            "x": 78,
+            "y": 42
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 10,
+          "positionLabel": null
+        },
+        {
+          "id": "a7",
+          "position": {
+            "x": 80,
+            "y": 8
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 7,
+          "positionLabel": "Wide"
+        },
+        {
+          "id": "a11",
+          "position": {
+            "x": 82,
+            "y": 58
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 11,
+          "positionLabel": null
+        },
+        {
+          "id": "a9",
+          "position": {
+            "x": 93,
+            "y": 32
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 9,
+          "positionLabel": "Striker"
+        },
+        {
+          "id": "b4",
+          "position": {
+            "x": 89,
+            "y": 23
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "b5",
+          "position": {
+            "x": 91,
+            "y": 42
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 5,
+          "positionLabel": null
+        },
+        {
+          "id": "b6",
+          "position": {
+            "x": 81,
+            "y": 34
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "gk",
+          "position": {
+            "x": 101,
+            "y": 34
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 1,
+          "positionLabel": "GK"
+        },
+        {
+          "id": "ball",
+          "position": {
+            "x": 60,
+            "y": 35
+          },
+          "headingDegrees": 0,
+          "kind": "ball"
+        },
+        {
+          "id": "cone",
+          "position": {
+            "x": 55,
+            "y": 8
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "cone"
+        }
+      ],
+      "stages": [
+        {
+          "id": "stage-1",
+          "title": "Establish & connect",
+          "durationSeconds": 6,
+          "tracks": [
+            {
+              "id": "wide-channel",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 6,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 72,
+                    "y": 2
+                  },
+                  "length": 27,
+                  "width": 12
+                },
+                "label": "WIDE OVERLOAD"
+              }
+            },
+            {
+              "id": "switch",
+              "entityId": "ball",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 60,
+                    "y": 35
+                  }
+                },
+                {
+                  "seconds": 4,
+                  "position": {
+                    "x": 80,
+                    "y": 8
+                  }
+                }
+              ],
+              "kind": "ball",
+              "movement": "pass"
+            },
+            {
+              "id": "overlap",
+              "entityId": "a8",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 73,
+                    "y": 23
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 89,
+                    "y": 12
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "rotation"
+            },
+            {
+              "id": "press",
+              "entityId": "b6",
+              "keyframes": [
+                {
+                  "seconds": 0,
+                  "position": {
+                    "x": 81,
+                    "y": 34
+                  }
+                },
+                {
+                  "seconds": 6,
+                  "position": {
+                    "x": 71,
+                    "y": 31
+                  }
+                }
+              ],
+              "kind": "player",
+              "movement": "press"
+            },
+            {
+              "id": "note",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 6,
+              "annotation": {
+                "kind": "note",
+                "position": {
+                  "x": 61,
+                  "y": 64
+                },
+                "text": "Switch early · arrive in the box"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "editor-full",
+      "revision": 1,
+      "units": "metres",
+      "context": {
+        "kind": "pitch",
+        "region": "full",
+        "attack": "positive-x"
+      },
+      "field": {
+        "length": 105,
+        "width": 68
+      },
+      "entities": [
+        {
+          "id": "a1",
+          "position": {
+            "x": 5,
+            "y": 34
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 1,
+          "positionLabel": "GK"
+        },
+        {
+          "id": "a2",
+          "position": {
+            "x": 20,
+            "y": 9
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 2,
+          "positionLabel": null
+        },
+        {
+          "id": "a3",
+          "position": {
+            "x": 18,
+            "y": 25
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 3,
+          "positionLabel": null
+        },
+        {
+          "id": "a4",
+          "position": {
+            "x": 18,
+            "y": 43
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "a5",
+          "position": {
+            "x": 20,
+            "y": 59
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 5,
+          "positionLabel": null
+        },
+        {
+          "id": "a6",
+          "position": {
+            "x": 38,
+            "y": 13
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "a7",
+          "position": {
+            "x": 35,
+            "y": 28
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 7,
+          "positionLabel": null
+        },
+        {
+          "id": "a8",
+          "position": {
+            "x": 35,
+            "y": 40
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 8,
+          "positionLabel": null
+        },
+        {
+          "id": "a9",
+          "position": {
+            "x": 38,
+            "y": 55
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 9,
+          "positionLabel": null
+        },
+        {
+          "id": "a10",
+          "position": {
+            "x": 49,
+            "y": 23
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 10,
+          "positionLabel": null
+        },
+        {
+          "id": "a11",
+          "position": {
+            "x": 49,
+            "y": 45
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 11,
+          "positionLabel": null
+        },
+        {
+          "id": "b1",
+          "position": {
+            "x": 100,
+            "y": 34
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 1,
+          "positionLabel": "GK"
+        },
+        {
+          "id": "b2",
+          "position": {
+            "x": 85,
+            "y": 59
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 2,
+          "positionLabel": null
+        },
+        {
+          "id": "b3",
+          "position": {
+            "x": 87,
+            "y": 43
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 3,
+          "positionLabel": null
+        },
+        {
+          "id": "b4",
+          "position": {
+            "x": 87,
+            "y": 25
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "b5",
+          "position": {
+            "x": 85,
+            "y": 9
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 5,
+          "positionLabel": null
+        },
+        {
+          "id": "b6",
+          "position": {
+            "x": 67,
+            "y": 55
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "b7",
+          "position": {
+            "x": 70,
+            "y": 40
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 7,
+          "positionLabel": null
+        },
+        {
+          "id": "b8",
+          "position": {
+            "x": 70,
+            "y": 28
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 8,
+          "positionLabel": null
+        },
+        {
+          "id": "b9",
+          "position": {
+            "x": 67,
+            "y": 13
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 9,
+          "positionLabel": null
+        },
+        {
+          "id": "b10",
+          "position": {
+            "x": 56,
+            "y": 45
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 10,
+          "positionLabel": null
+        },
+        {
+          "id": "b11",
+          "position": {
+            "x": 56,
+            "y": 23
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 11,
+          "positionLabel": null
+        },
+        {
+          "id": "goal-left",
+          "position": {
+            "x": 0,
+            "y": 34
+          },
+          "headingDegrees": 0,
+          "kind": "equipment",
+          "equipment": "goal"
+        },
+        {
+          "id": "goal-right",
+          "position": {
+            "x": 105,
+            "y": 34
+          },
+          "headingDegrees": 180,
+          "kind": "equipment",
+          "equipment": "goal"
+        },
+        {
+          "id": "ball",
+          "position": {
+            "x": 19,
+            "y": 25
+          },
+          "headingDegrees": 0,
+          "kind": "ball"
+        }
+      ],
+      "stages": [
+        {
+          "id": "diagram",
+          "title": "Static diagram",
+          "durationSeconds": 1,
+          "tracks": [
+            {
+              "id": "central-zone",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 1,
+              "annotation": {
+                "kind": "area",
+                "area": {
+                  "origin": {
+                    "x": 35,
+                    "y": 20
+                  },
+                  "length": 35,
+                  "width": 28
+                },
+                "label": "CENTRAL COMPACTNESS"
+              }
+            },
+            {
+              "id": "build",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 1,
+              "annotation": {
+                "kind": "arrow",
+                "from": {
+                  "x": 19,
+                  "y": 25
+                },
+                "to": {
+                  "x": 35,
+                  "y": 28
+                },
+                "movement": "pass"
+              }
+            },
+            {
+              "id": "press",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 1,
+              "annotation": {
+                "kind": "arrow",
+                "from": {
+                  "x": 56,
+                  "y": 45
+                },
+                "to": {
+                  "x": 47,
+                  "y": 36
+                },
+                "movement": "press"
+              }
+            },
+            {
+              "id": "support",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 1,
+              "annotation": {
+                "kind": "arrow",
+                "from": {
+                  "x": 38,
+                  "y": 13
+                },
+                "to": {
+                  "x": 45,
+                  "y": 16
+                },
+                "movement": "run"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "organizationId": "illustrative-club",
+      "id": "editor-corner-left",
+      "revision": 1,
+      "units": "metres",
+      "context": {
+        "kind": "pitch",
+        "region": "set-piece",
+        "attack": "positive-x",
+        "setPiece": {
+          "type": "corner",
+          "phase": "attacking",
+          "side": "left"
+        }
+      },
+      "field": {
+        "length": 105,
+        "width": 68
+      },
+      "entities": [
+        {
+          "id": "a6",
+          "position": {
+            "x": 88,
+            "y": 23
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 6,
+          "positionLabel": "Pivot"
+        },
+        {
+          "id": "a8",
+          "position": {
+            "x": 92,
+            "y": 23
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 8,
+          "positionLabel": null
+        },
+        {
+          "id": "a10",
+          "position": {
+            "x": 96,
+            "y": 23
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 10,
+          "positionLabel": null
+        },
+        {
+          "id": "a7",
+          "position": {
+            "x": 100,
+            "y": 23
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 7,
+          "positionLabel": "Wide"
+        },
+        {
+          "id": "a11",
+          "position": {
+            "x": 88,
+            "y": 31
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 11,
+          "positionLabel": null
+        },
+        {
+          "id": "a9",
+          "position": {
+            "x": 92,
+            "y": 31
+          },
+          "headingDegrees": 0,
+          "kind": "player",
+          "team": "a",
+          "number": 9,
+          "positionLabel": "Striker"
+        },
+        {
+          "id": "b4",
+          "position": {
+            "x": 96,
+            "y": 31
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 4,
+          "positionLabel": null
+        },
+        {
+          "id": "b5",
+          "position": {
+            "x": 100,
+            "y": 31
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 5,
+          "positionLabel": null
+        },
+        {
+          "id": "b6",
+          "position": {
+            "x": 88,
+            "y": 39
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 6,
+          "positionLabel": null
+        },
+        {
+          "id": "gk",
+          "position": {
+            "x": 92,
+            "y": 39
+          },
+          "headingDegrees": 180,
+          "kind": "player",
+          "team": "b",
+          "number": 1,
+          "positionLabel": "GK"
+        },
+        {
+          "id": "delivery-ball",
+          "position": {
+            "x": 104.5,
+            "y": 0.5
+          },
+          "headingDegrees": 0,
+          "kind": "ball"
+        }
+      ],
+      "stages": [
+        {
+          "id": "diagram",
+          "title": "Static diagram",
+          "durationSeconds": 1,
+          "tracks": [
+            {
+              "id": "delivery",
+              "kind": "annotation",
+              "visibleFrom": 0,
+              "visibleUntil": 1,
+              "annotation": {
+                "kind": "arrow",
+                "from": {
+                  "x": 104.5,
+                  "y": 0.5
+                },
+                "to": {
+                  "x": 99,
+                  "y": 31
+                },
+                "movement": "pass"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "documents": []
+}

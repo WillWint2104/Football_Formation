@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useId, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import type { Projection } from "@/lib/tactical/viewport";
 import { drawScene, type DrawingOptions, type SceneDrawing } from "@/lib/tactical/drawing";
 import { renderDrawingNode } from "./DrawingNodes";
@@ -17,7 +17,7 @@ type DiagramProps = {
   screenMode?: DiagramSize;
   sizingSeconds?: number;
   autoFitContent?: boolean;
-  viewer?: { frameNote?: string; onShowAll?: () => void };
+  viewer?: { caption?: ReactNode; frameNote?: string; onShowAll?: () => void; overlay?: ReactNode; coachingFrame?: string };
   interaction?: { down: DiagramPointer; move: DiagramPointer; up: DiagramPointer; cancel: () => void };
 };
 
@@ -80,15 +80,17 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
     {!screenMode && <span className="scene-diagram-caption">{status}</span>}
     {!screenMode && crop && options.paint === "coaching-light" && <span className="scene-diagram-crop-warning" role="status" style={{ position: "absolute", top: 6, left: 8, right: 8, padding: "4px 8px", background: "#fff7df", color: "#25341f", fontSize: 13, borderRadius: 3 }}>This frame crops {drawing.clippedEntities} markers / {drawing.croppedDetails} authored details. Use Fit all content to inspect them.</span>}
     </> : size && <span className="scene-diagram-error" role="alert">Diagram unavailable: {errorMessage}</span>}
+    {viewer?.overlay}
   </Surface>;
   if (!screenMode || compact) return board;
   return <div className="screen-diagram-layout">
     {board}
     <div className="screen-diagram-footer">
+      {viewer?.caption}
       <div className="screen-diagram-status">
-        <span>{cropMessage ? <span className="screen-diagram-crop" role="status">{viewer ? "Current frame: " : ""}{cropMessage}{!autoFitContent && !viewer && " Use Fit all content."}</span> : frameSummary}</span>
-        {cropMessage && viewer?.onShowAll && <button className="viewer-show-all" type="button" onClick={viewer.onShowAll}>Show all</button>}
-        {!cropMessage && viewer?.frameNote && <span className="viewer-frame-note" role="status">{viewer.frameNote}</span>}
+        <span>{viewer?.coachingFrame ?? (cropMessage ? <span className="screen-diagram-crop" role="status">{viewer ? "Current frame: " : ""}{cropMessage}{!autoFitContent && !viewer && " Use Fit all content."}</span> : frameSummary)}</span>
+        {!viewer?.coachingFrame && cropMessage && viewer?.onShowAll && <button className="viewer-show-all" type="button" onClick={viewer.onShowAll}>Show all</button>}
+        {!viewer?.coachingFrame && !cropMessage && viewer?.frameNote && <span className="viewer-frame-note" role="status">{viewer.frameNote}</span>}
         {fittedAll && !crop && <span>Fitted all content</span>}
       </div>
       {!!screen?.details.length && <details className="screen-diagram-inspection" onToggle={event => { if (!event.currentTarget.open) setInspection(undefined); }}>
