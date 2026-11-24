@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronLeft, ChevronRight, Flag, Layers, NotebookText, Plus, RefreshCw, Target } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, RefreshCw } from "lucide-react";
 import { CalendarApiError } from "@/lib/calendar/client";
 import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { addDays, calendarDates, eventSession, isCalendarDate, latestEvents, localParts, sessionLabels } from "@/lib/calendar/schedule";
@@ -14,7 +14,7 @@ import { SessionPreview } from "./SessionPreview";
 import { SessionTypeIcon } from "./SessionTypeIcon";
 import { CalendarLibrary } from "./CalendarLibrary";
 import { calendarContextProblem, calendarHref, type CalendarNavigation } from "@/lib/calendar/navigation";
-import { programmeRange, weekProgramme } from "@/lib/calendar/programme";
+import { bookingOnDay, programmeRange, weekProgramme } from "@/lib/calendar/programme";
 import { ProgrammeWeek } from "./ProgrammeWeek";
 
 /** Desktop planning surface; sample state and authenticated saved snapshots remain separate. */
@@ -53,7 +53,6 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
   const programme = weekProgramme(bundle, date, team);
   const disabled = loading || busy || navigating || blocked || !!problem;
   const navigationDisabled = loading || busy || navigating || !!problem;
-  const shortDate = (value: string) => new Intl.DateTimeFormat("en-AU", { weekday:"short",day:"numeric",month:"short",timeZone:"UTC" }).format(new Date(`${value}T12:00:00Z`));
 
   /** Reload through the shared workspace and clear page-specific editing state. */
   async function reload(id: string, switching = false) {
@@ -89,6 +88,15 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
     }
   }
 
+  const inlineFixture = view === "week" && current?.kind === "fixture" &&
+    visible.some(event => event.id === current.id) && bookingOnDay(current, date);
+  const preview = <SessionPreview bundle={bundle} event={current} demo={!saved} inlineFixture={inlineFixture}
+    onClose={() => go({ event: undefined, bookingRevision: undefined, focus:"date" })}
+    focusOnOpen={!navigation.library && navigation.focus !== "date" && !editing}
+    context={current ? { date, view, organization: bundle.organizationId, team: navigation.team, type: navigation.type, event: current.id, bookingRevision: current.revision } : undefined}
+    disabled={disabled} onSchedule={() => setEditing({ event: current })}
+    onBrowse={browse} onCopy={current?.session ? () => go({ library: "1", session: current.session!.id, revision: current.session!.revision }) : undefined} />;
+
   return <div className={`calendar-workspace calendar-integrated calendar-programme${view === "week" ? " calendar-programme-week" : ""}${current ? " calendar-inspector-open" : ""}`} aria-busy={loading || busy || navigating}
     onPointerDownCapture={() => { document.body.dataset.programmeInput = "pointer"; }} onKeyDownCapture={() => { document.body.dataset.programmeInput = "keyboard"; }}><div className="calendar-planning"><div className="programme-main-column">
     <div className="calendar-page-heading programme-page-heading"><div className="programme-heading-title"><div className="programme-heading-context"><label>Team<select aria-label="Team" disabled={navigationDisabled} value={team} onChange={(e) => go({ team: e.target.value || undefined, event: undefined, bookingRevision: undefined })}><option value="">All teams</option>
@@ -114,14 +122,11 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
     {problem && <p role="alert" className="calendar-context-warning">{problem} <Link href={calendarHref({ date, view })}>Reset Calendar context</Link></p>}
     {!problem && navigation.notice && <p role="status" className="calendar-saved-notice">{navigation.notice === "diagram-saved" ? "Diagram saved" : "Session saved"} · booking revision {current?.revision}. Your Calendar context is restored.</p>}
     {current && type && type !== (current.kind === "fixture" ? "fixture" : eventSession(bundle, current)?.content.kind ?? "other") && <p className="calendar-context-warning">The selected booking is hidden by the type filter. <button onClick={() => go({ type: undefined })}>Show selected booking</button></p>}
-    {view === "week" && !problem && <section className="programme-overview" aria-label="Weekly programme context"><div><Flag size={25} aria-hidden="true" /><div><p>{programme.fixtures.length > 1 ? `${programme.fixtures.length} fixtures this week` : "Fixture this week"}</p><strong>{programme.fixtures[0]?.title ?? "No fixture scheduled"}</strong><span>{programme.fixtures.length === 1 ? `${shortDate(programme.fixtures[0].localDate)} · ${programme.fixtures[0].startsAt ? localParts(programme.fixtures[0].startsAt, programme.fixtures[0].timeZone).time : "Time TBC"}` : programme.fixtures.length > 1 ? programme.fixtures.map(e => shortDate(e.localDate)).join(" · ") : "Selected week"}</span></div></div>
-      <div><Target size={25} aria-hidden="true" /><div><p>Scheduled training focus</p><strong title={programme.focus.join(" · ")}>{programme.focus.length ? `${programme.focus.slice(0,3).join(" · ")}${programme.focus.length > 3 ? ` +${programme.focus.length-3}` : ""}` : "Focus not specified"}</strong></div></div>
-      <div><NotebookText size={25} aria-hidden="true" /><div><p>Session objectives{programme.objectives.length > 1 ? ` · ${programme.objectives.length} saved` : ""}</p><strong title={programme.objectives.join(" · ")}>{programme.objectives[0] ?? "Objectives not specified"}</strong></div></div></section>}
     <section className="calendar-main" aria-label="Calendar schedule">
       <fieldset className="calendar-navigation-controls" disabled={navigationDisabled}>
       {view !== "week" && <div className="calendar-legend">{(["conditioning", "possession", "goalkeeper", "tactical", "testing", "recovery", "fixture"] as const).map((kind) =>
         <span key={kind} className={`calendar-type-${kind}`}><SessionTypeIcon kind={kind} />{kind === "fixture" ? "Match" : sessionLabels[kind]}</span>)}</div>}
-      {view === "week" ? <ProgrammeWeek bundle={bundle} dates={dates} date={date} events={visible} selected={selected} team={team} fixtures={programme.fixtures} disabled={disabled}
+      {view === "week" ? <ProgrammeWeek bundle={bundle} dates={dates} date={date} events={visible} selected={selected} team={team} fixtures={programme.fixtures} disabled={disabled} fixturePreview={inlineFixture ? preview : undefined}
         onDate={day => go({ date: day, event: undefined, bookingRevision: undefined })} onSelect={(event, day) => go({ event: event.id, bookingRevision: event.revision, date: day, focus:undefined })}
         onChoose={day => go({ date: day, event: undefined, bookingRevision: undefined, library: "1" })} onAdd={day => setEditing({ date: day })} /> : <div className={`calendar-grid calendar-${view === "day" ? "view-day" : view}`}>
         {view === "month" && <div className="calendar-weekdays">{["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <span key={d}>{d}</span>)}</div>}
@@ -157,15 +162,11 @@ export function CalendarWorkspace({ navigation }: { navigation: CalendarNavigati
         })}</div>
       </div>}
       </fieldset>
-      {view === "week" && !problem && <div className="programme-week-summary"><Layers size={25} aria-hidden="true" /><div><h2>Weekly programme</h2><p>{programme.trainingCount} training sessions · {programme.fixtures.length} {programme.fixtures.length === 1 ? "fixture" : "fixtures"}</p></div><span className="programme-summary-detail">{new Set(programme.bookings.filter(e => e.status !== "cancelled").map(e => e.localDate)).size} scheduled days</span></div>}
       <div className="calendar-grid-footer"><span>{visible.filter((e) => dates.includes(e.localDate)).length} bookings in this view</span>
         <span>Times shown in each booking’s time zone · Sydney default</span></div>
       {view !== "month" && <p className="calendar-muted calendar-footnote">Each day lists bookings chronologically, including parallel sessions and overnight continuations. Use Edit Booking for precise times and daylight-saving choices.</p>}
     </section></div>
-    <SessionPreview bundle={bundle} event={current} demo={!saved} onClose={() => go({ event: undefined, bookingRevision: undefined, focus:"date" })} focusOnOpen={!navigation.library && navigation.focus !== "date" && !editing}
-      context={current ? { date, view, organization: bundle.organizationId, team: navigation.team, type: navigation.type, event: current.id, bookingRevision: current.revision } : undefined}
-      disabled={loading || busy || navigating || blocked || !!problem} onSchedule={() => setEditing({ event: current })}
-      onBrowse={browse} onCopy={current?.session ? () => go({ library: "1", session: current.session!.id, revision: current.session!.revision }) : undefined} /></div>
+    {!inlineFixture && preview}</div>
     {editing && !loading && !problem && <ScheduleDialog bundle={bundle} date={editing.date ?? date} event={editing.event} demo={!saved} busy={busy} blocked={blocked} initialPlan={editing.plan} initialTeam={team}
       returnFocus={dateControl} onClose={() => setEditing(null)} onSave={publish} />}
     {navigation.library && !loading && !problem && <CalendarLibrary key={`${navigation.session ?? ""}:${navigation.revision ?? ""}:${navigation.copy ?? ""}`} context={context} />}

@@ -122,7 +122,7 @@ test("preview schedules one independent copy and returns to its actual date, tea
   await expect(page.getByLabel("Selected date")).toHaveValue("2026-11-11");
   await expect(page.getByLabel("Team", { exact: true })).toHaveValue("first-team");
   await expect(page.getByLabel("Session type", { exact: true })).toHaveValue("");
-  const selected = page.locator('.calendar-event[aria-pressed=true]'); await expect(selected).toContainText("17:00 – 18:15");
+  const selected = page.locator('.focused-programme-booking[aria-pressed=true]'); await expect(selected).toHaveAccessibleDescription(/17:00\. Ends 18:15/);
   expect(m.writes()).toBe(1);
   const saved = m.bundle().sessions.find((s) => s.id === `scheduled-session-${request}`)!;
   expect(saved.content).toEqual(m.source.content); expect(saved.documents).toEqual([]);
@@ -148,6 +148,7 @@ test("cancel copy and revisit its request via Back/Forward never writes or inven
 
 test("booking copy action preserves an all-team context and the picker supports keyboard cancellation", async ({ page }) => {
   const m = await storage(page); await page.goto(`${m.root.replace('&team=first-team', '')}&event=${m.originalEvent.id}&bookingRevision=1`); await loaded(page);
+  await page.getByText("Booking & reuse", { exact: true }).click();
   await page.getByRole("button", { name: "Schedule Another Copy", exact: true }).click();
   await expect(page.getByRole("region", { name: "Saved session preview" })).toContainText("Saved session preview · revision 1");
   await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -175,7 +176,7 @@ for (const failure of [409, 503, "lost-ack"] as const) test(`Calendar copy ${fai
     await expect(page.getByText("Independent occurrence found for this request", { exact: true })).toBeVisible();
     await page.getByRole("link", { name: "Open scheduled occurrence", exact: true }).click();
     await expect(page.getByRole("button", { name: "Week", exact: true })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator('.calendar-event[aria-pressed=true]')).toBeVisible();
+    await expect(page.locator('.focused-programme-booking[aria-pressed=true]')).toBeVisible();
   } else { expect(m.bundle()).toEqual(m.before); await expect(page.getByRole("dialog")).toBeVisible(); }
 });
 
@@ -213,7 +214,9 @@ test("invalid, stale and cross-organisation/team links never substitute another 
 
 test("weekly/monthly cards distinguish match and recovery; booking edits preserve session and guide pins", async ({ page }, info) => {
   const m = await storage(page); await page.goto(m.root.replace('2026-11-11','2026-11-03')); await loaded(page);
+  await page.getByRole("button", { name: "Select 2026-11-07", exact: true }).click();
   await expect(page.getByRole("button", { name: "First Team v Visitors, 2026-11-07, Match", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Select 2026-11-06", exact: true }).click();
   await expect(page.getByRole("button", { name: "Recovery & mobility, 2026-11-06, Recovery", exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath("calendar-light-week.png") });
   await page.getByRole("button", { name: "Month", exact: true }).click();
@@ -223,13 +226,15 @@ test("weekly/monthly cards distinguish match and recovery; booking edits preserv
   await card.click();
   const panel = page.getByRole("complementary", { name: "Session preview" });
   await expect(panel.getByRole("link", { name: "Open Session", exact: true })).toHaveAttribute("href", new RegExp(`^/sessions\\?event=${m.originalEvent.id}&revision=1&calendar=`));
+  await panel.getByText("Booking & reuse", { exact: true }).click();
   await panel.getByRole("button", { name: "Edit Booking", exact: true }).click();
   const form = page.getByRole("dialog"); await form.getByLabel("Start time").fill("17:00"); await form.getByLabel("End time").fill("18:00");
   await form.getByRole("button", { name: "Save booking", exact: true }).click();
   await expect(page).toHaveURL(/bookingRevision=2/);
   expect(m.bundle().sessions).toEqual(m.before.sessions);
   await expect(panel.getByRole("link", { name: "Coaching Guide", exact: true })).toHaveAttribute("href", new RegExp(`^/guides\\?session=${m.source.id}&revision=1&event=${m.originalEvent.id}&bookingRevision=2&calendar=`));
-  await expect(panel).toContainText("saved PDFs are historical exports");
+  await panel.getByText("Staff & booking information", { exact: true }).click();
+  await expect(panel.getByText(/saved PDFs are historical exports/)).toBeVisible();
   await panel.getByRole("link", { name: "Coaching Guide", exact: true }).click();
   await expect(page.getByText("Original booking 2026-11-03 · booking revision 1. Saved schedule may differ from the current booking.", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Download illustrated PDF 1", exact: true })).toBeEnabled();

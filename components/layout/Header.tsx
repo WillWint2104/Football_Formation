@@ -19,8 +19,8 @@ export function Header() {
   const programme = ["/calendar", "/team-schedule"].includes(pathname);
   const sessions = pathname === "/sessions";
   const sessionViewer = pathname === "/sessions/view";
-  const programmeHeader = (programme || sessions || sessionViewer) && <header className={`programme-frame-header${sessions ? " session-frame-header" : ""}${sessionViewer ? " viewer-frame-header" : ""}`}>
-    <Link href="/calendar" className="programme-frame-brand" aria-label="Football Formation Calendar"><span className="programme-brand-shield"><Shield aria-hidden="true" /><b aria-hidden="true">F</b></span>{sessionViewer ? <span>Football Formation</span> : <span>FOOTBALL<br />FORMATION</span>}</Link>
+  const programmeHeader = (programme || sessions || sessionViewer) && <header className={`programme-frame-header${programme ? " calendar-frame-header" : ""}${sessions ? " session-frame-header" : ""}${sessionViewer ? " viewer-frame-header" : ""}`}>
+    <Link href="/calendar" className="programme-frame-brand" aria-label="Football Formation Calendar"><span className="programme-brand-shield"><Shield aria-hidden="true" /><b aria-hidden="true">F</b></span>{programme || sessionViewer ? <span>Football Formation</span> : <span>FOOTBALL<br />FORMATION</span>}</Link>
     {!sessionViewer && <MobileNavigation />}<nav className="programme-primary-navigation" aria-label="Primary navigation">
       <Link href="/calendar" aria-current={programme ? "page" : undefined}><CalendarDays size={22} aria-hidden="true" /><span>Programme</span></Link>
       <Link href="/sessions" aria-current={sessions || sessionViewer ? "page" : undefined}><ClipboardList size={21} aria-hidden="true" /><span>Sessions</span></Link>

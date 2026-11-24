@@ -1,57 +1,132 @@
 "use client";
 
-import { CalendarDays, Flag, Plus } from "lucide-react";
+import { useId, type ReactNode } from "react";
+import { ArrowRight, CalendarDays, Check, ChevronRight, Layers3, MapPin, Plus, Trophy } from "lucide-react";
 import type { CalendarEvent } from "@/lib/domain/calendar";
 import type { DomainBundle } from "@/lib/domain/validation";
 import { eventSession, localParts, sessionLabels } from "@/lib/calendar/schedule";
-import { bookingOnDay, fixtureDayLabel, programmeIllustration } from "@/lib/calendar/programme";
+import { bookingOnDay, fixtureDayLabel } from "@/lib/calendar/programme";
 import { SessionTypeIcon } from "./SessionTypeIcon";
-import { coachingScreenOptions } from "@/lib/tactical/coaching-view";
-import { SceneDiagram } from "@/components/tactical/SceneDiagram";
 
-function ProgrammeIllustration({ illustration }: { illustration: NonNullable<ReturnType<typeof programmeIllustration>> }) {
-  const { activity, pin, scene } = illustration;
-  return <span className="programme-card-diagram"><SceneDiagram scene={scene} title={`${activity.content.title} · saved diagram`}
-    screenMode="compact" sizingSeconds={pin.representativeSeconds} autoFitContent options={coachingScreenOptions(scene, pin.representativeSeconds, activity.content.area)} /></span>;
+type WeekProps = {
+  bundle: DomainBundle; dates: string[]; date: string; events: CalendarEvent[]; selected?: string;
+  team: string; fixtures: CalendarEvent[]; disabled: boolean; fixturePreview?: ReactNode;
+  onDate: (day: string) => void; onSelect: (event: CalendarEvent, day: string) => void;
+  onChoose: (day: string) => void; onAdd: (day: string) => void;
+};
+
+const familyLabels = { training: "Training", goalkeeper: "GK", recovery: "Recovery", fixture: "Match", other: "Other" } as const;
+
+function formatDate(day: string, options: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat("en-AU", { ...options, timeZone: "UTC" }).format(new Date(day + "T12:00:00Z"));
 }
 
-/** Week presentation only. All selection and scheduling still use the accepted Calendar operations. */
-export function ProgrammeWeek({ bundle, dates, date, events, selected, team, fixtures, disabled, onDate, onSelect, onChoose, onAdd }: {
-  bundle: DomainBundle; dates: string[]; date: string; events: CalendarEvent[]; selected?: string; team: string; fixtures: CalendarEvent[]; disabled: boolean;
-  onDate: (date: string) => void; onSelect: (event: CalendarEvent, day: string) => void; onChoose: (date: string) => void; onAdd: (date: string) => void;
-}) {
-  const anchorFixture = team && fixtures.length === 1 ? fixtures[0] : undefined;
-  // One saved illustration in the visible week, never a repetitive decorative thumbnail grid.
-  const illustratedEvent = events.find(e => dates.some(day => bookingOnDay(e, day)) && programmeIllustration(bundle, e));
-  return <div className="calendar-grid calendar-week programme-week"><div className="calendar-days">{dates.map(day => {
-    const daily = events.filter(e => bookingOnDay(e, day));
-    const matchDay = fixtures.some(e => e.localDate === day), offset = fixtureDayLabel(day, anchorFixture);
-    return <div key={day} className={`calendar-day${day === date ? " calendar-date-selected" : ""}${matchDay ? " programme-match-day" : ""}`} data-date={day}>
-      <button className="calendar-day-number" aria-label={`Select ${day}`} aria-description={day === date ? "Current Calendar date." : "Change the Calendar date."} aria-pressed={day === date} onClick={() => onDate(day)}>
-        <strong>{new Intl.DateTimeFormat("en-AU", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`))}</strong>
-        <span>{offset ?? (matchDay ? "Match day" : "")}</span>
-      </button>
-      <div className="programme-day-sessions">{daily.map(event => {
-        const session = eventSession(bundle, event), kind = event.kind === "fixture" ? "fixture" : session?.content.kind ?? "other";
-        const kindLabel = kind === "fixture" ? "Match" : sessionLabels[kind];
-        const start = event.startsAt ? localParts(event.startsAt, event.timeZone) : null, end = event.endsAt ? localParts(event.endsAt, event.timeZone) : null;
-        const overnight = start && end && start.date !== end.date;
-        const minutes = event.startsAt && event.endsAt ? (Date.parse(event.endsAt) - Date.parse(event.startsAt)) / 60000 : null;
-        const illustration = event.id === illustratedEvent?.id && event.localDate === day ? programmeIllustration(bundle, event) : null;
-        return <button key={event.id} className={`calendar-event calendar-type-${kind}${selected === event.id ? " calendar-event-selected" : ""}${event.status === "cancelled" ? " programme-event-cancelled" : ""}`}
-          aria-label={`${event.title}, ${event.localDate}, ${kindLabel}`} title={event.title} aria-description={selected === event.id ? "Selected Calendar booking." : "Open the contextual inspector for this booking."} aria-pressed={selected === event.id} onClick={() => onSelect(event, day)}>
-          <span className="programme-card-kind"><SessionTypeIcon kind={kind} /><b>{kind === "other" && !session ? event.kind : kindLabel}</b>{event.status !== "confirmed" && <small>{event.status}</small>}</span>
-          {kind === "fixture" && <Flag className="programme-fixture-mark" size={30} aria-hidden="true" />}
-          <span className="calendar-event-time">{event.localDate < day ? "Continued · " : ""}{start ? `${overnight ? `${start.date} ` : ""}${start.time}` : "Time TBC"}{end && ` – ${overnight ? `${end.date} ` : ""}${end.time}`}</span>
-          {minutes !== null && kind !== "fixture" && <span className="programme-card-duration" title="Booking duration">({minutes.toLocaleString("en-AU", { maximumFractionDigits: 2 })}m)</span>}
-          {illustration && <ProgrammeIllustration illustration={illustration} />}
-          <span className="calendar-event-title"><strong>{event.title}</strong></span>
-          {!team && <span className="programme-card-team">{bundle.teams.find(t => t.id === event.teamId)?.name}</span>}
-          {kind === "fixture" && <span className="programme-card-activities">{event.venue ?? "Venue not specified"}</span>}
-          {event.timeZone !== "Australia/Sydney" && <span className="programme-card-zone">{event.timeZone}</span>}
-        </button>;
-      })}{!daily.length && <p className="calendar-muted calendar-empty"><CalendarDays size={21} aria-hidden="true" /><span>No sessions scheduled</span></p>}</div>
-      <div className="calendar-slot-actions"><button className="calendar-add-slot" disabled={disabled} onClick={() => onChoose(day)}>Choose session</button><button aria-label="Add session" title="Add a blank session on this date" disabled={disabled || !bundle.teams.length} onClick={() => onAdd(day)}><Plus size={14} /></button></div>
-    </div>;
-  })}</div></div>;
+function bookingFamily(bundle: DomainBundle, event: CalendarEvent): keyof typeof familyLabels {
+  if (event.kind === "fixture") return "fixture";
+  const kind = eventSession(bundle, event)?.content.kind;
+  if (kind === "goalkeeper" || kind === "recovery") return kind;
+  return event.kind === "training" || event.kind === "testing" ? "training" : "other";
+}
+
+function EventRow({ props, event, day }: { props: WeekProps; event: CalendarEvent; day: string }) {
+  const descriptionId = useId();
+  const session = eventSession(props.bundle, event);
+  const fixture = event.kind === "fixture";
+  const kind = session?.content.kind ?? "other";
+  const family = bookingFamily(props.bundle, event);
+  const category = fixture ? "Match" : session ? sessionLabels[kind] : event.kind;
+  const selected = event.id === props.selected;
+  const start = event.startsAt ? localParts(event.startsAt, event.timeZone) : null;
+  const end = event.endsAt ? localParts(event.endsAt, event.timeZone) : null;
+  const overnight = !!(start && end && start.date !== end.date);
+  const displayTime = (part: NonNullable<typeof start>) => overnight ? part.date + " " + part.time : part.time;
+  const continued = event.localDate < day;
+  const location = [event.venue, event.areaLabel].filter(Boolean).join(" · ");
+  const team = !props.team ? props.bundle.teams.find(item => item.id === event.teamId)?.name : undefined;
+
+  return <li>
+    <button type="button" className="focused-programme-booking" data-booking={event.id} data-family={family}
+      data-status={event.status} aria-pressed={selected} aria-label={event.title + ", " + event.localDate + ", " + category}
+      aria-describedby={descriptionId} title={event.title}
+      onClick={() => props.onSelect(event, day)}>
+      <span id={descriptionId} hidden>{[selected ? "Selected Calendar booking" : "Open the contextual inspector for this booking", start && displayTime(start), end && "Ends " + displayTime(end), event.timeZone, event.status, continued && "Continued booking", session?.content.objective, location, team].filter(Boolean).join(". ")}</span>
+      <span className="focused-programme-booking-clock">
+        <time dateTime={event.startsAt ?? undefined}>{start ? displayTime(start) : "Time TBC"}</time>
+        {end && <small>to {displayTime(end)}</small>}
+        {continued && <small>Continued</small>}
+        {event.timeZone !== "Australia/Sydney" && <small>{event.timeZone}</small>}
+      </span>
+      <span className="focused-programme-booking-icon">{fixture ? <Trophy size={20} aria-hidden="true" /> : <SessionTypeIcon kind={kind} />}</span>
+      <span className="focused-programme-booking-copy">
+        <strong>{event.title}</strong>
+        {session?.content.objective && <span className="focused-programme-booking-objective">{session.content.objective}</span>}
+        <span className="focused-programme-booking-meta">
+          <span className="focused-programme-category">{category}</span>
+          {location && <span className="focused-programme-booking-place"><MapPin size={13} aria-hidden="true" />{location}</span>}
+          {team && <span>{team}</span>}
+          {event.status !== "confirmed" && <span className="focused-programme-status">{event.status}</span>}
+        </span>
+      </span>
+      <span className="focused-programme-selection-mark" aria-hidden="true">{selected ? <Check size={17} /> : <ChevronRight size={16} />}</span>
+    </button>
+  </li>;
+}
+
+export function ProgrammeWeek(props: WeekProps) {
+  const descriptionId = useId();
+  const days = props.dates.map(day => {
+    const events = props.events.filter(event => bookingOnDay(event, day));
+    return { day, events, families: [...new Set(events.map(event => bookingFamily(props.bundle, event)))] };
+  });
+  const active = days.find(row => row.day === props.date) ?? days[0];
+  if (!active) return null;
+  const fixtureAnchor = props.team && props.fixtures.length === 1 ? props.fixtures[0] : undefined;
+  const offset = fixtureDayLabel(active.day, fixtureAnchor);
+  const upcoming = props.events.filter(event => event.kind === "fixture" && event.status !== "cancelled" &&
+    event.localDate > active.day && props.dates.includes(event.localDate)).sort((a,b) => a.localDate.localeCompare(b.localDate))[0];
+  const kickoff = upcoming?.startsAt ? localParts(upcoming.startsAt, upcoming.timeZone).time : "Time TBC";
+  const bookingCount = (count: number) => count + (count === 1 ? " booking" : " bookings");
+
+  return <section className="focused-programme" aria-label="Weekly overview and focused day">
+    <nav className="focused-programme-week-strip" aria-label="Seven days">
+      {days.map(({ day, events, families }) => <button type="button" key={day} data-day={day}
+        aria-label={"Select " + day} aria-pressed={day === active.day}
+        aria-describedby={descriptionId + day}
+        onClick={() => props.onDate(day)}>
+        <span id={descriptionId + day} hidden>{(day === active.day ? "Current Calendar date. " : "") + bookingCount(events.length) + (families.length ? ". " + families.map(family => family === "goalkeeper" ? "Goalkeeper" : familyLabels[family]).join(", ") : "")}</span>
+        <span className="focused-programme-day-top"><span>{formatDate(day, { weekday: "short" })}</span><span className="focused-programme-day-count" aria-hidden="true">{events.length}</span></span>
+        <strong>{formatDate(day, { day: "numeric", month: "short" })}</strong>
+        <span className="focused-programme-day-families" aria-hidden="true">
+          {families.length ? families.map(family => <span key={family} data-family={family}>
+            {family === "fixture" ? <Trophy size={12} /> : <i />}
+            {familyLabels[family]}
+          </span>) : <span className="focused-programme-unbooked">No bookings</span>}
+        </span>
+      </button>)}
+    </nav>
+    <section className="focused-programme-day" aria-label={formatDate(active.day, { weekday: "long", day: "numeric", month: "long" })} data-day={active.day}>
+      <header className="focused-programme-day-heading">
+        <div>
+          <h2>{formatDate(active.day, { weekday: "long", day: "numeric", month: "long" })}</h2>
+          <p>{bookingCount(active.events.length)}{offset && <> <span aria-hidden="true">·</span> {offset}</>}</p>
+        </div>
+        <div className="focused-programme-day-actions">
+          <button type="button" disabled={props.disabled} onClick={() => props.onChoose(active.day)}><Layers3 size={16} aria-hidden="true" />Choose session</button>
+          <button type="button" disabled={props.disabled || !props.bundle.teams.length} onClick={() => props.onAdd(active.day)}><Plus size={16} aria-hidden="true" />Add session</button>
+        </div>
+      </header>
+      {active.events.length ? <ol className="focused-programme-bookings" aria-label="Scheduled bookings">
+        {active.events.map(event => <EventRow key={event.id} props={props} event={event} day={active.day} />)}
+      </ol> : <p className="focused-programme-empty"><CalendarDays size={21} aria-hidden="true" />No bookings for this day</p>}
+    </section>
+    {props.fixturePreview && <div className="focused-programme-fixture-preview">{props.fixturePreview}</div>}
+    {upcoming && <button type="button" className="focused-programme-next" onClick={() => props.onSelect(upcoming, upcoming.localDate)}
+      aria-label={"Open next fixture, " + upcoming.title}>
+      <span className="focused-programme-next-icon"><Trophy size={19} aria-hidden="true" /></span>
+      <span className="focused-programme-next-title"><small>Next fixture</small><strong>{upcoming.title}</strong></span>
+      <span className="focused-programme-next-context"><strong>{formatDate(upcoming.localDate, { weekday: "short", day: "numeric", month: "short" })} · {kickoff}</strong>
+        {upcoming.venue && <span><MapPin size={13} aria-hidden="true" />{upcoming.venue}</span>}</span>
+      <ArrowRight size={17} aria-hidden="true" />
+    </button>}
+  </section>;
 }

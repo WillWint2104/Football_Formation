@@ -15,7 +15,7 @@ async function storage(page:Page,{busy=false,invalid=false,longTitle=false,failu
   await page.route('**/api/**',r=>r.abort());
   await page.route('**/api/organizations',r=>r.fulfill({json:{organizations:[{id:bundle.organizationId,name:'Synthetic inspector review club',version:4}]}}));
   await page.route('**/api/organizations/*/snapshot',r=>{if(r.request().method()!=='GET'){writes++;return failure ? r.fulfill({status:failure,json:{error:'Synthetic conflict'}}) : r.abort();}return r.fulfill({json:{version:4,bundle}});});
-  return {root:`/calendar?date=2026-11-05&view=week&organization=${bundle.organizationId}&team=first-team`,bundle,before,writes:()=>writes,errors};
+  return {root:`/calendar?date=2026-11-03&view=week&organization=${bundle.organizationId}&team=first-team`,bundle,before,writes:()=>writes,errors};
 }
 async function loaded(page:Page){await expect(page.locator('.calendar-connection [role=status]')).toContainText('Loaded saved organisation snapshot');await expect(page.locator('.calendar-programme')).toHaveAttribute('aria-busy','false');}
 const panel=(page:Page)=>page.getByRole('complementary',{name:'Session preview',exact:true});
@@ -23,30 +23,31 @@ async function open(page:Page){await page.getByRole('button',{name:'First touch 
 
 test('inspector opens read-only beside a dominant seven-day Calendar; closing restores full width',async({page},info)=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);
-  const full=(await page.locator('.programme-week').boundingBox())!.width;
+  const full=(await page.locator('.focused-programme').boundingBox())!.width;
   await page.screenshot({path:info.outputPath('01-inspector-closed.png')});await open(page);
   await expect(panel(page).getByRole('heading',{name:'First touch & support play',exact:true})).toBeFocused();
-  const board=(await page.locator('.programme-week').boundingBox())!,inspector=(await panel(page).boundingBox())!;
+  const board=(await page.locator('.focused-programme').boundingBox())!,inspector=(await panel(page).boundingBox())!;
   expect(board.width).toBeGreaterThan(inspector.width*2);expect(inspector.x+inspector.width).toBeLessThanOrEqual(info.project.use.viewport!.width);
   expect(inspector.y).toBeLessThan(board.y);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  expect(await page.locator('.programme-week .calendar-day').first().evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThanOrEqual(120);
+  expect(await page.locator('.focused-programme-week-strip > button').first().evaluate(e=>e.getBoundingClientRect().width)).toBeGreaterThanOrEqual(112);
   await expect(panel(page).getByRole('link',{name:'Open Session',exact:true})).toBeVisible();await expect(panel(page).getByRole('link',{name:'Coaching Guide',exact:true})).toBeVisible();
   await expect(panel(page).locator('.scene-diagram')).toHaveAttribute('data-revision','1');await expect(panel(page).locator('.scene-diagram')).toHaveAttribute('data-time','2');
   await page.screenshot({path:info.outputPath('02-inspector-training.png')});
   if(info.project.name==='desktop'){await page.setViewportSize({width:1672,height:941});await page.screenshot({path:info.outputPath('concept-size-1672x941.png')});await page.setViewportSize({width:1920,height:1080});}
   await panel(page).getByRole('button',{name:'Dismiss session preview',exact:true}).click();await expect(panel(page)).toHaveCount(0);
-  expect((await page.locator('.programme-week').boundingBox())!.width).toBe(full);await expect(page.getByLabel('Selected date',{exact:true})).toBeFocused();
+  expect((await page.locator('.focused-programme').boundingBox())!.width).toBe(full);await expect(page.getByLabel('Selected date',{exact:true})).toBeFocused();
   expect(m.writes()).toBe(0);expect(m.bundle).toEqual(m.before);expect(m.errors).toEqual([]);
 });
 
 test('switching sessions, Back/Forward and refresh preserve booking context and reset only local diagram selection',async({page},info)=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);await open(page);const first=page.url();
   await panel(page).getByRole('button',{name:'Diagram 2 · r2',exact:true}).click();await expect(panel(page).locator('.scene-diagram')).toHaveAttribute('data-time','4');
+  await page.getByRole('button',{name:'Select 2026-11-05',exact:true}).click();await expect(panel(page)).toHaveCount(0);
   await page.getByRole('button',{name:'Pressing & defensive shape, 2026-11-05, Tactical',exact:true}).click();
   await expect(panel(page).getByRole('heading',{name:'Pressing & defensive shape',exact:true})).toBeVisible();await expect(panel(page)).toContainText('No tactical diagrams attached');
   await page.screenshot({path:info.outputPath('03-inspector-switched.png')});
-  await page.goBack();await expect(page).toHaveURL(first);await expect(panel(page).locator('.scene-diagram')).toHaveAttribute('data-revision','1');
-  await page.goForward();await expect(panel(page)).toContainText('Pressing & defensive shape');await page.reload();await loaded(page);
+  await page.goBack();await expect(panel(page)).toHaveCount(0);await page.goBack();await expect(page).toHaveURL(first);await expect(panel(page).locator('.scene-diagram')).toHaveAttribute('data-revision','1');
+  await page.goForward();await expect(panel(page)).toHaveCount(0);await page.goForward();await expect(panel(page)).toContainText('Pressing & defensive shape');await page.reload();await loaded(page);
   await expect(page.getByLabel('Team',{exact:true})).toHaveValue('first-team');await expect(page.getByLabel('Selected date',{exact:true})).toHaveValue('2026-11-05');
   expect(m.writes()).toBe(0);expect(m.bundle).toEqual(m.before);expect(m.errors).toEqual([]);
 });
@@ -61,7 +62,7 @@ test('multiple diagrams and activity selection use exact authored pins; coaching
   await expect.poll(()=>region.evaluate(e=>e.scrollTop)).toBeGreaterThan(0);expect(await page.evaluate(()=>scrollY)).toBe(pageY);
   await page.screenshot({path:info.outputPath('08-inspector-keyboard-scroll.png')});
   await panel(page).getByRole('button',{name:'Show diagram for 5v2 Rondo',exact:true}).click();await expect(panel(page).locator('.scene-diagram')).toHaveAttribute('data-revision','1');
-  await expect(panel(page).locator('.scene-diagram')).toBeInViewport();await expect(panel(page).getByRole('heading',{name:'Session diagram',exact:true})).toBeFocused();
+  await expect(panel(page).locator('.scene-diagram')).toBeInViewport();await expect(panel(page).getByRole('heading',{name:'Tactical diagram',exact:true})).toBeFocused();
   await page.screenshot({path:info.outputPath('10-activity-diagram-revealed.png')});
   await page.keyboard.press('Escape');await expect(panel(page)).toHaveCount(0);await expect(page.getByLabel('Selected date',{exact:true})).toBeFocused();
   expect(m.writes()).toBe(0);expect(m.bundle).toEqual(m.before);expect(m.errors).toEqual([]);
@@ -69,11 +70,19 @@ test('multiple diagrams and activity selection use exact authored pins; coaching
 
 test('match and no-diagram bookings show actual details without invented coaching sources',async({page},info)=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);
-  await page.getByRole('button',{name:'Riverside FC vs Western United, 2026-11-07, Match',exact:true}).click();
-  await expect(panel(page).getByRole('heading',{name:'Match details',exact:true})).toBeVisible();await expect(panel(page)).toContainText('Main Pitch');
+  await page.getByRole('button',{name:'Open next fixture, Riverside FC vs Western United',exact:true}).click();
+  await expect(panel(page).getByRole('heading',{name:'Fixture details',exact:true})).toBeVisible();await expect(panel(page)).toContainText('Main Pitch');
+  await expect(panel(page).getByRole('region',{name:'Match kickoff'})).toContainText('15:00');
+  await expect(panel(page).getByRole('region',{name:'Match kickoff'})).toContainText('120 min');
+  const details=panel(page).getByText('Booking information',{exact:true});
+  await details.press('Enter');
+  await expect(panel(page).getByText('confirmed · booking v1',{exact:true})).toBeVisible();
+  await details.press('Enter');
+  await expect(panel(page).getByText('confirmed · booking v1',{exact:true})).toBeHidden();
   await expect(panel(page).getByRole('link',{name:'Open Session',exact:true})).toHaveCount(0);await expect(panel(page).locator('.scene-diagram')).toHaveCount(0);
   await page.screenshot({path:info.outputPath('05-inspector-match.png')});
   await panel(page).getByRole('button',{name:'Edit Booking',exact:true}).click();await expect(page.getByRole('dialog')).toBeVisible();await page.getByRole('button',{name:'Cancel',exact:true}).click();
+  await page.getByRole('button',{name:'Select 2026-11-03',exact:true}).click();
   await page.getByRole('button',{name:'Distribution drills, 2026-11-03, Goalkeeper',exact:true}).click();await expect(panel(page)).toContainText('No tactical diagrams attached to this session.');
   await page.screenshot({path:info.outputPath('06-inspector-no-diagram.png')});expect(m.writes()).toBe(0);expect(m.bundle).toEqual(m.before);
 });
@@ -87,7 +96,7 @@ test('invalid referenced scene is rejected by the native graph boundary instead 
 
 test('busy programme retains readable lanes and context-pinned editor / guide navigation',async({page},info)=>{
   const m=await storage(page,{busy:true});await page.goto(m.root);await loaded(page);await open(page);
-  await expect(page.locator('.programme-week .calendar-event')).toHaveCount(13);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await expect(page.locator('.focused-programme-booking')).toHaveCount(2);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:info.outputPath('07-inspector-busy-week.png')});
   const openLink=panel(page).getByRole('link',{name:'Open Session',exact:true}),guide=panel(page).getByRole('link',{name:'Coaching Guide',exact:true});
   await expect(openLink).toHaveAttribute('href',/^\/sessions\?event=sample-4&revision=1&calendar=/);await expect(guide).toHaveAttribute('href',/^\/guides\?session=sample-3&revision=1&event=sample-4&bookingRevision=1&calendar=/);
@@ -108,12 +117,13 @@ test('long titles retain full accessible text without consuming the reading regi
 });
 
 test('save conflict keeps source history intact and still allows read-only inspector dismissal',async({page},info)=>{
-  const m=await storage(page,{failure:409});await page.goto(m.root);await loaded(page);const full=(await page.locator('.programme-week').boundingBox())!.width;await open(page);
+  const m=await storage(page,{failure:409});await page.goto(m.root);await loaded(page);const full=(await page.locator('.focused-programme').boundingBox())!.width;await open(page);
+  await panel(page).getByText('Booking & reuse',{exact:true}).click();
   await panel(page).getByRole('button',{name:'Edit Booking',exact:true}).click();const dialog=page.getByRole('dialog');
   await dialog.getByLabel('Start time',{exact:true}).fill('16:00');await dialog.getByLabel('End time',{exact:true}).fill('17:15');await dialog.getByRole('button',{name:'Save booking',exact:true}).click();
   await expect(dialog.getByRole('button',{name:'Save booking',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Close scheduling form',exact:true}).click();
   await panel(page).getByRole('button',{name:'Dismiss session preview',exact:true}).click();await expect(panel(page)).toHaveCount(0);
-  expect((await page.locator('.programme-week').boundingBox())!.width).toBe(full);await expect(page.locator('.calendar-connection [role=status]')).toContainText('Reload');
+  expect((await page.locator('.focused-programme').boundingBox())!.width).toBe(full);await expect(page.locator('.calendar-connection [role=status]')).toContainText('Reload');
   await expect(page.getByLabel('Team',{exact:true})).toBeEnabled();await expect(page.getByLabel('Selected date',{exact:true})).toBeEnabled();
   await page.getByRole('button',{name:'Month',exact:true}).click();await expect(page.getByRole('button',{name:'Month',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.getByRole('button',{name:'Week',exact:true}).click();await expect(page.getByRole('button',{name:'Week',exact:true})).toHaveAttribute('aria-pressed','true');
