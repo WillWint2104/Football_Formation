@@ -140,6 +140,7 @@
 }
 @media (min-width:1320px) and (max-width:1500px) {
   .calendar-programme.calendar-programme-week .programme-page-heading { gap:9px; }
+  .calendar-programme.calendar-programme-week.calendar-inspector-open .programme-page-heading { flex-wrap:nowrap; }
   .calendar-programme.calendar-programme-week .programme-heading-controls { gap:6px; }
   .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-primary { padding-inline:9px; }
   .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-period > button[aria-label] {

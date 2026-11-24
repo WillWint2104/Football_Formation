@@ -27,8 +27,8 @@ async function open(page:Page){await card(page).click();await expect(panel(page)
 
 test('laptop planning actions share the heading row without reducing fonts or Calendar width',async({page},info)=>{
   const m=await storage(page);await page.goto(m.root);await loaded(page);await page.screenshot({path:info.outputPath('01-polish-closed.png')});
-  await open(page);const heading=(await page.locator('.programme-page-heading').boundingBox())!;
-  if(info.project.name==='laptop')expect(heading.height).toBeLessThanOrEqual(80);
+  await open(page);const heading=page.locator('.programme-page-heading');
+  if(info.project.name==='laptop')expect((await heading.boundingBox())!.height).toBeLessThanOrEqual(80);
   await expect(page.getByLabel('Team',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'This week',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Add session',exact:true}).first()).toBeVisible();
   const main=(await page.locator('.focused-programme').boundingBox())!,aside=(await panel(page).boundingBox())!;
   expect(aside.width).toBe(info.project.name==='laptop'?356:420);expect(main.width).toBeGreaterThan(aside.width*2);
@@ -36,7 +36,14 @@ test('laptop planning actions share the heading row without reducing fonts or Ca
   expect(await page.locator('.focused-programme .focused-programme-booking-copy > strong').first().evaluate(e=>parseFloat(getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(14);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await expect(panel(page).getByRole('link',{name:'Open Session',exact:true})).toBeInViewport();await expect(panel(page).getByRole('link',{name:'Coaching Guide',exact:true})).toBeInViewport();
-  await page.screenshot({path:info.outputPath('02-polish-selected.png')});expect(m.writes()).toBe(0);expect(m.bundle).toEqual(m.before);expect(m.errors).toEqual([]);
+  await page.screenshot({path:info.outputPath('02-polish-selected.png')});
+  if(info.project.name==='laptop'){
+    // Allow for a narrower layout area and differences in platform font metrics.
+    await page.setViewportSize({width:1336,height:768});
+    expect((await heading.boundingBox())!.height).toBeLessThanOrEqual(80);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  }
+  expect(m.writes()).toBe(0);expect(m.bundle).toEqual(m.before);expect(m.errors).toEqual([]);
 });
 
 test('pointer, keyboard, day context, booking selection and hover have distinct accessible states',async({page},info)=>{
