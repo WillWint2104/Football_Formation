@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { buildSync } from "esbuild";
 import { writeFile } from "node:fs/promises";
@@ -12,7 +13,8 @@ async function open(p: Page) {
   const pkg = attachmentExample(); pkg.document.session.activities[0].diagrams.push({ scene: { id: "example-rondo", revision: 2 }, representativeSeconds: 4 });
   const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), pkg); if (!r.ok) throw Error(r.error.message);
   const status = p.getByRole("region", { name: "Local diagram workspace", exact: true });
-  await status.getByRole("button", { name: "Browse local plans", exact: true }).click(); await status.getByText(/Saved local plans \(/).click();
+  await openDesignerDisclosure(p, "Session files");
+  await status.getByRole("button", { name: "Browse local plans", exact: true }).click(); await expect(status.getByText(/Saved local plans \(/)).toBeVisible();
   await status.getByRole("button", { name: `Review plan ${r.value.documentId}`, exact: true }).click(); p.once("dialog", d=>d.accept());
   await p.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click(); await expect(attached(p)).toBeVisible();
 }

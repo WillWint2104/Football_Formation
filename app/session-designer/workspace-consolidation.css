@@ -1,0 +1,175 @@
+@media screen {
+  #main-content:has(.designer-light) { padding:8px clamp(12px,1.25vw,24px); }
+  .session-designer .designer-heading { align-items:center; gap:8px 20px; margin-bottom:6px; }
+  .session-designer.designer-tactical-workspace .designer-heading h1 { font-size:clamp(22px,2vw,31px); line-height:1.17; }
+  .session-designer.designer-tactical-workspace .designer-heading > div > p:last-child { display:block; margin-top:2px; color:var(--color-shell-muted); }
+  .designer-heading-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:7px; }
+  .designer-owner-version { color:var(--color-shell-muted); font-size:12px; }
+  .session-designer .designer-heading .designer-draft-status { margin:0; padding:0; border:0; background:transparent; }
+  .session-designer .designer-heading .designer-draft-status small { display:none; }
+  .designer-workspace-disclosure { position:relative; }
+  .designer-workspace-disclosure > summary {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    width:max-content;
+    min-height:34px;
+    padding:5px 8px;
+    border:1px solid var(--color-shell-edge);
+    border-radius:6px;
+    background:white;
+    color:#183f63;
+    font-size:14px;
+    font-weight:650;
+    cursor:pointer;
+  }
+  .designer-workspace-disclosure > summary::-webkit-details-marker { display:none; }
+  .designer-workspace-disclosure[open] > summary { background:#e9f1f9; border-color:#91b6d7; }
+  .designer-workspace-menu {
+    position:absolute;
+    z-index:18;
+    inset:calc(100% + 5px) 0 auto auto;
+    display:grid;
+    gap:4px;
+    min-width:245px;
+    max-width:calc(100vw - 32px);
+    padding:6px;
+    border:1px solid var(--color-shell-edge);
+    border-radius:7px;
+    background:white;
+    box-shadow:0 8px 20px #18375422;
+  }
+  .designer-workspace-menu > button { display:flex; align-items:center; gap:8px; justify-content:flex-start; text-align:left; }
+  .session-designer .designer-diagram-status { margin:5px 0; }
+  .session-designer .designer-diagram-status:not([data-notice]):not(:has(.diagram-plan-list[open])) { margin:0; padding:0; border:0; }
+  .session-designer .designer-diagram-status .diagram-plan-list:not([open]) { display:none; }
+  .session-designer .designer-diagram-status .diagram-plan-list[open] { flex-basis:100%; }
+  .session-designer.designer-tactical-workspace .designer-toolbar { margin-bottom:5px; padding-block:2px; }
+  .session-designer.designer-tactical-workspace .designer-toolbar button { min-height:34px; padding-block:5px; }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-layout {
+    grid-template-columns:clamp(164px,12.4vw,224px) minmax(0,1fr);
+    height:var(--designer-activity-height,calc(100dvh - 218px));
+    min-height:405px;
+  }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-layout[data-activities-hidden=true] { grid-template-columns:minmax(0,1fr); }
+  .session-designer.designer-tactical-workspace .designer-selected-heading {
+    align-items:center;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    gap:7px;
+  }
+  .session-designer.designer-tactical-workspace .designer-selected-heading p { grid-column:1; grid-row:1; font-size:12px; }
+  .session-designer.designer-tactical-workspace .designer-quick-fields {
+    grid-column:2;
+    grid-row:1;
+    grid-template-columns:minmax(0,1fr) 109px;
+    gap:8px;
+  }
+  .session-designer.designer-tactical-workspace .designer-quick-fields label { flex-direction:row; align-items:center; white-space:nowrap; font-size:12px; }
+  .session-designer.designer-tactical-workspace .designer-quick-fields input { flex:1; width:0; min-width:45px; font-size:14px; }
+  .session-designer.designer-tactical-workspace .designer-quick-fields input[type=number] { min-width:58px; padding-inline:5px; }
+  .session-designer.designer-tactical-workspace .designer-activity-panel-toggle { grid-column:3; grid-row:1; }
+  .session-designer .designer-activity-nav > h3 { font-size:15px; }
+  .session-designer.designer-tactical-workspace .coaching-activity-list button { min-height:80px; gap:2px 7px; padding:8px 6px; }
+  .session-designer .coaching-activity-list button > span:first-child { align-self:start; }
+  .session-designer .designer-activity-diagram-count { font-size:12px; }
+  .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] {
+    grid-template-columns:minmax(0,1fr) clamp(255px,19vw,340px);
+  }
+  .session-designer.designer-tactical-workspace .designer-coaching-panel { padding:10px; }
+  .designer-coaching-heading {
+    margin:-10px -10px 10px;
+    padding:9px 10px;
+    border-bottom:1px solid var(--color-shell-edge);
+    background:#f1f6fb;
+    color:#173b5d;
+    font-size:16px;
+    font-weight:700;
+  }
+  .session-designer.designer-tactical-workspace .designer-activity-footer {
+    background:#eef4fa;
+    border:1px solid #cadbea;
+    border-radius:6px;
+    padding:4px 7px;
+  }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams {
+    grid-template-columns:minmax(0,1fr) fit-content(155px) auto;
+    grid-template-rows:auto minmax(0,1fr);
+    gap:5px 7px;
+    overflow:visible;
+  }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > header {
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+  .session-designer .activity-diagrams > header h3 { white-space:nowrap; }
+  .session-designer .activity-diagrams .diagram-authoring-controls { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .session-designer .activity-diagrams .designer-workspace-menu { inset-inline:0 auto; }
+  .session-designer .activity-diagrams .diagram-pin-details { padding:4px; }
+  .session-designer .activity-diagrams .diagram-pin-details summary { cursor:pointer; }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .diagram-tabs {
+    grid-column:2;
+    grid-row:1;
+    align-self:center;
+    max-width:155px;
+  }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .diagram-canvas-toolbar { grid-column:3; grid-row:1; }
+  .session-designer.designer-tactical-workspace .diagram-canvas-toolbar .diagram-candidate-label { display:block; color:var(--color-shell-muted); font-size:11px; }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .activity-diagram-canvas {
+    grid-column:1/-1;
+    grid-row:2;
+    height:auto;
+    min-height:0;
+  }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams:has(.diagram-source-browser) {
+    grid-template-rows:auto minmax(150px,1fr) auto;
+  }
+  .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .diagram-source-browser {
+    grid-column:1/-1;
+    grid-row:3;
+    max-height:180px;
+  }
+  .session-designer .coaching-scene-controls { gap:4px 6px; padding:3px 6px; font-size:13px; }
+  .session-designer .coaching-scene-controls label { font-size:13px!important; }
+  .session-designer .coaching-scene-controls select { max-width:182px; }
+  .session-designer .coaching-scene-controls button { padding-inline:6px!important; }
+  .session-designer .coaching-stage-time input { width:64px!important; }
+  .designer-light .local-authoring-host { height:calc(100dvh - 80px); }
+  @media (max-width:1023px) {
+    .session-designer .designer-heading-actions { justify-content:flex-start; }
+    .session-designer .designer-heading .designer-workspace-menu { inset-inline:0 auto; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-layout,
+    .session-designer.designer-tactical-workspace .designer-practice-layout[data-guidance-open=true] {
+      grid-template-columns:minmax(0,1fr);
+      height:auto;
+      min-height:0;
+    }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .coaching-activity-layout .designer-activity-nav { max-height:225px; overflow:auto; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .activity-diagram-canvas { height:clamp(270px,58vw,540px); }
+    .designer-light .local-authoring-host { height:auto; }
+    .designer-light .editor-coaching[data-properties-open=true] .editor-layout { grid-template-columns:minmax(0,1fr); }
+    .designer-light .editor-coaching .editor-inspector { height:auto; max-height:none; }
+    .designer-light .local-authoring-host .editor-coaching .editor-surface { min-height:clamp(260px,60vw,530px); }
+    .session-designer.designer-tactical-workspace .designer-selected-heading { grid-template-columns:minmax(0,1fr) auto; }
+    .session-designer.designer-tactical-workspace .designer-quick-fields { grid-column:1; grid-row:2; grid-template-columns:minmax(0,1fr) 109px; gap:6px; }
+    .session-designer.designer-tactical-workspace .designer-activity-panel-toggle { grid-column:2; grid-row:1 / span 2; }
+  }
+  @media (max-width:620px) {
+    .session-designer.designer-tactical-workspace .designer-selected-heading { grid-template-columns:minmax(0,1fr); }
+    .session-designer.designer-tactical-workspace .designer-selected-heading .designer-activity-panel-toggle { grid-column:1; grid-row:3; flex-wrap:wrap; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams {
+      grid-template-columns:minmax(0,1fr) auto;
+      grid-template-rows:auto auto minmax(0,1fr);
+    }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > header { grid-column:1/-1; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .diagram-tabs { grid-column:1; grid-row:2; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .diagram-canvas-toolbar { grid-column:2; grid-row:2; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams > .activity-diagram-canvas { grid-row:3; }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .activity-diagrams:has(.diagram-source-browser) {
+      grid-template-rows:auto auto minmax(150px,1fr) auto;
+    }
+    .session-designer.designer-tactical-workspace .designer-focused-sequence .designer-practice-layout .diagram-source-browser { grid-row:4; }
+  }
+}

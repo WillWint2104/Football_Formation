@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { buildSync } from "esbuild";
 import { attachmentExample } from "../fixtures/attachments";
 import type {} from "../fixtures/companion-browser";
@@ -12,7 +13,8 @@ async function openPlan(p: Page) {
   const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), attachmentExample());
   if (!r.ok) throw new Error(r.error.message);
   const status = p.getByRole("region", { name: "Local diagram workspace", exact: true });
-  await status.getByRole("button", { name: "Browse local plans", exact: true }).click(); await status.getByText(/Saved local plans \(/).click();
+  await openDesignerDisclosure(p, "Session files");
+  await status.getByRole("button", { name: "Browse local plans", exact: true }).click(); await expect(status.getByText(/Saved local plans \(/)).toBeVisible();
   await status.getByRole("button", { name: `Review plan ${r.value.documentId}`, exact: true }).click();
   p.once("dialog", (d) => d.accept()); await p.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click();
   await expect(rail(p)).toBeVisible();
@@ -35,25 +37,26 @@ test("actual interface comparison: import, activity workspace, overview and loca
 });
 test("scoped light navigation resets on client route changes and does not recolour tactical geometry", async ({ page }) => {
   const shell = page.locator("body"), global = page.getByRole("navigation", { name: "Main navigation", exact: true });
-  await expect(shell).toHaveCSS("--color-shell", "#f3f6f7");
+  await expect(shell).toHaveCSS("--color-shell", "#f7f9fc");
   const active = global.getByRole("link", { name: "Session Designer", exact: true });
-  await expect(active).toHaveAttribute("aria-current", "page"); await expect(active).toHaveCSS("background-color", "rgb(23, 99, 182)");
-  await expect(active).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(active).toHaveAttribute("aria-current", "page"); await expect(active).toHaveCSS("background-color", "rgb(230, 240, 250)");
+  await expect(active).toHaveCSS("color", "rgb(21, 75, 120)");
   await openPlan(page); const diagram = page.locator(".activity-diagram-canvas .scene-diagram");
   await expect(diagram).toHaveAttribute("data-scene-id", "example-rondo"); await expect(diagram).toHaveAttribute("data-time", "2");
   await expect(diagram).toHaveAttribute("data-revision", "1");
   await global.getByRole("link", { name: "Tactics", exact: true }).click(); await expect(page).toHaveURL(/lineup$/);
   await expect(shell).toHaveCSS("--color-shell", "#101e30");
   await global.getByRole("link", { name: "Session Designer", exact: true }).click();
-  await expect(shell).toHaveCSS("--color-shell", "#f3f6f7");
+  await expect(shell).toHaveCSS("--color-shell", "#f7f9fc");
 });
 test("activity panel can collapse independently without changing selection, text, diagram pins or B2 snapshots", async ({ page }, info) => {
   await openPlan(page); await coaching(page); const planId = new URL(page.url()).searchParams.get("localPlan")!;
   const before = await page.evaluate((id) => window.companionTest.browserCompanionRepository().read(id), planId);
   const detail = page.getByLabel("Selected activity editing area", { exact: true }), beforeWidth = (await detail.boundingBox())!.width;
+  const railWidth = (await rail(page).boundingBox())!.width;
   await page.getByRole("button", { name: "Hide activities", exact: true }).click(); await expect(rail(page)).toBeHidden();
   const show = page.getByRole("button", { name: "Show activities", exact: true }); await expect(show).toHaveAttribute("aria-expanded", "false");
-  expect((await detail.boundingBox())!.width).toBeGreaterThan(beforeWidth + 200); await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("5v2 Rondo");
+  expect((await detail.boundingBox())!.width).toBeGreaterThanOrEqual(beforeWidth + railWidth); await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("5v2 Rondo");
   await shot(page, info, "activities-hidden"); await show.focus(); await page.keyboard.press("Enter");
   await expect(rail(page)).toBeVisible(); await expect(rail(page).locator('[aria-current="step"]')).toContainText("5v2 Rondo");
   await expect(rail(page).locator('[aria-current="step"]')).toContainText("1 diagram reference");

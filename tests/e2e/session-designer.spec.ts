@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
 import { PDFDocument } from "pdf-lib";
@@ -82,6 +83,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await expect(preview.locator(".designer-plan-header")).toHaveCSS("background-color", "rgb(36, 90, 66)");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("designer-branded-preview.png") });
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Print / Save as PDF", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-print-invoked", "true");
   const pdfBytes = await page.pdf({ path: info.outputPath("branded-session-plan.pdf"), printBackground: true, preferCSSPageSize: true });
@@ -92,6 +94,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await page.screenshot({ path: info.outputPath("designer-print-preview.png"), fullPage: true });
   await page.emulateMedia({ media: "screen" });
   const downloadEvent = page.waitForEvent("download");
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const download = await downloadEvent, exported = await readFile((await download.path())!, "utf8"), portable = parseSessionJson(exported);
   await download.saveAs(info.outputPath("branded-session-round-trip.json"));
@@ -105,9 +108,11 @@ test("five activities → edit → dropped transparent crest → brand → print
   await expect(editor.getByLabel("Session title")).toHaveValue(portable.session.name);
   await expect(editor.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("12");
   await expect(page.getByAltText("Club logo preview")).toHaveAttribute("src", portable.branding.logo!.dataUrl);
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Import JSON", exact: true }).click();
   await page.getByLabel("Choose session JSON").setInputFiles({ name: "round-trip.json", mimeType: "application/json", buffer: Buffer.from(exported) });
   await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
+  await openDesignerDisclosure(page, "Session files");
   const roundTripEvent = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   expect(parseSessionJson(await readFile((await (await roundTripEvent).path())!, "utf8"))).toEqual(portable);
   expect(apiRequests).toEqual([]); expect(errors).toEqual([]);
@@ -140,6 +145,7 @@ test("shared activity editor adds, reorders and removes independent activities a
   await page.getByLabel("Scene ID 1", { exact: true }).fill("custom-scene");
   await page.getByLabel("Revision 1", { exact: true }).fill("3");
   await page.getByLabel("Preview seconds 1", { exact: true }).fill("2.5");
+  await openDesignerDisclosure(page, "Session files");
   const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const result = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(result.session.activities[4].diagrams[0]).toEqual({ scene: { id: "custom-scene", revision: 3 }, representativeSeconds: 2.5 });
@@ -184,6 +190,7 @@ test("storage quota denial leaves export usable and does not claim a browser sav
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException("Quota exceeded", "QuotaExceededError"); }; });
   await open(page); await acceptFile(page);
   await expect(page.getByRole("status")).toContainText("Draft not saved");
+  await openDesignerDisclosure(page, "Session files");
   const download = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   expect((await download).suggestedFilename()).toBe("Build-Through-Pressure.json");
 });
@@ -228,10 +235,12 @@ test("preview and print omit blank coaching lines exactly as JSON export does", 
   const plan = page.getByLabel("Branded session plan", { exact: true });
   await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
   await expect(plan.locator("article").first().locator(".designer-plan-section").first().locator("li")).toHaveCount(2);
+  await openDesignerDisclosure(page, "Session files");
   const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const exported = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(exported.session.objectives).toEqual(["First objective", "Second objective"]);
   expect(exported.session.activities[0].instructions).toEqual(["Instruction one", "Instruction two"]);
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Print / Save as PDF", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-print-invoked", "true");
   await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
@@ -333,6 +342,7 @@ test("C2 long sessions and instructions retain accessible navigation, real print
   const bytes = await page.pdf({ path: info.outputPath("long-session-plan.pdf"), preferCSSPageSize: true, printBackground: true });
   expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(3);
   await expect(page.getByLabel("Branded session plan", { exact: true })).toContainText("Delivery step 45:");
+  await openDesignerDisclosure(page, "Session files");
   const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const result = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(result.session.activities[23].instructions).toEqual(input.session.activities[23].instructions);

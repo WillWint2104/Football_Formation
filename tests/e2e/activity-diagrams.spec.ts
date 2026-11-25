@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { readFile } from "node:fs/promises";
 import { buildSync } from "esbuild";
@@ -36,6 +37,7 @@ test("normalized complete plans recover without discarding raw whitespace in the
 
 test("opening the source browser keeps attached-preview labels until a candidate is chosen", async ({ page }) => {
   const source = await seed(page); await openPlan(page, source.documentId);
+  await openDesignerDisclosure(page, "Manage diagrams");
   await panel(page).getByRole("button", { name: "Add / replace diagram", exact: true }).click();
   await expect(panel(page).locator(".diagram-canvas-toolbar strong")).toHaveText("Attached diagram 1");
   await expect(diagram(page).locator("svg>title")).toHaveText("Attached diagram: 5v2 Rondo");
@@ -55,14 +57,16 @@ async function seed(page: Page) {
   if (!result.ok) throw Error(JSON.stringify(result)); return result.value;
 }
 async function openPlan(page: Page, id: string) {
+  await openDesignerDisclosure(page, "Session files");
   await workspace(page).getByRole("button", { name: "Browse local plans", exact: true }).click();
-  await workspace(page).getByText(/Saved local plans \(/).click();
+  await expect(workspace(page).getByText(/Saved local plans \(/)).toBeVisible();
   await workspace(page).getByRole("button", { name: `Review plan ${id}`, exact: true }).click();
   page.once("dialog", (d) => d.accept()); await page.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click();
   await expect(page.getByRole("region", { name: "Local session editor" })).toBeVisible();
   return new URL(page.url()).searchParams.get("localPlan")!;
 }
 async function browse(page: Page, source: string, scene = "0", time = "2") {
+  await openDesignerDisclosure(page, "Manage diagrams");
   await panel(page).getByRole("button", { name: "Add / replace diagram", exact: true }).click();
   await page.getByLabel("Local scene package", { exact: true }).selectOption(source);
   await page.getByLabel("Scene revision", { exact: true }).selectOption(scene);
@@ -92,6 +96,7 @@ async function expandCapture(page: Page, info: TestInfo, name: string) {
   await page.keyboard.press("Escape"); await expect(modal).toHaveCount(0); await expect(panel(page).getByRole("button", { name: "Expand diagram", exact: true })).toBeFocused();
 }
 async function download(page: Page, name: string) {
+  await openDesignerDisclosure(page, "Session files");
   const wait = page.waitForEvent("download"); await page.getByRole("button", { name, exact: true }).click(); return readFile((await (await wait).path())!, "utf8");
 }
 test.beforeEach(async ({ context, page }) => {
@@ -118,8 +123,9 @@ test("open complete plan, preview exact geometry, manage multiple pins and expor
   await capture(page, info, "multiple-diagrams");
   await browse(page, source.documentId, "0", "1"); await panel(page).getByRole("button", { name: "Replace diagram 2 with preview", exact: true }).click(); await expect(workspace(page)).toContainText("owner v3");
   await panel(page).getByRole("button", { name: "Return to attached diagrams", exact: true }).click();
-  const complete = parseSessionPackageJson(await download(page, "Download complete package")), legacy = parseSessionJson(await download(page, "Download text & references JSON"));
+  const complete = parseSessionPackageJson(await download(page, "Back up session & diagrams")), legacy = parseSessionJson(await download(page, "Download text & references JSON"));
   expect(complete.ok).toBe(true); if (complete.ok) { expect(complete.value.document).toEqual(legacy); expect(complete.value.document.session.activities[0].diagrams.map((p) => [p.scene.revision, p.representativeSeconds])).toEqual([[1, 2], [1, 1]]); }
+  await openDesignerDisclosure(page, "Manage diagrams");
   await panel(page).getByRole("button", { name: "Remove selected diagram", exact: true }).click(); await expect(workspace(page)).toContainText("owner v4");
   expect(await stored(page, source.documentId)).toEqual({ ok: true, value: { status: "ready", snapshot: source } });
 });
@@ -127,7 +133,7 @@ test("open complete plan, preview exact geometry, manage multiple pins and expor
 test("activity switching and refresh retain stable attachment identities and full-pitch geometry", async ({ page }, info) => {
   const source = await seed(page), id = await openPlan(page, source.documentId);
   await page.getByRole("navigation", { name: "Session activities", exact: true }).getByRole("button", { name: /11v11 Team Shape/ }).click();
-  await page.getByLabel("Diagram framing", { exact: true }).selectOption("pitch");
+  await page.getByRole("group", { name: "Fit diagram", exact: true }).getByRole("button", { name: "Fit pitch", exact: true }).click();
   await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-11v11"); await expect(diagram(page)).toHaveAttribute("data-clipped", "0");
   expect(await diagram(page).locator("g[data-entity-id]").count()).toBe(25);
   await expect(diagram(page).locator('svg>desc')).toContainText("105 by 68");
@@ -194,7 +200,7 @@ test("newer text draft versus complete snapshot requires a deliberate choice wit
   page.once("dialog", (d) => d.dismiss()); await page.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click(); expect(await download(page, "Download text & references JSON")).toContain("Unsaved text revision");
   page.once("dialog", (d) => d.accept()); await page.getByRole("button", { name: "Keep current text & revalidate linked diagrams", exact: true }).click();
   await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-rondo"); await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("Unsaved text revision");
-  const complete = parseSessionPackageJson(await download(page, "Download complete package")); expect(complete.ok && complete.value.document.session.activities[0].name).toBe("Unsaved text revision");
+  const complete = parseSessionPackageJson(await download(page, "Back up session & diagrams")); expect(complete.ok && complete.value.document.session.activities[0].name).toBe("Unsaved text revision");
   expect(new URL(page.url()).searchParams.get("localPlan")).not.toBe(id);
 });
 

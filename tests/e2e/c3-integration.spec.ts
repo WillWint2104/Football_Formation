@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { readFile, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import { printExample } from "../fixtures/print-session";
@@ -23,6 +24,7 @@ async function capture(p: Page, info: TestInfo, name: string) {
 async function importPackage(p: Page, pkg: SessionPackage, info?: TestInfo) {
   const before = await p.evaluate(() => window.companionTest.browserCompanionRepository().list());
   if (!before.ok) throw Error(before.error.message);
+  await openDesignerDisclosure(p, "Session files");
   await p.getByRole("button", { name: "Import JSON", exact: true }).click();
   await p.getByRole("button", { name: "Import Session & Diagrams", exact: true }).click();
   await p.getByLabel("Choose session and diagrams package").setInputFiles({ name: "coaching-package.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(pkg)) });
@@ -43,6 +45,7 @@ async function importPackage(p: Page, pkg: SessionPackage, info?: TestInfo) {
 }
 async function openPlan(p: Page, id: string) {
   await p.getByRole("button", { name: "Edit session", exact: true }).click();
+  await openDesignerDisclosure(p, "Session files");
   await workspace(p).getByRole("button", { name: "Browse local plans", exact: true }).click();
   const list = workspace(p).locator(".diagram-plan-list");
   if (await list.getAttribute("open") === null) await list.locator("summary").click();
@@ -81,6 +84,7 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   await capture(page, info, "unsaved-coaching-information");
   await page.getByRole("button", { name: "Hide coaching information", exact: true }).click();
   for (const [scene, seconds] of [["0", "2"], ["1", "4"]]) {
+    await openDesignerDisclosure(page, "Manage diagrams");
     await panel(page).getByRole("button", { name: "Add / replace diagram", exact: true }).click();
     await page.getByLabel("Local scene package", { exact: true }).selectOption(source);
     await page.getByLabel("Scene revision", { exact: true }).selectOption(scene);
@@ -120,7 +124,7 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   await page.getByRole("navigation", { name: "Session activities", exact: true }).getByRole("button", { name: /11v11 Team Shape/ }).click();
   await page.getByLabel("Activity name", { exact: true }).fill("11v11 - build through midfield");
   await page.getByRole("button", { name: "Hide coaching information", exact: true }).click();
-  await page.getByLabel("Diagram framing", { exact: true }).selectOption("pitch");
+  await page.getByRole("group", { name: "Fit diagram", exact: true }).getByRole("button", { name: "Fit pitch", exact: true }).click();
   const touchlines = panel(page).locator('rect[data-field-marking="touchlines"]');
   expect(Number(await touchlines.getAttribute("width")) / Number(await touchlines.getAttribute("height"))).toBeCloseTo(105 / 68, 6);
   await capture(page, info, "full-pitch-activity");
@@ -138,7 +142,8 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   await page.getByRole("button", { name: "Overview", exact: true }).click();
   await capture(page, info, "recovered-session-overview");
   const wait = page.waitForEvent("download");
-  await workspace(page).getByRole("button", { name: "Download complete package", exact: true }).click();
+  await openDesignerDisclosure(page, "Session files");
+  await workspace(page).getByRole("button", { name: "Back up session & diagrams", exact: true }).click();
   const bytes = await readFile((await (await wait).path())!, "utf8"), exported = parseSessionPackageJson(bytes);
   if (!exported.ok) throw Error(JSON.stringify(exported.diagnostics));
   expect(exported.value).toEqual(saved.package);

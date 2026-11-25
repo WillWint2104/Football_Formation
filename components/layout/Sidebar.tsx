@@ -61,10 +61,11 @@ const navigation: {
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const programme = ["/calendar", "/team-schedule"].includes(pathname);
+  const authoring = pathname === "/session-designer" || pathname === "/tactical-editor";
   const primary = ["/sessions", "/lineup", "/presentations", "/coaches"];
   return (
     <nav aria-label="Main navigation" className="flex flex-col gap-2 p-4">
-      {navigation.filter(item => !programme || !!onNavigate || !primary.includes(item.href ?? "")).map(({ label, href, icon: Icon, planned, aliases }) => {
+      {navigation.filter(item => !(programme || authoring) || !!onNavigate || !primary.includes(item.href ?? "") || authoring && item.href === "/lineup").map(({ label, href, icon: Icon, planned, aliases }) => {
         const active =
           href !== null &&
           [href, ...(aliases ?? [])].some(
@@ -73,7 +74,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
         const content = (
           <>
             <Icon className="size-5 shrink-0" aria-hidden="true" />
-            <span className="flex-1">{programme && label === "Exercise Library" ? "Library" : programme && label === "Session Designer" ? "Designer" : label}</span>
+            <span className="flex-1">{(programme || authoring) && label === "Exercise Library" ? "Library" : (programme || authoring) && label === "Session Designer" ? "Designer" : label}</span>
             {planned && (
               <span className="font-mono text-[10px] uppercase tracking-wide text-shell-muted">
                 Planned
@@ -91,6 +92,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
           <Link
             key={label}
             href={href}
+            aria-label={authoring && (label === "Session Designer" || label === "Exercise Library") ? label : undefined}
             aria-current={active ? "page" : undefined}
             className={className}
             onClick={onNavigate}

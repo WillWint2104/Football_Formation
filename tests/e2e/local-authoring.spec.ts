@@ -1,4 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { buildSync } from "esbuild";
 import { attachmentExample } from "../fixtures/attachments";
 import type {} from "../fixtures/companion-browser";
@@ -20,8 +21,9 @@ async function open(p: Page, noDiagrams = false) {
   if (noDiagrams) { pkg.sceneNamespace = null as never; pkg.scenes = []; pkg.document.session.activities.forEach((a) => a.diagrams = []); }
   const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), pkg);
   if (!r.ok) throw new Error(JSON.stringify(r));
+  await openDesignerDisclosure(p, "Session files");
   await status(p).getByRole("button", { name: "Browse local plans", exact: true }).click();
-  await status(p).getByText(/Saved local plans \(/).click();
+  await expect(status(p).getByText(/Saved local plans \(/)).toBeVisible();
   await status(p).getByRole("button", { name: `Review plan ${r.value.documentId}`, exact: true }).click();
   p.once("dialog", (d) => d.accept()); await p.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click();
   await expect(panel(p)).toBeVisible();
@@ -64,7 +66,9 @@ test("edit imported scene using real tools, append native revisions, explicitly 
   await shot(page, info, "accepted-local-copy");
 });
 test("create a new diagram in a null-namespace plan, use existing editor setup and accept as append", async ({ page }) => {
-  const origin = await open(page, true); await panel(page).getByRole("button", { name: "Create Diagram", exact: true }).click();
+  const origin = await open(page, true);
+  await openDesignerDisclosure(page, "Manage diagrams");
+  await panel(page).getByRole("button", { name: "Create Diagram", exact: true }).click();
   await page.getByLabel("Example setup", { exact: true }).selectOption("rondo"); await page.getByRole("button", { name: "Apply setup", exact: true }).click();
   await save(page); await review(page); await host(page).getByRole("button", { name: "Accept Diagram", exact: true }).click(); await expect(host(page)).toHaveCount(0);
   const saved = await read(page, origin.documentId); expect(saved.package.sceneNamespace).toMatch(/^local-/); expect(saved.package.document.session.activities[0].diagrams).toHaveLength(1);
@@ -120,7 +124,8 @@ for (const fault of ["quota", "interrupted"] as const) test(`${fault} transactio
 test("lost URL leaves candidate discoverable without automatic attachment", async ({ page }) => {
   const origin = await open(page); await edit(page); await save(page); const ctx = context(page), url = new URL(page.url()); url.searchParams.delete("localAuthoring");
   await page.goto(url.href); await expect(page.getByRole("button", { name: "Recover Saved Candidate", exact: true })).toHaveCount(0);
-  await status(page).getByRole("button", { name: "Browse local plans", exact: true }).click(); await status(page).getByText(/Saved local plans \(/).click();
+  await openDesignerDisclosure(page, "Session files");
+  await status(page).getByRole("button", { name: "Browse local plans", exact: true }).click(); await expect(status(page).getByText(/Saved local plans \(/)).toBeVisible();
   await expect(status(page).getByRole("button", { name: `Review plan ${ctx.candidate.id}`, exact: true })).toBeVisible(); expect(await read(page, origin.documentId)).toEqual(origin);
 });
 test("shortening the actual animation requires a new representative time before acceptance", async ({ page }, info) => {
@@ -164,6 +169,7 @@ test("legacy text-only import can create its first complete local plan without a
   const pkg = attachmentExample(); pkg.document.session.activities.forEach((a) => a.diagrams = []);
   await page.getByLabel("Choose session JSON", { exact: true }).setInputFiles({ name: "legacy.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(pkg.document)) });
   await page.getByRole("button", { name: "Open imported session", exact: true }).click();
+  await openDesignerDisclosure(page, "Manage diagrams");
   await panel(page).getByRole("button", { name: "Create Diagram", exact: true }).click(); await expect(host(page)).toBeVisible();
   const ctx = context(page); expect(ctx.candidate).toBeNull(); const origin = await read(page, ctx.origin.id); expect(origin.package.scenes).toEqual([]); expect(origin.package.document).toEqual(pkg.document);
   await save(page); await review(page); await host(page).getByRole("button", { name: "Accept Diagram", exact: true }).click(); await expect(host(page)).toHaveCount(0);

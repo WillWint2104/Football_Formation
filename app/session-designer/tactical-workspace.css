@@ -1,7 +1,5 @@
 /* B4b: local coaching workspace only. Neither scene geometry nor other routes are themed here. */
 @media screen {
-  /* Desktop already has permanent navigation and a session title; retain the existing narrow-screen menu. */
-  @media (min-width:1024px) { .application-shell:has(.designer-tactical-workspace) > div > header { display:none; } }
   #main-content:has(.designer-tactical-workspace), #main-content:has(.local-authoring-host) { padding:12px 18px; }
   .session-designer.designer-tactical-workspace .designer-heading { margin-bottom:4px; align-items:center; }
   .session-designer.designer-tactical-workspace .designer-heading h1 { font-size:22px; line-height:1.3; }

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openDesignerDisclosure } from "../fixtures/designer-controls";
 import { readFile } from "node:fs/promises";
 import { printExample as fixture } from "../fixtures/print-session";
 import { openPrintPlan as open, previewPrintPlan as preview, capturePrintOutput as output, preparePrintPage } from "../fixtures/print-browser";
@@ -44,8 +45,10 @@ test("current edits replace stale preview data, native print uses verified vecto
   const id=await open(page);await preview(page);await expect(plan(page).locator(".designer-print-scene")).toHaveCount(5);
   await page.getByRole("button",{name:"Edit session",exact:true}).click();await page.getByRole("button",{name:"Coaching information",exact:true}).click();await page.getByLabel("Setup & delivery instructions",{exact:true}).fill("Current instructions for the printed plan.");
   await preview(page);await expect(plan(page)).toContainText("Current instructions for the printed plan.");
+  await openDesignerDisclosure(page, "Session files");
   await page.evaluate(()=>{window.print=()=>{document.documentElement.dataset.printInvoked="yes";};});await page.getByRole("button",{name:"Print / Save as PDF",exact:true}).click();await expect(page.locator("html")).toHaveAttribute("data-print-invoked","yes");await expect(plan(page).locator(".designer-print-scene")).toHaveCount(5);
-  const download=page.waitForEvent("download");await status(page).getByRole("button",{name:"Download complete package",exact:true}).click();const pkg=JSON.parse(await readFile((await(await download).path())!,"utf8"));
+  await openDesignerDisclosure(page, "Session files");
+  const download=page.waitForEvent("download");await status(page).getByRole("button",{name:"Back up session & diagrams",exact:true}).click();const pkg=JSON.parse(await readFile((await(await download).path())!,"utf8"));
   expect(pkg.document.session.activities[0].instructions).toEqual(["Current instructions for the printed plan."]);expect(pkg.scenes).toEqual(fixture().scenes);
   expect(new URL(page.url()).searchParams.get("localPlan")).toBe(id);
 });
