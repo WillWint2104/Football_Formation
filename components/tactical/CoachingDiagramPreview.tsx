@@ -20,6 +20,7 @@ const frames: { value: Frame; label: string; short: string }[] = [
 ];
 type Props = {
   scene: TacticalScene; title: string; seconds: number; area?: TrainingArea | null;
+  workspaceTurf?: boolean;
   fit?: Frame; screenMode: DiagramSize; onFitChange?: (fit: Frame) => void;
   presentation?: { heading: ReactNode; action: ReactNode; attachments: ReactNode; activityId: string; diagramIndex: number;
     equipment?: readonly InventoryItem[] };
@@ -36,7 +37,7 @@ export function CoachingDiagramPreview(props: Props) {
   return <Preview key={JSON.stringify([props.scene.organizationId, props.scene.id, props.scene.revision, props.seconds, props.area])} {...props} savedStage={savedStage} />;
 }
 
-function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = "exercise", screenMode, onFitChange, presentation }: Props & { savedStage: string }) {
+function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = "exercise", screenMode, onFitChange, presentation, workspaceTurf }: Props & { savedStage: string }) {
   const isViewer = !!presentation;
   const opening = useMemo(() => isViewer ? coachingOpeningFrame(scene, savedSeconds, area) : undefined, [isViewer, scene, savedSeconds, area]);
   const [seconds, setSeconds] = useState(savedSeconds), [selected, setSelected] = useState(savedStage);
@@ -48,6 +49,8 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   const atSavedMoment = seconds === savedSeconds && selected === savedStage;
   const choose = (next: number) => { const r = ranges[next]; if (r) { setSelected(r.stage.id); setSeconds(r.start); } };
   const options = { ...coachingScreenOptions(scene, seconds, area, frame), poseStageId: selected || undefined };
+  const timed = ranges.length > 1 || scene.stages.some(stage => stage.tracks.some(track =>
+    track.kind !== "annotation" || track.visibleFrom > 0 || track.visibleUntil < stage.durationSeconds));
   if (opening && frame === "all") {
     options.rotation = opening.allRotation ?? options.rotation;
     if (opening.omitArea) {
@@ -63,8 +66,8 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   </> : <strong>Static diagram</strong>;
   const fitControls = <div className="coaching-fit-controls" role="group" aria-label="Fit diagram">
     {frames.map(({ value, label, short }) => <button key={value} type="button" aria-pressed={frame === value}
-      aria-label={presentation ? value === "all" ? "Fit all" : label : undefined}
-      onClick={() => chooseFrame(value)}>{presentation ? short : label}</button>)}
+      aria-label={workspaceTurf && value === "pitch" && scene.context?.kind === "neutral" ? "Fit boundary" : presentation ? value === "all" ? "Fit all" : label : undefined}
+      onClick={() => chooseFrame(value)}>{workspaceTurf && value === "pitch" && scene.context?.kind === "neutral" ? "Fit boundary" : presentation ? short : label}</button>)}
   </div>;
   const reset = !atSavedMoment && <button className={presentation ? "viewer-button" : undefined} type="button" onClick={() => {
     stageSelect.current?.focus();
@@ -73,7 +76,7 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   }} aria-label={presentation ? "Saved view" : undefined} title={presentation ? "Return to saved view" : undefined}>
     {presentation ? <RotateCcw size={15} aria-hidden="true" /> : `Saved moment · ${savedSeconds} s`}
   </button>;
-  const drawing = (overlay?: ReactNode, coachingFrame?: string) => <div className="coaching-preview-surface"><SceneDiagram scene={scene} title={title} screenMode={screenMode} sizingSeconds={savedSeconds} options={options}
+  const drawing = (overlay?: ReactNode, coachingFrame?: string) => <div className={`coaching-preview-surface${workspaceTurf ? " recovery-turf" : ""}`} data-practice-context={workspaceTurf ? scene.context?.kind : undefined}><SceneDiagram scene={scene} title={title} screenMode={screenMode} sizingSeconds={savedSeconds} options={workspaceTurf ? { ...options, surface: "transparent", padding: 16 } : options}
     viewer={presentation ? { overlay, coachingFrame, caption: presentation.heading, onShowAll: frame !== "all" ? () => chooseFrame("all") : undefined,
       frameNote: frame === "all" && opening?.fit === "all"
         ? opening.omitArea ? "Fit all · This attachment sits outside the activity area." : "Fit all · Includes content beyond the exercise boundary."
@@ -100,8 +103,8 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
           <span className="viewer-tool-label" aria-hidden="true">Fit</span>{fitControls}{presentation.action}
         </div>
       </div>
-      : <div className="coaching-scene-controls">{stageNavigation}
-        {range && <label className="coaching-stage-time">Pose <input aria-label="Scene stage pose seconds" type="range" min={0} max={range.stage.durationSeconds} step={0.01} value={Math.max(0, seconds - range.start)} onChange={e => setSeconds(range.start + Number(e.target.value))} /><span>{(seconds - range.start).toFixed(1)} s</span></label>}
+      : <div className="coaching-scene-controls">{workspaceTurf && !timed ? <strong>Static diagram</strong> : stageNavigation}
+        {range && (!workspaceTurf || timed) && <label className="coaching-stage-time">Pose <input aria-label="Scene stage pose seconds" type="range" min={0} max={range.stage.durationSeconds} step={0.01} value={Math.max(0, seconds - range.start)} onChange={e => setSeconds(range.start + Number(e.target.value))} /><span>{(seconds - range.start).toFixed(1)} s</span></label>}
         {fitControls}{reset}</div>}
     {coachingAreaWarning(scene, area) && <p className="coaching-area-warning" role="status">{coachingAreaWarning(scene, area)}</p>}
     {presentation ? <GroundLayoutPresentation scene={scene}

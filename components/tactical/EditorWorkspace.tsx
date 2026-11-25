@@ -28,7 +28,7 @@ export function EditorWorkspace({ target, calendar }: { target?: DiagramTarget; 
       <WorkspaceStatus />
     </div>
   </details>;
-  return <div className={`calendar-workspace editor-workspace${calendar ? " coaching-from-calendar calendar-integrated" : ""}`}>
+  return <div className={`calendar-workspace editor-workspace${calendar ? " coaching-from-calendar calendar-integrated" : " recovery-editor-workspace"}`}>
     {loading ? <>{storage}<p>Loading validated coaching records…</p></> : failure ? <>{storage}<div role="alert"><h1>Requested diagram is unavailable</h1><p>{failure}</p><Link href="/sessions">Open sessions</Link></div></> :
       <BoundEditor key={`${scope}:${snapshot.version}:${JSON.stringify(target)}`} target={target} resolved={resolved} calendar={calendar} storage={storage} />}
   </div>;
@@ -48,18 +48,21 @@ function BoundEditor({ target, resolved, calendar, storage }: { target?: Diagram
   useUnsavedChanges(dirty || timeDirty);
   const back = target?.kind === "session" ? target.event ? `/sessions?event=${encodeURIComponent(target.event)}&revision=${target.booking}` : `/sessions?session=${encodeURIComponent(target.id)}&revision=${target.revision}`
     : target ? `/${target.kind === "exercise" ? "exercises" : "templates"}?item=${encodeURIComponent(target.id)}&revision=${target.revision}` : "/sessions";
+  const context = scene.context?.kind === "neutral" ? "Independent practice" : "Football pitch";
+  const representativeField = target && <label className="representative-time">Representative preview time (seconds)<input aria-label="Representative preview time (seconds)" type="number" min="0" step="any" value={representative} disabled={!!resolved?.readOnly || busy || blocked} onChange={e => setRepresentative(e.target.value)} /><span>Previous moment: {previousTime}s. Valid range for the last checked scene: 0–{duration}s. Save validates the edited timeline; no moment is silently reset.</span></label>;
   return <><div className="editor-heading"><div><p className="calendar-eyebrow">{target ? `${target.kind} · immutable owner v${target.revision}` : "Practice canvas · examples never uploaded"}</p>
-    <h1>{resolved?.title ?? "2D tactical editor"}</h1><p className="calendar-muted">{resolved?.readOnly ? "Historical snapshot · read only" : dirty ? "Unsaved diagram changes" : "World geometry in metres · camera changes do not move objects"}</p></div>
+    <h1>{resolved?.title ?? "2D Tactical Editor"}</h1><p className="calendar-muted">{resolved?.readOnly ? "Historical snapshot · read only" : dirty ? "Unsaved diagram changes" : !calendar && target ? `${context} · ${scene.field.length} × ${scene.field.width} m · Diagram r${scene.revision}` : "World geometry in metres · camera changes do not move objects"}</p></div>
     <div className="editor-actions"><Link href={withCalendar(back, calendar)}>← {target ? "Return to plan" : "Choose a saved activity"}</Link>
       {calendar && <Link href={calendarHref(calendar)}>Cancel / Return to Calendar</Link>}
       {target?.kind === "session" && <Link href={withCalendar(guideHref({ session: target.id, revision: target.revision, ...(target.event ? { event: target.event, bookingRevision: target.booking } : {}) }), calendar)}>Open exact guide →</Link>}
+      {!calendar && target && <details className="editor-storage"><summary>Saved moment</summary><div className="editor-storage-content">{representativeField}</div></details>}
       <details className="editor-workspace-links"><summary>Tactics workspaces</summary><nav aria-label="Tactics workspaces"><Link href="/lineup">Lineups</Link><Link href="/tactical-renderer">Renderer preview</Link><Link href="/presentations">2D Presentation</Link></nav></details>
       {storage}
     </div></div>
-    {target && <label className="representative-time">Representative preview time (seconds)<input aria-label="Representative preview time (seconds)" type="number" min="0" step="any" value={representative} disabled={!!resolved?.readOnly || busy || blocked} onChange={e => setRepresentative(e.target.value)} /><span>Previous moment: {previousTime}s. Valid range for the last checked scene: 0–{duration}s. Save validates the edited timeline; no moment is silently reset.</span></label>}
+    {calendar && representativeField}
     {error && <p role="alert" className="coaching-notice">{error}</p>}
     <TacticalEditor initial={target ? scene : { ...structuredClone(editorExamples[0].scene), organizationId: scene.organizationId, id: scene.id }} readOnly={!!resolved?.readOnly || busy || blocked}
-      presentation={calendar ? "coaching" : undefined} onDirty={setDirty} saveLabel={calendar ? "Save Diagram & Return" : mode === "sample" ? "Save sample diagram" : "Save diagram"} canSave={!!target && (dirty || timeDirty) && !resolved?.readOnly && !busy && !blocked}
+      presentation={calendar ? "coaching" : undefined} recoveryWorkspace={!calendar} initialSeconds={calendar ? 0 : previousTime} onDirty={setDirty} saveLabel={calendar ? "Save Diagram & Return" : mode === "sample" ? "Save sample diagram" : "Save diagram"} canSave={!!target && (dirty || timeDirty) && !resolved?.readOnly && !busy && !blocked}
       onSave={async (draft) => {
         if (!target) return;
         try {

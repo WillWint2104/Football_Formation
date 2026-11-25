@@ -11,6 +11,8 @@ import "../calendar/programme.css";
 import "../calendar/calendar-frame.css";
 import "../authoring-frame.css";
 import "./light-workspace.css";
+import "@/components/tactical/flat-ground.css";
+import "./visual-recovery.css";
 import { parseCalendarReturn } from "@/lib/coaching/calendar-return";
 
 export const metadata = { title: "2D Tactical Editor | Football Formation" };

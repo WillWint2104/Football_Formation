@@ -1,0 +1,70 @@
+@media screen {
+  #main-content:has(.recovery-editor-workspace) { padding:0 clamp(12px, 1.35vw, 26px) 12px; }
+  .recovery-editor-workspace .editor-heading {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px 18px;
+    margin:0;
+    padding:13px 0 12px;
+  }
+  .recovery-editor-workspace .editor-heading h1 { margin:0 0 2px; color:#102b4d; letter-spacing:-.025em; }
+  .recovery-editor-workspace .editor-heading .calendar-eyebrow { position:absolute; clip-path:inset(50%); }
+  .recovery-editor-workspace .editor-actions { gap:6px 11px; font-size:13px; }
+  .recovery-editor-workspace .representative-time { margin:0; border:0; }
+  .recovery-tactical-editor .editor-command-strip {
+    display:flex;
+    flex-wrap:wrap;
+    flex-direction:row-reverse;
+    justify-content:space-between;
+    align-items:center;
+    gap:4px 9px;
+    margin-bottom:9px;
+    padding:4px;
+    border:1px solid #cbd9e7;
+    border-radius:8px;
+    background:#fff;
+  }
+  .recovery-tactical-editor :is(.editor-topbar,.editor-pitch-tools) { margin:0; padding:0; border:0; background:transparent; gap:4px; }
+  .recovery-tactical-editor .editor-topbar { flex:0 1 auto; }
+  .recovery-tactical-editor .editor-pitch-tools { flex:1 1 590px; }
+  .recovery-tactical-editor .editor-mode { gap:1px; }
+  .recovery-tactical-editor .editor-topbar button { padding:5px 7px; }
+  .recovery-tactical-editor .editor-viewbar > label { font-size:0; }
+  .recovery-tactical-editor .editor-viewbar input,.recovery-tactical-editor .editor-viewbar select { font-size:13px; }
+  .recovery-toolbar-menu { position:relative; }
+  .recovery-toolbar-menu > summary { padding:6px 7px; font-size:13px; color:#254b70; cursor:pointer; }
+  .recovery-toolbar-menu > div { position:absolute; z-index:8; inset:calc(100% + 5px) 0 auto auto; display:grid; gap:6px; width:225px; padding:8px; border:1px solid #ccd9e5; border-radius:8px; background:white; }
+  .recovery-tactical-editor .editor-layout { grid-template-columns:minmax(0,1fr) clamp(250px,20vw,325px); gap:12px; }
+  .recovery-tactical-editor:not([data-properties-open]) .editor-layout { grid-template-columns:minmax(0,1fr); }
+  .recovery-tactical-editor .editor-surface {
+    height:clamp(390px,calc(100dvh - 201px),1030px);
+    border:1px solid #688545;
+    border-radius:8px;
+    background-color:#6a8644;
+    color:#163854;
+  }
+  .recovery-tactical-editor.editor-animation .editor-surface { height:clamp(340px,calc(100dvh - 284px),950px); }
+  .recovery-tactical-editor.editor-expanded .editor-surface { height:clamp(390px,calc(100dvh - 128px),1230px); }
+  .recovery-tactical-editor.editor-expanded.editor-animation .editor-surface { height:clamp(305px,calc(100dvh - 226px),1120px); }
+  .recovery-tactical-editor .screen-diagram-layout { padding:0; }
+  .recovery-tactical-editor .screen-diagram-footer { background:#f6f9fa; min-height:27px; padding:1px 9px; }
+  .recovery-tactical-editor .editor-status { background:transparent; padding:3px 0; border:0; }
+  .recovery-tactical-editor .editor-feedback { margin:3px 0; }
+  .recovery-tactical-editor .editor-object-list { margin:3px 0; }
+  .recovery-tactical-editor .editor-inspector { max-height:calc(100dvh - 175px); overflow:auto; }
+  .recovery-tactical-editor .editor-inspector-heading { background:#fff; padding-block:13px; }
+  .recovery-tactical-editor .editor-inspector-heading h2 { color:#102b4d; font-size:17px; }
+  .recovery-tactical-editor .editor-inspector-heading span { border-radius:20px; padding:4px 8px; color:#154a7e; background:#e7f1fc; }
+  .recovery-tactical-editor .recovery-board-option { border-bottom:1px solid #dee7ef; }
+  .recovery-tactical-editor .recovery-board-option > summary { padding:11px 2px; font-size:14px; font-weight:650; color:#1c446b; cursor:pointer; }
+  .recovery-tactical-editor .recovery-board-option > div { display:grid; gap:8px; padding:0 2px 9px; }
+  .recovery-tactical-editor .editor-help { color:#426078; margin-top:12px; }
+  @media(max-width:1023px) {
+    .recovery-tactical-editor[data-properties-open] .editor-layout { grid-template-columns:minmax(0,1fr); }
+    .recovery-tactical-editor .editor-inspector { max-height:none; }
+    .recovery-tactical-editor .editor-surface,.recovery-tactical-editor.editor-animation .editor-surface { height:clamp(260px,65vw,530px); }
+    .recovery-tactical-editor .editor-command-strip { flex-direction:row; }
+  }
+}

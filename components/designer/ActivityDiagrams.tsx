@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, FolderOpen, Layers } from "lucide-react";
+import { ChevronDown, ClipboardList, FolderOpen, Layers, Plus } from "lucide-react";
 import type { SessionActivity } from "@/lib/domain/session";
 import { CoachingDiagramPreview } from "@/components/tactical/CoachingDiagramPreview";
 import { previewAttachment, type DiagramPin } from "@/lib/designer/attachments";
@@ -9,12 +9,14 @@ import { sceneDuration } from "@/lib/tactical/evaluate";
 import { diagramAssociation } from "@/lib/designer/diagram-label";
 import { downloadDiagramPackage, type ActivityDiagramsController } from "./useActivityDiagrams";
 import type { LocalAuthoringController } from "./useLocalAuthoring";
+import { ActivityCoachingBrief } from "./ActivityCoachingBrief";
 
-export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fileActions }: {
+export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fileActions, sessionActions }: {
   controller: ActivityDiagramsController;
   heading: ReactNode;
   draftStatus: ReactNode;
   fileActions: ReactNode;
+  sessionActions?: ReactNode;
 }) {
   const files = useRef<HTMLDetailsElement>(null);
   const catalog = useRef<HTMLDetailsElement>(null);
@@ -49,6 +51,10 @@ export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fi
             }}>Browse local plans</button>
           </div>
         </details>
+        {sessionActions && <details className="designer-workspace-disclosure recovery-session-tools">
+          <summary>Session tools<ChevronDown size={15} aria-hidden="true" /></summary>
+          {sessionActions}
+        </details>}
       </div>
     </div>
     <div className="designer-diagram-status" data-notice={hasNotice || undefined}>
@@ -69,7 +75,7 @@ export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fi
   </section>;
 }
 
-export function ActivityDiagrams({ activity, controller: c, authoring, selectionMemory, onSelectionChange }: { activity: SessionActivity; controller: ActivityDiagramsController; authoring?: LocalAuthoringController; selectionMemory?: Map<string, number>; onSelectionChange?: () => void }) {
+export function ActivityDiagrams({ activity, controller: c, authoring, selectionMemory, onSelectionChange, objectives }: { activity: SessionActivity; controller: ActivityDiagramsController; authoring?: LocalAuthoringController; selectionMemory?: Map<string, number>; onSelectionChange?: () => void; objectives: string[] }) {
   const pins = activity.content.diagrams;
   const memoryKey = `${c.active?.documentId ?? "draft"}:${activity.id}`;
   const [selected, setSelected] = useState(() => selectionMemory?.get(memoryKey) ?? 0), [choosing, setChoosing] = useState(false);
@@ -87,6 +93,7 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
   const showingCandidate = choosing && candidate !== null && c.source !== null;
   const validChoice = choosing && candidate && preview?.ok;
   const disabled = c.busy || c.blocked;
+  const written = !pin && !choosing && !resolved;
   function browseScenes() {
     if (management.current) management.current.open = false;
     setChoosing(true);
@@ -101,8 +108,8 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
     await c.save({ activityId: activity.id, index: replace ? index : null, pin: candidate });
     // Keep candidate preview visible until the coach deliberately returns to attached diagrams.
   }
-  return <section className="activity-diagrams" aria-label="Activity tactical diagrams">
-    <header><h3>Tactical diagrams <span>{pins.length}/20</span></h3><div className="diagram-authoring-controls">
+  return <section className="activity-diagrams" aria-label="Activity tactical diagrams" data-written={written || undefined}>
+    <header><h3>{written ? "Written practice" : "Tactical diagrams"} {!written && <span>{pins.length}/20</span>}</h3><div className="diagram-authoring-controls">
       <details ref={management} className="designer-workspace-disclosure" onKeyDown={event => {
         if (event.key !== "Escape" || !event.currentTarget.open) return;
         event.stopPropagation();
@@ -121,9 +128,16 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
       {choosing && <button type="button" onClick={closeScenes}>Close scene browser</button>}
     </div></header>
     {!!pins.length && <nav className="diagram-tabs" aria-label="Attached diagrams">{pins.map((p, i) => <button type="button" key={i} aria-pressed={!choosing && index === i} onClick={() => { setSelected(i); selectionMemory?.set(memoryKey, i); onSelectionChange?.(); setChoosing(false); }}>Diagram {i + 1}<small className="diagram-pin-accessible">{p.scene.id || "Missing ID"} · r{p.scene.revision} · {p.representativeSeconds} s</small></button>)}</nav>}
-    <div className="diagram-canvas-toolbar"><strong className={showingCandidate ? "diagram-candidate-label" : "sr-only"}>{showingCandidate ? "Source preview · not yet attached" : pin ? `Attached diagram ${index + 1}` : "No diagram attached"}</strong><button type="button" disabled={!resolved} onClick={() => setExpanded(true)}>Expand diagram</button></div>
-    <div className="activity-diagram-canvas">{resolved ? <CoachingDiagramPreview scene={resolved.scene} screenMode="standard" title={`${showingCandidate ? "Source preview" : "Attached diagram"}: ${activity.content.title}`} fit={fit} onFitChange={setFit} area={showingCandidate ? undefined : activity.content.area} seconds={resolved.representativeSeconds} />
-      : <div className="diagram-empty"><strong>{preview && !preview.ok ? "Exact diagram unavailable" : pin ? "Reference-only diagram" : "Build a visual coaching plan"}</strong><p>{preview && !preview.ok ? preview.diagnostics.slice(0, 3).map((d) => d.message).join(" ") : pin ? "Open the matching complete local plan to resolve this reference. No namespace or revision is inferred." : "Choose Create Diagram to draw a new practice, or Add / replace diagram to reuse a saved scene. Known activity dimensions are offered for confirmation; missing dimensions are never inferred."}</p></div>}</div>
+    {!written && <div className="diagram-canvas-toolbar"><strong className={showingCandidate ? "diagram-candidate-label" : "sr-only"}>{showingCandidate ? "Source preview · not yet attached" : pin ? `Attached diagram ${index + 1}` : "No diagram attached"}</strong><button type="button" disabled={!resolved} onClick={() => setExpanded(true)}>Expand diagram</button></div>}
+    <div className="activity-diagram-canvas">{resolved ? <CoachingDiagramPreview workspaceTurf scene={resolved.scene} screenMode="standard" title={`${showingCandidate ? "Source preview" : "Attached diagram"}: ${activity.content.title}`} fit={fit} onFitChange={setFit} area={showingCandidate ? undefined : activity.content.area} seconds={resolved.representativeSeconds} />
+      : written ? <article className="recovery-written">
+        <header className="recovery-written-heading"><span className="recovery-written-icon"><ClipboardList size={22} aria-hidden="true" /></span><div><h4>{activity.content.title || "Untitled activity"}</h4><p>No diagram attached</p></div></header>
+        <ActivityCoachingBrief content={activity.content} objectives={objectives} mode="written-delivery" />
+        <div className="recovery-written-actions">
+          {authoring && <button className="calendar-primary" type="button" disabled={disabled || authoring.busy || !!authoring.recover} onClick={() => void authoring.start(activity.id, null)}><Plus size={16} aria-hidden="true" />Create diagram</button>}
+          <button type="button" onClick={browseScenes}>Attach existing diagram</button>
+        </div>
+      </article> : <div className="diagram-empty"><strong>{preview && !preview.ok ? "Exact diagram unavailable" : pin ? "Reference-only diagram" : "Choose a saved diagram"}</strong><p>{preview && !preview.ok ? preview.diagnostics.slice(0, 3).map((d) => d.message).join(" ") : pin ? "Open the matching complete local plan to resolve this reference. No namespace or revision is inferred." : "Select a local scene package and the exact scene revision."}</p></div>}</div>
     {choosing && <section className="diagram-source-browser" aria-label="Local scene browser"><h4 ref={sourceHeading} tabIndex={-1}>Choose an exact local scene</h4><p>Source packages stay unchanged. The selected revision is copied into this plan; organisation namespaces are preserved.</p><div className="diagram-source-fields"><label>Local scene package<select aria-label="Local scene package" disabled={disabled} value={c.source?.documentId ?? ""} onChange={(e) => { setSceneIndex(""); setSeconds("0"); if (e.target.value) void c.selectSource(e.target.value); }}><option value="">Select an imported package</option>{c.entries.filter((e) => e.status === "ready" && (!c.active || e.namespace === c.active.package.sceneNamespace)).map((e) => <option key={e.documentId} value={e.documentId}>{e.name ?? e.documentId} · owner v{e.ownerVersion} · {e.documentId.slice(0, 8)}</option>)}</select></label>
       <label>Scene revision<select aria-label="Scene revision" disabled={disabled || !c.source} value={sceneIndex} onChange={(e) => { setSceneIndex(e.target.value); setSeconds("0"); }}><option value="">Choose scene and revision</option>{c.source?.package.scenes.map((s, i) => <option key={`${s.id}-${s.revision}`} value={i}>{diagramAssociation(c.source!.package, s)} · r{s.revision} · {s.field.length} × {s.field.width} m · {s.id}</option>)}</select></label>
       <label>Representative seconds<input aria-label="Representative seconds" type="number" min="0" step="any" disabled={disabled || !scene} value={seconds} onChange={(e) => setSeconds(e.target.value)} /><small>{scene ? `Allowed: 0–${sceneDuration(scene)} s · no clamping` : "Choose an exact scene first"}</small></label></div>
@@ -131,6 +145,6 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
       <div className="diagram-attachment-actions"><button type="button" disabled={disabled || !validChoice || pins.length >= 20} onClick={() => void attach(false)}>Attach as diagram {pins.length + 1}</button>{!!pins.length && <button type="button" disabled={disabled || !validChoice} onClick={() => void attach(true)}>Replace diagram {index + 1} with preview</button>}<button type="button" onClick={closeScenes}>Return to attached diagrams</button></div>
     </section>}
 
-    {expanded && resolved && <dialog ref={dialog} className="activity-diagram-expanded" aria-label="Expanded activity diagram" onClose={() => setExpanded(false)} onKeyDown={(event) => { if (event.key === "Tab") { const controls = [...(dialog.current?.querySelectorAll<HTMLElement>("button, select, input, summary, details[open] [tabindex=\"0\"]") ?? [])].filter(el => el.getClientRects().length); const first = controls[0], last = controls.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } } }}><header><div><h3>{activity.content.title}</h3><p>{showingCandidate ? "Source preview · not attached · " : ""}{resolved.scene.id} · r{resolved.scene.revision} · {resolved.representativeSeconds} s</p></div><button type="button" autoFocus onClick={() => dialog.current?.close()}>Close diagram · Esc</button></header><div className="expanded-diagram-layout"><div className="expanded-diagram-canvas"><CoachingDiagramPreview scene={resolved.scene} screenMode="expanded" title={activity.content.title} fit={fit} onFitChange={setFit} area={showingCandidate ? undefined : activity.content.area} seconds={resolved.representativeSeconds} /></div><details className="expanded-coaching-guidance"><summary>Coaching guidance</summary><div tabIndex={0}><h4>Organisation &amp; Delivery</h4>{activity.content.instructions.length ? <ol>{activity.content.instructions.map((text, i) => <li key={i}>{text}</li>)}</ol> : <p>No instructions specified.</p>}<h4>Coaching points</h4>{activity.content.coachingPoints.length ? <ul>{activity.content.coachingPoints.map((text, i) => <li key={i}>{text}</li>)}</ul> : <p>No coaching points specified.</p>}<h4>Progressions &amp; Variations</h4><ul>{[...activity.content.progressions, ...activity.content.variations].map((text,i)=><li key={i}>{text}</li>)}</ul></div></details></div><p>Namespace: {resolved.namespace} · View only · scene coordinates unchanged</p></dialog>}
+    {expanded && resolved && <dialog ref={dialog} className="activity-diagram-expanded" aria-label="Expanded activity diagram" onClose={() => setExpanded(false)} onKeyDown={(event) => { if (event.key === "Tab") { const controls = [...(dialog.current?.querySelectorAll<HTMLElement>("button, select, input, summary, details[open] [tabindex=\"0\"]") ?? [])].filter(el => el.getClientRects().length); const first = controls[0], last = controls.at(-1); if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); } } }}><header><div><h3>{activity.content.title}</h3><p>{showingCandidate ? "Source preview · not attached · " : ""}{resolved.scene.id} · r{resolved.scene.revision} · {resolved.representativeSeconds} s</p></div><button type="button" autoFocus onClick={() => dialog.current?.close()}>Close diagram · Esc</button></header><div className="expanded-diagram-layout"><div className="expanded-diagram-canvas"><CoachingDiagramPreview workspaceTurf scene={resolved.scene} screenMode="expanded" title={activity.content.title} fit={fit} onFitChange={setFit} area={showingCandidate ? undefined : activity.content.area} seconds={resolved.representativeSeconds} /></div><details className="expanded-coaching-guidance"><summary>Coaching guidance</summary><div tabIndex={0}><h4>Organisation &amp; Delivery</h4>{activity.content.instructions.length ? <ol>{activity.content.instructions.map((text, i) => <li key={i}>{text}</li>)}</ol> : <p>No instructions specified.</p>}<h4>Coaching points</h4>{activity.content.coachingPoints.length ? <ul>{activity.content.coachingPoints.map((text, i) => <li key={i}>{text}</li>)}</ul> : <p>No coaching points specified.</p>}<h4>Progressions &amp; Variations</h4><ul>{[...activity.content.progressions, ...activity.content.variations].map((text,i)=><li key={i}>{text}</li>)}</ul></div></details></div><p>Namespace: {resolved.namespace} · View only · scene coordinates unchanged</p></dialog>}
   </section>;
 }
