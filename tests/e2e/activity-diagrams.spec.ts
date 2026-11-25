@@ -264,6 +264,10 @@ test("quota failure retains original pins and exposes the full candidate backup"
   const source = await seed(page), id = await openPlan(page, source.documentId), before = await stored(page, id); await browse(page, source.documentId, "1", "4");
   await page.evaluate(() => { const original = IDBObjectStore.prototype.put; IDBObjectStore.prototype.put = function () { IDBObjectStore.prototype.put = original; throw new DOMException("Test quota", "QuotaExceededError"); }; });
   await panel(page).getByRole("button", { name: "Attach as diagram 2", exact: true }).click(); await expect(page.getByRole("region", { name: "Diagram recovery" })).toBeVisible(); expect(await stored(page, id)).toEqual(before);
+  await openDesignerDisclosure(page, "Session files");
+  await expect(workspace(page).getByRole("button", { name: "Back up session & diagrams", exact: true })).toBeDisabled();
+  await expect(workspace(page).getByRole("button", { name: "Download text & references JSON", exact: true })).toBeEnabled();
+  await page.keyboard.press("Escape");
   const backup = parseSessionPackageJson(await download(page, "Download complete candidate")); expect(backup.ok && backup.value.document.session.activities[0].diagrams.length).toBe(2);
   await workspace(page).scrollIntoViewIfNeeded(); await page.screenshot({ path: info.outputPath(`save-recovery-${info.project.name}.png`) });
 });

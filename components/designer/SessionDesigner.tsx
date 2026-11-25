@@ -130,7 +130,7 @@ export function SessionDesigner() {
       <p className="designer-file-status">{saveState}</p>
       <button type="button" disabled={!ready} aria-pressed={view === "import"} onClick={() => { setView("import"); setErrors([]); }}><FileJson size={16} aria-hidden="true" />Import JSON</button>
       <button type="button" disabled={!ready || printRequested || preparingPrint} onClick={() => void preview(true)}><Printer size={16} aria-hidden="true" />Print / Save as PDF</button>
-      {(hasDiagrams || diagrams.active) && <button type="button" disabled={!ready || !diagrams.active} onClick={diagrams.downloadCurrent} title={!diagrams.active ? "Open the matching complete local plan to back up its diagrams." : undefined}><Download size={16} aria-hidden="true" />Back up session &amp; diagrams</button>}
+      {(hasDiagrams || diagrams.active) && <button type="button" disabled={!ready || !diagrams.active || diagrams.blocked || diagrams.busy} onClick={diagrams.downloadCurrent} title={!diagrams.active ? "Open the matching complete local plan to back up its diagrams." : undefined}><Download size={16} aria-hidden="true" />Back up session &amp; diagrams</button>}
       <button type="button" disabled={!ready} onClick={download}><Download size={16} aria-hidden="true" />{hasDiagrams ? "Download text & references JSON" : "Download JSON"}</button>
     </>} />
     {view !== "edit" && sessionActions}
