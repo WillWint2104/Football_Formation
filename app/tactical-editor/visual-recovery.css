@@ -16,7 +16,6 @@
   .recovery-tactical-editor .editor-command-strip {
     display:flex;
     flex-wrap:wrap;
-    flex-direction:row-reverse;
     justify-content:space-between;
     align-items:center;
     gap:4px 9px;
@@ -45,9 +44,9 @@
     background-color:#6a8644;
     color:#163854;
   }
-  .recovery-tactical-editor.editor-animation .editor-surface { height:clamp(340px,calc(100dvh - 284px),950px); }
+  .recovery-tactical-editor.editor-animation .editor-surface { height:clamp(230px,var(--editor-available-height,360px),950px); }
   .recovery-tactical-editor.editor-expanded .editor-surface { height:clamp(390px,calc(100dvh - 128px),1230px); }
-  .recovery-tactical-editor.editor-expanded.editor-animation .editor-surface { height:clamp(305px,calc(100dvh - 226px),1120px); }
+  .recovery-tactical-editor.editor-expanded.editor-animation .editor-surface { height:clamp(230px,var(--editor-available-height,360px),1120px); }
   .recovery-tactical-editor .screen-diagram-layout { padding:0; }
   .recovery-tactical-editor .screen-diagram-footer { background:#f6f9fa; min-height:27px; padding:1px 9px; }
   .recovery-tactical-editor .editor-status { background:transparent; padding:3px 0; border:0; }
@@ -61,10 +60,14 @@
   .recovery-tactical-editor .recovery-board-option > summary { padding:11px 2px; font-size:14px; font-weight:650; color:#1c446b; cursor:pointer; }
   .recovery-tactical-editor .recovery-board-option > div { display:grid; gap:8px; padding:0 2px 9px; }
   .recovery-tactical-editor .editor-help { color:#426078; margin-top:12px; }
+  @media(min-width:1451px) {
+    .recovery-tactical-editor:not(.editor-animation):not(.editor-expanded) .editor-surface {
+      height:clamp(390px,calc(100dvh - 204px),1030px);
+    }
+  }
   @media(max-width:1023px) {
     .recovery-tactical-editor[data-properties-open] .editor-layout { grid-template-columns:minmax(0,1fr); }
     .recovery-tactical-editor .editor-inspector { max-height:none; }
     .recovery-tactical-editor .editor-surface,.recovery-tactical-editor.editor-animation .editor-surface { height:clamp(260px,65vw,530px); }
-    .recovery-tactical-editor .editor-command-strip { flex-direction:row; }
   }
 }

@@ -22,7 +22,7 @@ export function Header() {
   const designer = pathname === "/session-designer";
   const tacticalEditor = pathname === "/tactical-editor";
   const authoring = designer || tacticalEditor;
-  const programmeHeader = (programme || sessions || sessionViewer || authoring) && <header className={`programme-frame-header${programme || authoring ? " calendar-frame-header" : ""}${authoring ? " authoring-frame-header" : ""}${sessions ? " session-frame-header" : ""}${sessionViewer ? " viewer-frame-header" : ""}`}>
+  const programmeHeader = (programme || sessions || sessionViewer || authoring) && <header className={`programme-frame-header${programme || authoring || sessionViewer ? " calendar-frame-header" : ""}${authoring ? " authoring-frame-header" : ""}${sessions ? " session-frame-header" : ""}${sessionViewer ? " viewer-frame-header" : ""}`}>
     <Link href="/calendar" className="programme-frame-brand" aria-label="Football Formation Calendar"><span className="programme-brand-shield"><Shield aria-hidden="true" /><b aria-hidden="true">F</b></span>{programme || sessionViewer || authoring ? <span>Football Formation</span> : <span>FOOTBALL<br />FORMATION</span>}</Link>
     {!sessionViewer && <MobileNavigation />}<nav className="programme-primary-navigation" aria-label="Primary navigation">
       <Link href="/calendar" aria-current={programme ? "page" : undefined}><CalendarDays size={22} aria-hidden="true" /><span>Programme</span></Link>

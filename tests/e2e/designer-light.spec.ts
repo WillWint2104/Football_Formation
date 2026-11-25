@@ -1,5 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
-import { openDesignerDisclosure } from "../fixtures/designer-controls";
+import { openDesignerCoachingEditor, openDesignerDisclosure, openDesignerSessionTools } from "../fixtures/designer-controls";
 import { buildSync } from "esbuild";
 import { attachmentExample } from "../fixtures/attachments";
 import type {} from "../fixtures/companion-browser";
@@ -7,10 +7,9 @@ import type {} from "../fixtures/companion-browser";
 const bundle = buildSync({ entryPoints: ["tests/fixtures/companion-browser.ts"], bundle: true, write: false, format: "iife", platform: "browser", target: "es2022" }).outputFiles[0].text;
 const phase = process.env.B4_EVIDENCE_PHASE ?? "after";
 const rail = (p: Page) => p.getByRole("navigation", { name: "Session activities", exact: true });
-async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
 
-async function openPlan(p: Page) {
-  const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), attachmentExample());
+async function openPlan(p: Page, input = attachmentExample()) {
+  const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), input);
   if (!r.ok) throw new Error(r.error.message);
   const status = p.getByRole("region", { name: "Local diagram workspace", exact: true });
   await openDesignerDisclosure(p, "Session files");
@@ -30,7 +29,7 @@ test.beforeEach(async ({ page, context }) => {
 });
 test("actual interface comparison: import, activity workspace, overview and local host", async ({ page }, info) => {
   await shot(page, info, "import"); await openPlan(page); await shot(page, info, "activity");
-  await page.getByRole("button", { name: "Overview", exact: true }).click(); await shot(page, info, "overview");
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Overview", exact: true }).click(); await shot(page, info, "overview");
   await page.getByRole("button", { name: "Edit session", exact: true }).click();
   await page.getByRole("button", { name: "Edit Diagram", exact: true }).click(); await expect(page.getByRole("region", { name: "Local tactical editor", exact: true })).toBeVisible();
   await shot(page, info, "local-host");
@@ -50,7 +49,7 @@ test("scoped light navigation resets on client route changes and does not recolo
   await expect(shell).toHaveCSS("--color-shell", "#f7f9fc");
 });
 test("activity panel can collapse independently without changing selection, text, diagram pins or B2 snapshots", async ({ page }, info) => {
-  await openPlan(page); await coaching(page); const planId = new URL(page.url()).searchParams.get("localPlan")!;
+  await openPlan(page); await openDesignerCoachingEditor(page); const planId = new URL(page.url()).searchParams.get("localPlan")!;
   const before = await page.evaluate((id) => window.companionTest.browserCompanionRepository().read(id), planId);
   const detail = page.getByLabel("Selected activity editing area", { exact: true }), beforeWidth = (await detail.boundingBox())!.width;
   const railWidth = (await rail(page).boundingBox())!.width;
@@ -81,9 +80,31 @@ test("readable cards and primary controls meet measured text contrast and remain
   const railBox = (await rail(page).boundingBox())!; expect(railBox.y + railBox.height).toBeLessThanOrEqual((await page.viewportSize())!.height + 1);
 });
 test("removing the last activity with navigation hidden leaves Add activity available", async ({ page }) => {
-  await openPlan(page); await coaching(page); await page.getByRole("button", { name: "Hide activities", exact: true }).click();
-  await page.getByRole("button", { name: "Remove activity", exact: true }).click(); await page.getByRole("button", { name: "Remove activity", exact: true }).click();
+  await openPlan(page); await openDesignerCoachingEditor(page); await page.getByRole("button", { name: "Hide activities", exact: true }).click();
+  await page.getByRole("button", { name: "Remove activity", exact: true }).click();
+  await openDesignerCoachingEditor(page); await page.getByRole("button", { name: "Remove activity", exact: true }).click();
   await expect(rail(page)).toBeVisible(); await rail(page).getByRole("button", { name: "Add activity", exact: true }).click();
   await expect(page.getByLabel("Activity name", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Show activities", exact: true })).toBeVisible();
+});
+
+test("an unframeable legacy thumbnail leaves other exact attachments usable", async ({ page }) => {
+  const input = attachmentExample();
+  const affected = input.scenes[2];
+  delete affected.context;
+  affected.stages[0].tracks.push({
+    id: "tiny-region", kind: "annotation", visibleFrom: 0, visibleUntil: affected.stages[0].durationSeconds,
+    annotation: { kind: "area", area: { origin: { x: 20, y: 20 }, length: 0.005, width: 0.005 }, label: "Tiny legacy region" },
+  });
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await openPlan(page, input);
+  const rondo = rail(page).getByRole("button", { name: /5v2 Rondo/ });
+  const thumbnail = rondo.locator("[data-thumbnail-scene]");
+  await expect(thumbnail).toHaveAttribute("data-thumbnail-scene", "example-rondo");
+  await expect(thumbnail).toHaveAttribute("data-thumbnail-revision", "1");
+  await expect(thumbnail).toHaveAttribute("data-thumbnail-time", "2");
+  await expect(rail(page).getByRole("button", { name: /11v11 Team Shape/ })).toContainText("Unavailable");
+  await expect(page.locator(".activity-diagram-canvas .scene-diagram")).toHaveAttribute("data-time", "2");
+  expect(errors).toEqual([]);
 });

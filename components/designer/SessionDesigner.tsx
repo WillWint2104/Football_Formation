@@ -5,11 +5,13 @@ import { Download, Printer, FileJson, Pencil, Eye, Plus, ListOrdered, Palette, C
 import { SessionContentFields } from "@/components/sessions/SessionContentFields";
 import { activityTotals } from "@/lib/coaching/sessions";
 import { applySessionContent, blankDesignerDocument, designerErrors, exportDocument, serializeSessionJson, toSessionContent, type DesignerDocument } from "@/lib/designer/contract";
-import { previewAttachment, sameDocument } from "@/lib/designer/attachments";
+import { sameDocument } from "@/lib/designer/attachments";
 import { renderDrawingNode } from "@/components/tactical/DrawingNodes";
 import { coachingScreenOptions } from "@/lib/tactical/coaching-view";
 import { drawScene } from "@/lib/tactical/drawing";
+import { sceneDuration } from "@/lib/tactical/evaluate";
 import type { SessionActivity } from "@/lib/domain/session";
+import type { TacticalScene } from "@/lib/domain/tactical-scene";
 import { composePrintActivities } from "@/lib/designer/print-composition";
 import type { SessionPackage } from "@/lib/designer/package";
 import { useDesignerDraft } from "./useDesignerDraft";
@@ -23,29 +25,31 @@ import { SessionOverview } from "./SessionOverview";
 import { useLocalAuthoring } from "./useLocalAuthoring";
 import { LocalAuthoringHost, LocalAuthoringNotice } from "./LocalAuthoringHost";
 
-function ActivityThumbnail({ source, activity }: { source?: SessionPackage; activity: SessionActivity }) {
+function ActivityThumbnail({ scene, pin }: { scene?: TacticalScene; pin?: SessionActivity["content"]["diagrams"][number] }) {
   const id = useId().replace(/[^\w-]/g, "_");
-  const pin = activity.content.diagrams[0];
-  const sceneId = pin?.scene.id, revision = pin?.scene.revision, seconds = pin?.representativeSeconds;
+  const seconds = pin?.representativeSeconds;
   const drawing = useMemo(() => {
-    if (!source || !sceneId || revision === undefined || seconds === undefined) return null;
-    const result = previewAttachment(source, activity.id, { scene: { id: sceneId, revision }, representativeSeconds: seconds });
-    if (!result.ok) return null;
-    const { scene } = result.value;
-    return drawScene(scene, {
-      ...coachingScreenOptions(scene, seconds, null, "context"),
-      width: 160, height: 140, padding: 9, areaLabels: false, labels: false, paths: "none",
-      surface: "transparent", screen: { id, mode: "compact", sizingSeconds: seconds },
-    });
-  }, [source, activity.id, sceneId, revision, seconds, id]);
+    if (!scene || seconds === undefined || !Number.isFinite(seconds) || seconds < 0 || seconds > sceneDuration(scene)) return null;
+    try {
+      return drawScene(scene, {
+        ...coachingScreenOptions(scene, seconds, null, "context"),
+        width: 160, height: 140, padding: 9, areaLabels: false, labels: false, paths: "none",
+        surface: "transparent", screen: { id, mode: "compact", sizingSeconds: seconds },
+      });
+    } catch (error) {
+      if (error instanceof RangeError) return null;
+      throw error;
+    }
+  }, [scene, seconds, id]);
   if (!drawing) return <span className="recovery-activity-placeholder"><FileJson size={21} aria-hidden="true" /><span>{pin ? "Unavailable" : "Written"}</span></span>;
-  return <svg viewBox="0 0 160 140" width="100%" height="100%" aria-hidden="true" data-thumbnail-scene={drawing.sceneId} data-thumbnail-revision={drawing.revision}>{drawing.nodes.map(renderDrawingNode)}</svg>;
+  return <svg viewBox="0 0 160 140" width="100%" height="100%" aria-hidden="true" data-thumbnail-scene={drawing.sceneId} data-thumbnail-revision={drawing.revision} data-thumbnail-time={drawing.seconds}>{drawing.nodes.map(renderDrawingNode)}</svg>;
 }
 
 /** Fully local import/edit/brand/export flow; no authenticated APIs or saved revision engine is invoked. */
 export function SessionDesigner() {
   const draft = useDesignerDraft();
   const { document, update, ready, saveState } = draft;
+  const shortSaveState = /^(Draft (?:saved in|recovered from) this browser) · /.exec(saveState)?.[1];
   const [view, setView] = useState<"import" | "edit" | "preview" | "overview">("import"), [epoch, setEpoch] = useState(0);
   const [selected, setSelected] = useState(""), [brandOpen, setBrandOpen] = useState(false), [brandTop, setBrandTop] = useState(0);
   const [errors, setErrors] = useState<string[]>([]), [printRequested, setPrintRequested] = useState(false);
@@ -56,6 +60,7 @@ export function SessionDesigner() {
   const [selectionVersion, setSelectionVersion] = useState(0);
   const editorRef = useRef<HTMLElement>(null), brandButton = useRef<HTMLButtonElement>(null);
   const diagrams = useActivityDiagrams(draft, () => { setEpoch((n) => n + 1); setSelected(""); setView("edit"); });
+  const exactScenes = useMemo(() => new Map(diagrams.active?.package.scenes.map(scene => [JSON.stringify([scene.id, scene.revision]), scene])), [diagrams.active?.package]);
   const authoring = useLocalAuthoring(draft, diagrams);
   useDesignerNavigation({ ready, checking: diagrams.checking, blocked: diagrams.blocked, document, ownerId: diagrams.active?.documentId ?? null, ownerVersion: diagrams.active?.ownerVersion ?? null,
     view, setView, selected, setSelected, selection: diagramSelection, selectionVersion });
@@ -119,9 +124,10 @@ export function SessionDesigner() {
           <span><Layers2 size={15} aria-hidden="true" />{content.activities.length} activities</span>
         </div>}
       </div>}
-      draftStatus={<div className="designer-draft-status"><div><p role="status">{saveState}</p><small>Browser draft only · retained for 30 days · {hasDiagrams ? "use Back up session & diagrams to keep or share the complete plan." : "download JSON to keep or share your plan."}</small></div></div>}
+      draftStatus={<div className="designer-draft-status"><div><p role="status" title={saveState}>{shortSaveState ? <><span className="sr-only">{saveState}</span><span aria-hidden="true">{shortSaveState}</span></> : saveState}</p><small>Browser draft only · retained for 30 days · {hasDiagrams ? "use Back up session & diagrams to keep or share the complete plan." : "download JSON to keep or share your plan."}</small></div></div>}
       sessionActions={view === "edit" ? sessionActions : undefined}
       fileActions={<>
+      <p className="designer-file-status">{saveState}</p>
       <button type="button" disabled={!ready} aria-pressed={view === "import"} onClick={() => { setView("import"); setErrors([]); }}><FileJson size={16} aria-hidden="true" />Import JSON</button>
       <button type="button" disabled={!ready || printRequested || preparingPrint} onClick={() => void preview(true)}><Printer size={16} aria-hidden="true" />Print / Save as PDF</button>
       {(hasDiagrams || diagrams.active) && <button type="button" disabled={!ready || !diagrams.active} onClick={diagrams.downloadCurrent} title={!diagrams.active ? "Open the matching complete local plan to back up its diagrams." : undefined}><Download size={16} aria-hidden="true" />Back up session &amp; diagrams</button>}
@@ -133,7 +139,10 @@ export function SessionDesigner() {
     {view === "overview" && <SessionOverview document={document} onActivity={(id) => { setSelected(id); setView("edit"); }} onDetails={() => { setView("edit"); requestAnimationFrame(() => { const details = editorRef.current?.querySelector<HTMLDetailsElement>(".designer-session-details"); if (details) { details.open = true; details.querySelector("input")?.focus(); } }); }} />}
     <div className={`designer-edit-layout ${view === "preview" ? "designer-preview-layout" : ""}`} hidden={view === "import" || view === "overview"}>
       <section ref={editorRef} className="designer-editor" aria-label="Local session editor" hidden={view !== "edit"} data-no-print>
-        <div className="coaching-editor" key={epoch}><SessionContentFields workspaceNavigation activityThumbnail={activity => <ActivityThumbnail source={diagrams.active?.package} activity={activity} />} activityVisual={(activity) => <ActivityDiagrams key={activity.id} activity={activity} controller={diagrams} authoring={authoring} objectives={document.session.objectives} selectionMemory={diagramSelection.current} onSelectionChange={() => setSelectionVersion(n => n + 1)} />} content={content} exercises={[]} focused selection={{ id: selected, onChange: setSelected }} localAuthoring collapsibleDetails metadataFields={<div className="designer-meta-fields"><label>Team or age group<input maxLength={200} placeholder="Not specified" value={document.session.team ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, team: e.target.value || null } })} /></label>
+        <div className="coaching-editor" key={epoch}><SessionContentFields workspaceNavigation activityThumbnail={activity => {
+          const pin = activity.content.diagrams[0];
+          return <ActivityThumbnail pin={pin} scene={pin && exactScenes.get(JSON.stringify([pin.scene.id, pin.scene.revision]))} />;
+        }} activityVisual={(activity) => <ActivityDiagrams key={activity.id} activity={activity} controller={diagrams} authoring={authoring} objectives={document.session.objectives} selectionMemory={diagramSelection.current} onSelectionChange={() => setSelectionVersion(n => n + 1)} />} content={content} exercises={[]} focused selection={{ id: selected, onChange: setSelected }} localAuthoring collapsibleDetails metadataFields={<div className="designer-meta-fields"><label>Team or age group<input maxLength={200} placeholder="Not specified" value={document.session.team ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, team: e.target.value || null } })} /></label>
           <label>Planned duration (minutes)<input type="number" min="0.01" step="any" placeholder="Unknown" value={document.session.durationMinutes ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, durationMinutes: e.target.value === "" ? null : Number(e.target.value) } })} /></label>
           <label>Session participants<input type="number" min="1" step="1" placeholder="Unknown" value={document.session.playerCount ?? ""} onChange={(e) => update({ ...document, session: { ...document.session, playerCount: e.target.value === "" ? null : Number(e.target.value) } })} /></label></div>} typeSelection={{ value: document.session.type, onChange: (type) => update({ ...document, session: { ...document.session, type } }) }} onChange={(next) => update(applySessionContent(document, next))} /></div>
       </section>

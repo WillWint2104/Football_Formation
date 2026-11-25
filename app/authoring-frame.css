@@ -1,6 +1,6 @@
 /* The authoring routes use the Calendar's light navigation and reserve screen space for the pitch. */
 @media screen {
-  .application-shell:has(> div > .authoring-frame-header) {
+  .application-shell:has(> div > :is(.authoring-frame-header,.viewer-frame-header)) {
     color-scheme:light;
     --color-shell:#f7f9fc;
     --color-shell-panel:#fff;

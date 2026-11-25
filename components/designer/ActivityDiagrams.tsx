@@ -27,7 +27,6 @@ export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fi
       {heading}
       <div className="designer-heading-actions">
         {draftStatus}
-        {c.active && <span className="designer-owner-version">Complete plan v{c.active.ownerVersion}</span>}
         {c.active && <button className="calendar-primary" type="button" disabled={c.busy || c.blocked} onClick={() => void c.save()}>Save complete plan</button>}
         <details ref={files} className="designer-workspace-disclosure" onKeyDown={event => {
           if (event.key !== "Escape" || !event.currentTarget.open) return;
@@ -41,6 +40,7 @@ export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fi
             if (files.current) files.current.open = false;
             if (!catalog.current?.contains(document.activeElement)) files.current?.querySelector("summary")?.focus();
           }}>
+            {c.active && <p className="designer-owner-version">Complete plan v{c.active.ownerVersion}</p>}
             {fileActions}
             <button type="button" disabled={c.busy} onClick={() => {
               if (catalog.current) {
@@ -51,7 +51,12 @@ export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fi
             }}>Browse local plans</button>
           </div>
         </details>
-        {sessionActions && <details className="designer-workspace-disclosure recovery-session-tools">
+        {sessionActions && <details className="designer-workspace-disclosure recovery-session-tools" onKeyDown={event => {
+          if (event.key !== "Escape" || !event.currentTarget.open) return;
+          event.stopPropagation();
+          event.currentTarget.open = false;
+          event.currentTarget.querySelector("summary")?.focus();
+        }}>
           <summary>Session tools<ChevronDown size={15} aria-hidden="true" /></summary>
           {sessionActions}
         </details>}
@@ -109,7 +114,7 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
     // Keep candidate preview visible until the coach deliberately returns to attached diagrams.
   }
   return <section className="activity-diagrams" aria-label="Activity tactical diagrams" data-written={written || undefined}>
-    <header><h3>{written ? "Written practice" : "Tactical diagrams"} {!written && <span>{pins.length}/20</span>}</h3><div className="diagram-authoring-controls">
+    <header><h3>{written ? "Written practice" : pins.length === 1 ? "Diagram" : "Tactical diagrams"}</h3><div className="diagram-authoring-controls">
       <details ref={management} className="designer-workspace-disclosure" onKeyDown={event => {
         if (event.key !== "Escape" || !event.currentTarget.open) return;
         event.stopPropagation();
@@ -132,7 +137,7 @@ export function ActivityDiagrams({ activity, controller: c, authoring, selection
     <div className="activity-diagram-canvas">{resolved ? <CoachingDiagramPreview workspaceTurf scene={resolved.scene} screenMode="standard" title={`${showingCandidate ? "Source preview" : "Attached diagram"}: ${activity.content.title}`} fit={fit} onFitChange={setFit} area={showingCandidate ? undefined : activity.content.area} seconds={resolved.representativeSeconds} />
       : written ? <article className="recovery-written">
         <header className="recovery-written-heading"><span className="recovery-written-icon"><ClipboardList size={22} aria-hidden="true" /></span><div><h4>{activity.content.title || "Untitled activity"}</h4><p>No diagram attached</p></div></header>
-        <ActivityCoachingBrief content={activity.content} objectives={objectives} mode="written-delivery" />
+        <ActivityCoachingBrief content={activity.content} objectives={objectives} written />
         <div className="recovery-written-actions">
           {authoring && <button className="calendar-primary" type="button" disabled={disabled || authoring.busy || !!authoring.recover} onClick={() => void authoring.start(activity.id, null)}><Plus size={16} aria-hidden="true" />Create diagram</button>}
           <button type="button" onClick={browseScenes}>Attach existing diagram</button>

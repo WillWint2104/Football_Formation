@@ -1,5 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
-import { openDesignerDisclosure } from "../fixtures/designer-controls";
+import { openDesignerDisclosure, openDesignerSessionTools } from "../fixtures/designer-controls";
 import { readFile } from "node:fs/promises";
 import { buildSync } from "esbuild";
 import { companionExample, maximumCompanionPackage } from "../fixtures/companion";
@@ -131,7 +131,7 @@ test("legacy JSON remains a separate working import flow and its unsaved fields 
   await page.getByLabel("Choose session JSON", { exact: true }).setInputFiles("public/samples/session-designer-recovery.json"); await page.getByRole("button", { name: "Open imported session", exact: true }).click();
   await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Import JSON", exact: true }).click(); await page.getByRole("button", { name: "Import Session & Diagrams", exact: true }).click();
-  await storeNew(page); await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  await storeNew(page); await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Recovery & Mobility", exact: true }).first()).toBeVisible();
 });
 test("namespace changes cannot replace an existing owner but can be imported explicitly as an independent unchanged copy", async ({ page }) => {

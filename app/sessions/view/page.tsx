@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { SessionViewer } from "@/components/sessions/SessionViewer";
 import { parseSessionView } from "@/lib/coaching/session-view";
 import "../../calendar/programme.css";
+import "../../calendar/calendar-frame.css";
+import "../../authoring-frame.css";
 import "./viewer.css";
 
 export const metadata: Metadata = { title: "Session Viewer | Football Formation" };

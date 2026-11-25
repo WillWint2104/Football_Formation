@@ -3,7 +3,7 @@ import { buildSync } from "esbuild";
 import { writeFile } from "node:fs/promises";
 import { PDFDocument, PDFRawStream, decodePDFRawStream } from "pdf-lib";
 import { printExample as fixture } from "./print-session";
-import { openDesignerDisclosure } from "./designer-controls";
+import { openDesignerDisclosure, openDesignerSessionTools } from "./designer-controls";
 import type {} from "./companion-browser";
 
 const bundle=buildSync({entryPoints:["tests/fixtures/companion-browser.ts"],bundle:true,write:false,format:"iife",platform:"browser",target:"es2022"}).outputFiles[0].text;
@@ -20,7 +20,7 @@ export async function openPrintPlan(p:Page,input=fixture()) {
   if (!hasDiagram) await p.keyboard.press("Escape");
   return new URL(p.url()).searchParams.get("localPlan")!;
 }
-export async function previewPrintPlan(p:Page){await p.getByRole("button",{name:"Branded preview",exact:true}).click();await expect(plan(p)).toBeVisible();}
+export async function previewPrintPlan(p:Page){await openDesignerSessionTools(p);await p.getByRole("button",{name:"Branded preview",exact:true}).click();await expect(plan(p)).toBeVisible();}
 export async function capturePrintOutput(p:Page,info:TestInfo,name:string){
   await p.evaluate(async()=>{await document.fonts.ready;await Promise.all(Array.from(document.querySelectorAll<HTMLImageElement>('.designer-print img')).map(img=>img.decode()));});
   await p.evaluate(()=>scrollTo(0,0));await p.screenshot({path:info.outputPath(`${name}-${info.project.name}.png`)});

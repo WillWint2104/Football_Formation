@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import { openDesignerDisclosure } from "../fixtures/designer-controls";
+import { openTacticalDisclosure } from "../fixtures/tactical-controls";
+import { openDesignerSessionTools, openDesignerDisclosure } from "../fixtures/designer-controls";
 import { readFile } from "node:fs/promises";
 import { attachmentExample } from "../fixtures/attachments";
 import { parseSessionPackageJson } from "../../lib/designer/package";
@@ -33,7 +34,7 @@ test("U02 refresh resumes overview, selected activity and exact diagram; stale p
   await importPlan(page, pkg);
   const rail = page.getByRole("navigation", { name: "Session activities", exact: true });
   await rail.getByRole("button", { name: /11v11 Team Shape/ }).click();
-  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Overview", exact: true }).click();
   const key = "football-formation.session-designer.navigation.v1";
   await expect.poll(() => page.evaluate(key => JSON.parse(sessionStorage.getItem(key) ?? "{}").view, key)).toBe("overview");
   await page.reload();
@@ -86,8 +87,8 @@ test("U03 name and duration are direct controls; known dimensions require confir
   await expect(page.getByRole("region", { name: "Activity coaching information" })).toBeHidden();
   await page.getByLabel("Activity name", { exact: true }).fill("Support in a 12 x 15 grid");
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("15");
-  await expect(diagrams(page)).toContainText("Choose Create Diagram");
-  await page.getByRole("button", { name: "Coaching information", exact: true }).click();
+  await expect(diagrams(page)).toContainText("No diagram attached");
+  await page.getByRole("button", { name: "Edit coaching information", exact: true }).click();
   await page.getByLabel("Specify field dimensions").check();
   await page.getByLabel("Length (m)", { exact: true }).fill("12");
   await page.getByLabel("Width (m)", { exact: true }).fill("15");
@@ -103,7 +104,7 @@ test("U03 name and duration are direct controls; known dimensions require confir
   const host = page.getByRole("region", { name: "Local tactical editor", exact: true });
   await expect(host).toBeVisible();
   await host.getByRole("button", { name: "Properties", exact: true }).click();
-  await expect(host.getByLabel("Area length (m)")).toHaveValue("12");
+  await openTacticalDisclosure(host, "Field setup"); await expect(host.getByLabel("Area length (m)")).toHaveValue("12");
   await expect(host.getByLabel("Area width (m)")).toHaveValue("15");
   await expect(host).toContainText("Independent training area");
   await page.screenshot({ path: info.outputPath("u03-confirmed-training-area.png") });

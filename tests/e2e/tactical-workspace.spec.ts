@@ -1,5 +1,6 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
-import { openDesignerDisclosure } from "../fixtures/designer-controls";
+import { openTacticalDisclosure } from "../fixtures/tactical-controls";
+import { openDesignerCoachingEditor, openDesignerDisclosure } from "../fixtures/designer-controls";
 import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { buildSync } from "esbuild";
 import { writeFile } from "node:fs/promises";
@@ -43,7 +44,7 @@ test("diagram selection survives activity navigation; coaching panels scroll ind
   const rail=page.getByRole("navigation",{name:"Session activities",exact:true});
   await rail.getByRole("button",{name:/11v11 Team Shape/}).click();await rail.getByRole("button",{name:/5v2 Rondo/}).click();
   await expect(attached(page)).toHaveAttribute("data-time","4"); await expect(attached(page)).toHaveAttribute("data-revision","2");
-  await page.getByRole("button",{name:"Coaching information",exact:true}).focus();await page.keyboard.press("Enter");
+  await page.getByRole("button",{name:"Edit coaching information",exact:true}).focus();await page.keyboard.press("Enter");
   const guidance=page.getByRole("region",{name:"Activity coaching information",exact:true});
   await page.getByLabel("Activity name",{exact:true}).fill("Rondo · unsaved coaching text");
   await guidance.getByLabel("Setup & delivery instructions",{exact:true}).fill(Array.from({length:60},(_,i)=>`Coaching instruction ${i+1}`).join("\n"));
@@ -54,7 +55,7 @@ test("diagram selection survives activity navigation; coaching panels scroll ind
   await page.getByRole("button",{name:"Hide coaching information",exact:true}).click();await expect(guidance).toBeHidden();
   await page.getByRole("button",{name:"Hide activities",exact:true}).click();await expect(rail).toBeHidden();
   const toggle=page.getByRole("button",{name:"Show activities",exact:true});await toggle.focus();await page.keyboard.press("Enter");await expect(rail).toBeVisible();
-  await page.getByRole("button",{name:"Coaching information",exact:true}).click();await expect(page.getByLabel("Activity name",{exact:true})).toHaveValue("Rondo · unsaved coaching text");
+  await openDesignerCoachingEditor(page);await expect(page.getByLabel("Activity name",{exact:true})).toHaveValue("Rondo · unsaved coaching text");
   await expect(guidance.getByLabel("Setup & delivery instructions",{exact:true})).toHaveValue(/Coaching instruction 60/);
   expect(await page.evaluate(id=>window.companionTest.browserCompanionRepository().read(id),planId)).toEqual(before);
   await capture(page,info,"coaching-panel");
@@ -75,7 +76,7 @@ test("local authoring uses the visible projection, optional properties, unsaved 
   const host=page.getByRole("region",{name:"Local tactical editor",exact:true}), diagram=host.locator(".editor-surface .scene-diagram");
   await expect(host.getByRole("complementary",{name:"Contextual properties",exact:true})).toBeHidden();
   await host.getByRole("button",{name:"Properties",exact:true}).click();await expect(host.getByRole("complementary",{name:"Contextual properties",exact:true})).toBeVisible();
-  await host.getByLabel("Grid spacing",{exact:true}).selectOption("1");
+  await openTacticalDisclosure(host, "Grid & guides"); await host.getByLabel("Grid spacing",{exact:true}).selectOption("1");
   await host.getByRole("button",{name:"Hide properties",exact:true}).click();
   await expect.poll(async()=>Math.abs(Number(await diagram.getAttribute("data-width"))-(await diagram.boundingBox())!.width)).toBeLessThan(2);
   const player=diagram.locator('g[data-entity-id="a1"]');

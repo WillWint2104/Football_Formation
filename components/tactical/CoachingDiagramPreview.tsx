@@ -49,8 +49,8 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   const atSavedMoment = seconds === savedSeconds && selected === savedStage;
   const choose = (next: number) => { const r = ranges[next]; if (r) { setSelected(r.stage.id); setSeconds(r.start); } };
   const options = { ...coachingScreenOptions(scene, seconds, area, frame), poseStageId: selected || undefined };
-  const timed = ranges.length > 1 || scene.stages.some(stage => stage.tracks.some(track =>
-    track.kind !== "annotation" || track.visibleFrom > 0 || track.visibleUntil < stage.durationSeconds));
+  const timed = ranges.length > 1 || scene.stages.some(stage => stage.durationSeconds !== 1 || stage.hiddenEntityIds?.length
+    || stage.tracks.some(track => track.kind !== "annotation" || track.visibleFrom > 0 || track.visibleUntil < stage.durationSeconds));
   if (opening && frame === "all") {
     options.rotation = opening.allRotation ?? options.rotation;
     if (opening.omitArea) {
@@ -61,7 +61,7 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
   if (screenMode === "expanded") options.padding = 26;
   const stageNavigation = range ? <>
     <button type="button" aria-label="Previous scene stage" disabled={index <= 0} onClick={() => choose(index - 1)}>‹</button>
-    <label>Scene stage <select aria-label="Scene stage" value={selected} onChange={e => choose(ranges.findIndex(r => r.stage.id === e.target.value))}>{ranges.map((r, i) => <option key={r.stage.id} value={r.stage.id}>{i + 1} / {ranges.length} · {r.stage.title}</option>)}</select></label>
+    <label>Scene stage <select ref={stageSelect} aria-label="Scene stage" value={selected} onChange={e => choose(ranges.findIndex(r => r.stage.id === e.target.value))}>{ranges.map((r, i) => <option key={r.stage.id} value={r.stage.id}>{i + 1} / {ranges.length} · {r.stage.title}</option>)}</select></label>
     <button type="button" aria-label="Next scene stage" disabled={index === ranges.length - 1} onClick={() => choose(index + 1)}>›</button>
   </> : <strong>Static diagram</strong>;
   const fitControls = <div className="coaching-fit-controls" role="group" aria-label="Fit diagram">
@@ -112,6 +112,10 @@ function Preview({ scene, title, seconds: savedSeconds, savedStage, area, fit = 
       seconds={seconds} savedSeconds={savedSeconds} stage={selected} options={options} equipment={presentation.equipment ?? []}>
       {drawing}
     </GroundLayoutPresentation> : drawing()}
-    {!presentation && <span className="coaching-preview-provenance">r{scene.revision} · Saved moment {savedSeconds} s · Viewing {seconds.toFixed(1)} s{!atSavedMoment ? " · view only; saved pin unchanged" : ""}</span>}
+    {workspaceTurf && <details className="coaching-preview-provenance coaching-pin-disclosure">
+      <summary>Saved diagram details</summary>
+      <p>Revision {scene.revision} · Saved moment {savedSeconds} s · Viewing {seconds.toFixed(1)} s{!atSavedMoment ? " · view only; saved pin unchanged" : ""}</p>
+    </details>}
+    {!workspaceTurf && !presentation && <span className="coaching-preview-provenance">r{scene.revision} · Saved moment {savedSeconds} s · Viewing {seconds.toFixed(1)} s{!atSavedMoment ? " · view only; saved pin unchanged" : ""}</span>}
   </div>;
 }

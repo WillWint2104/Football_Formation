@@ -39,8 +39,8 @@
   .session-designer .designer-activity-nav > h3 span { border-radius:14px; padding:1px 7px; color:#285a85; background:#e7f1fb; font-size:12px; }
   .session-designer.designer-tactical-workspace .coaching-activity-list button {
     display:grid;
-    grid-template-columns:76px minmax(0,1fr);
-    align-items:center;
+    grid-template-columns:70px minmax(0,1fr);
+    align-items:start;
     column-gap:8px;
     min-height:84px;
     border:1px solid #d5e1ec;
@@ -49,12 +49,12 @@
     background:#fff;
   }
   .session-designer.designer-tactical-workspace .coaching-activity-list button[aria-current=step] { background:#ebf4fc; border-color:#4389c5; box-shadow:inset 2px 0 #1c67ab; }
-  .session-designer.designer-tactical-workspace .coaching-activity-list button > .recovery-activity-thumbnail { display:block; width:76px; height:68px; grid-area:auto; align-self:center; overflow:hidden; border:0; border-radius:5px; padding:0; background-color:#edf4f8; }
+  .session-designer.designer-tactical-workspace .coaching-activity-list button > .recovery-activity-thumbnail { display:block; width:70px; height:68px; grid-area:auto; align-self:start; overflow:hidden; border:0; border-radius:5px; padding:0; background-color:#edf4f8; }
   .session-designer.designer-tactical-workspace .coaching-activity-list button > .recovery-activity-thumbnail.recovery-turf { background-color:#6a8644; background-image:url("/ground-layout/grain.png"); }
   .session-designer .recovery-activity-thumbnail .scene-diagram { display:block; width:100%; height:100%; min-height:0; }
   .session-designer .recovery-activity-placeholder { display:flex; height:100%; flex-direction:column; gap:3px; align-items:center; justify-content:center; background:#edf4fa; color:#375a79; font-size:11px; }
-  .session-designer.designer-tactical-workspace .coaching-activity-list button > .recovery-activity-name { display:grid; grid-area:auto; gap:4px; min-width:0; text-align:left; font-family:inherit; }
-  .session-designer .recovery-activity-name strong { color:#152f4f; font-size:14px; line-height:1.17; }
+  .session-designer.designer-tactical-workspace .coaching-activity-list button > .recovery-activity-name { display:grid; grid-area:auto; gap:4px; min-width:0; padding-block:3px; text-align:left; font-family:inherit; }
+  .session-designer .recovery-activity-name strong { color:#152f4f; font-size:14px; line-height:1.25; overflow-wrap:anywhere; }
   .session-designer .recovery-activity-name small { display:flex; align-items:center; gap:3px; color:#456482; }
   .session-designer .recovery-activity-number { color:#476b8c; }
   .session-designer .designer-add-activity { display:flex; align-items:center; justify-content:center; gap:5px; }
@@ -103,6 +103,7 @@
   .recovery-written-brief { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .recovery-written-brief .recovery-focus { grid-column:1/-1; }
   .recovery-written-actions { display:flex; flex-wrap:wrap; gap:7px; }
+  .designer-file-status,.designer-owner-version { color:#49647c; font-size:12px; margin:3px 6px; overflow-wrap:anywhere; }
   .recovery-written-actions button { display:inline-flex; align-items:center; gap:5px; }
   .session-designer.designer-tactical-workspace .activity-diagrams .recovery-written-actions .calendar-primary { color:white; background:#175b94; border-color:#175b94; }
   .session-designer.designer-tactical-workspace .designer-activity-footer { padding:3px 7px; min-height:40px; background:#eff5fb; }

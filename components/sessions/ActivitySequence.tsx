@@ -35,6 +35,16 @@ export function ActivitySequence({ activities, exercises, onChange, localAuthori
   const hideNavigation = workspaceNavigation && navigationHidden && activities.length > 0;
   const index = current ? activities.indexOf(current) : -1;
   const written = current?.content.diagrams.length === 0;
+  const showGuidance = editingBrief || (!written && guidanceOpen);
+  const closeGuidance = () => {
+    setEditingBrief(false);
+    if (!written) setGuidanceOpen(false);
+  };
+  const toggleGuidance = () => {
+    if (showGuidance) closeGuidance();
+    else if (written) setEditingBrief(true);
+    else setGuidanceOpen(true);
+  };
   useEffect(() => { if (focused) { detail.current?.scrollTo({ top: 0 }); coachingPanel.current?.scrollTo({ top: 0 }); } }, [focused, current?.id]);
   const savedExercises = latest(exercises);
   const change = (value: SessionActivity) => onChange(activities.map((a) => a.id === value.id ? value : a));
@@ -68,23 +78,24 @@ export function ActivitySequence({ activities, exercises, onChange, localAuthori
       <button type="button" disabled={!exercise} onClick={() => { const source = savedExercises.find((e) => e.id === exercise); if (!source) return; const a = newActivity(source); onChange([...activities, a]); setSelected(a.id); }}>Add exercise snapshot</button></div>}
     <div ref={layout} className="coaching-activity-layout" style={workspaceNavigation && workspaceHeight ? { "--designer-activity-height": `${workspaceHeight}px` } as CSSProperties : undefined} data-activities-hidden={hideNavigation ? "true" : undefined}><nav id={navigationId} hidden={hideNavigation} className="designer-activity-nav" aria-label="Session activities">{focused && <h3>Session activities <span>{activities.length}</span></h3>}<ol ref={list} className="coaching-activity-list">{activities.map((a, i) => <li key={a.id}><button type="button" title={workspaceNavigation ? a.content.title || "Untitled activity" : undefined} aria-pressed={a.id === current?.id} aria-current={focused && a.id === current?.id ? "step" : undefined} onKeyDown={(e) => railKey(e, i)} onClick={() => navigate(a.id)}>
       {activityThumbnail ? <>
-        <span className={`recovery-activity-thumbnail${a.content.diagrams.length ? " recovery-turf" : ""}`} aria-hidden="true">{activityThumbnail(a)}</span>
+        <span className={`recovery-activity-thumbnail${a.content.diagrams.length ? " recovery-turf" : ""}`}>{activityThumbnail(a)}</span>
         <span className="recovery-activity-name">
           <strong><span className="recovery-activity-number">{i + 1}. </span>{a.content.title || "Untitled activity"}</strong>
           <small><Clock3 size={13} aria-hidden="true" />{a.durationMinutes === null ? "Untimed" : `${a.durationMinutes} min`}</small>
+          {a.content.diagrams.length > 0 && <span className="sr-only">{a.content.diagrams.length} diagram reference{a.content.diagrams.length === 1 ? "" : "s"}</span>}
         </span>
       </> : <><span>{String(i + 1).padStart(2, "0")}</span><strong>{a.content.title}</strong>
         <small>{a.role.replaceAll("-", " ")} · {a.durationMinutes === null ? "Untimed" : `${a.durationMinutes} min`}</small></>}
       </button></li>)}</ol>
       {focused && <button className="designer-add-activity" type="button" onClick={add}><Plus size={15} aria-hidden="true" />Add activity</button>}</nav>
-      <div ref={detail} className="coaching-activity-detail" tabIndex={focused ? 0 : undefined} aria-label={focused ? "Selected activity editing area" : undefined}>{current ? <>{focused && <header className="designer-selected-heading"><p>Activity {index + 1} of {activities.length} · {current.role.replaceAll("-", " ")}</p><h2 className={workspaceNavigation ? "designer-activity-heading-text" : undefined}>{current.content.title || "Untitled activity"}</h2>{workspaceNavigation && <div className="designer-quick-fields"><label>Activity name<input required maxLength={200} value={current.content.title} onChange={e => change({ ...current, content: { ...current.content, title: e.target.value } })} /></label><label>Minutes<input aria-label="Duration (minutes)" type="number" min="0.01" step="any" placeholder="Unknown" value={current.durationMinutes ?? ""} onChange={e => change({ ...current, durationMinutes: e.target.value === "" ? null : Number(e.target.value) })} /></label></div>}{workspaceNavigation && <div className="designer-activity-panel-toggle"><button type="button" aria-expanded={!navigationHidden} aria-controls={navigationId} onClick={() => setNavigationHidden((hidden) => !hidden)}>{navigationHidden ? "Show activities" : "Hide activities"}</button><button ref={guidanceToggle} type="button" aria-expanded={guidanceOpen} aria-controls={`${navigationId}-guidance`} onClick={() => setGuidanceOpen((open) => !open)}><PanelRight size={15} aria-hidden="true" />{guidanceOpen ? "Hide coaching information" : "Coaching information"}</button></div>}</header>}
-        <div className={workspaceNavigation ? "designer-practice-layout" : undefined} data-guidance-open={workspaceNavigation && guidanceOpen ? "true" : undefined}>
+      <div ref={detail} className="coaching-activity-detail" tabIndex={focused ? 0 : undefined} aria-label={focused ? "Selected activity editing area" : undefined}>{current ? <>{focused && <header className="designer-selected-heading"><p>Activity {index + 1} of {activities.length} · {current.role.replaceAll("-", " ")}</p><h2 className={workspaceNavigation ? "designer-activity-heading-text" : undefined}>{current.content.title || "Untitled activity"}</h2>{workspaceNavigation && <div className="designer-quick-fields"><label>Activity name<input required maxLength={200} value={current.content.title} onChange={e => change({ ...current, content: { ...current.content, title: e.target.value } })} /></label><label>Minutes<input aria-label="Duration (minutes)" type="number" min="0.01" step="any" placeholder="Unknown" value={current.durationMinutes ?? ""} onChange={e => change({ ...current, durationMinutes: e.target.value === "" ? null : Number(e.target.value) })} /></label></div>}{workspaceNavigation && <div className="designer-activity-panel-toggle"><button type="button" aria-expanded={!navigationHidden} aria-controls={navigationId} onClick={() => setNavigationHidden((hidden) => !hidden)}>{navigationHidden ? "Show activities" : "Hide activities"}</button><button ref={guidanceToggle} type="button" aria-expanded={showGuidance} aria-controls={`${navigationId}-guidance`} onClick={toggleGuidance}><PanelRight size={15} aria-hidden="true" />{showGuidance ? "Hide coaching information" : written ? "Edit coaching information" : "Coaching information"}</button></div>}</header>}
+        <div className={workspaceNavigation ? "designer-practice-layout" : undefined} data-guidance-open={workspaceNavigation && showGuidance ? "true" : undefined}>
         {activityVisual?.(current)}
-        <section ref={coachingPanel} id={`${navigationId}-guidance`} className={workspaceNavigation ? "designer-coaching-panel" : undefined} aria-label={workspaceNavigation ? "Activity coaching information" : undefined} tabIndex={workspaceNavigation ? 0 : undefined} hidden={workspaceNavigation && !guidanceOpen}>
-        {workspaceNavigation && <header className="designer-coaching-heading"><h3>Coaching properties</h3><button type="button" aria-label="Close coaching properties" onClick={() => { setGuidanceOpen(false); guidanceToggle.current?.focus(); }}><X size={16} aria-hidden="true" /></button></header>}
-        {workspaceNavigation && <div className="recovery-coaching-actions"><button type="button" aria-pressed={editingBrief}
+        <section ref={coachingPanel} id={`${navigationId}-guidance`} className={workspaceNavigation ? "designer-coaching-panel" : undefined} aria-label={workspaceNavigation ? "Activity coaching information" : undefined} tabIndex={workspaceNavigation ? 0 : undefined} hidden={workspaceNavigation && !showGuidance}>
+        {workspaceNavigation && <header className="designer-coaching-heading"><h3>Coaching properties</h3><button type="button" aria-label="Close coaching properties" onClick={() => { closeGuidance(); guidanceToggle.current?.focus(); }}><X size={16} aria-hidden="true" /></button></header>}
+        {workspaceNavigation && !written && <div className="recovery-coaching-actions"><button type="button" aria-pressed={editingBrief}
           onClick={() => setEditingBrief(editing => !editing)}><Pencil size={14} aria-hidden="true" />{editingBrief ? "Read coaching information" : "Edit coaching information"}</button></div>}
-        {workspaceNavigation && !editingBrief && <ActivityCoachingBrief content={current.content} objectives={objectives} mode={written ? "written-properties" : "diagram"} />}
+        {workspaceNavigation && !written && !editingBrief && <ActivityCoachingBrief content={current.content} objectives={objectives} />}
         {workspaceNavigation ? <div hidden={!editingBrief}>{editPanel}</div> : editPanel}
         </section></div>
         {focused && <footer className="designer-activity-footer"><span>{index + 1} of {activities.length} · {totals.minutes} min{totals.unknown ? " known" : ""}</span><div><button type="button" disabled={index <= 0} onClick={() => navigate(activities[index - 1].id)}>Previous activity</button><button type="button" disabled={index >= activities.length - 1} onClick={() => navigate(activities[index + 1].id)}>Next activity</button></div></footer>}

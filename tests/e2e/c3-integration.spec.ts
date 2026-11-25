@@ -1,5 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
-import { openDesignerDisclosure } from "../fixtures/designer-controls";
+import { openDesignerCoachingEditor, openDesignerDisclosure, openDesignerSessionTools } from "../fixtures/designer-controls";
 import { readFile, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import { printExample } from "../fixtures/print-session";
@@ -44,7 +44,7 @@ async function importPackage(p: Page, pkg: SessionPackage, info?: TestInfo) {
   return id;
 }
 async function openPlan(p: Page, id: string) {
-  await p.getByRole("button", { name: "Edit session", exact: true }).click();
+  await openDesignerSessionTools(p); await p.getByRole("button", { name: "Edit session", exact: true }).click();
   await openDesignerDisclosure(p, "Session files");
   await workspace(p).getByRole("button", { name: "Browse local plans", exact: true }).click();
   const list = workspace(p).locator(".diagram-plan-list");
@@ -54,10 +54,6 @@ async function openPlan(p: Page, id: string) {
   await p.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click();
   await expect(panel(p)).toBeVisible();
   return new URL(p.url()).searchParams.get("localPlan")!;
-}
-async function coaching(p: Page) {
-  const toggle = p.getByRole("button", { name: "Coaching information", exact: true });
-  if (await toggle.isVisible()) await toggle.click();
 }
 async function edit(p: Page) { await panel(p).getByRole("button", { name: "Edit Diagram", exact: true }).click(); await expect(host(p)).toBeVisible(); }
 async function saveCopy(p: Page) {
@@ -77,7 +73,7 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   const pkg = printExample(); pkg.document.session.activities[0].diagrams = [];
   const source = await importPackage(page, pkg, info), sourceBefore = await read(page, source);
   const id = await openPlan(page, source);
-  await coaching(page);
+  await openDesignerCoachingEditor(page);
   await page.getByLabel("Activity name", { exact: true }).fill("Rondo - receive, scan and support");
   await page.getByLabel("Setup & delivery instructions", { exact: true }).fill("Mark a 12 x 12 m area for five attackers and two defenders.\nScan before receiving and move to support the next pass.\nRotate defenders after each two-minute block.");
   await expect(workspace(page)).toContainText("Text edits are newer than the complete snapshot");
@@ -115,7 +111,7 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   expect(accepted.package.document.session.activities[0].diagrams[1]).toEqual({ scene: { id: candidate.sceneId, revision: 1 }, representativeSeconds: 4 });
   await expect(panel(page).locator(".activity-diagram-canvas .scene-diagram")).toHaveAttribute("data-clipped", "0");
   await capture(page, info, "accepted-activity-diagrams");
-  await page.getByRole("button", { name: "Add activity", exact: true }).click(); await coaching(page);
+  await page.getByRole("button", { name: "Add activity", exact: true }).click(); await openDesignerCoachingEditor(page);
   await page.getByLabel("Activity name", { exact: true }).fill("Cool-down - mobility and reflection");
   await page.getByLabel("Activity role", { exact: true }).selectOption("cool-down");
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("5");
@@ -128,7 +124,7 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   const touchlines = panel(page).locator('rect[data-field-marking="touchlines"]');
   expect(Number(await touchlines.getAttribute("width")) / Number(await touchlines.getAttribute("height"))).toBeCloseTo(105 / 68, 6);
   await capture(page, info, "full-pitch-activity");
-  await page.getByRole("button", { name: "Club Branding", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Club Branding", exact: true }).click();
   const png = await sharp(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80"><path d="M16 8H144V48L80 76L16 48Z" fill="#17324D" stroke="#D7B46A" stroke-width="4"/><text x="80" y="48" text-anchor="middle" font-size="26" fill="white" font-family="Arial">TEST</text></svg>')).png().toBuffer();
   await page.getByLabel("Choose club logo").setInputFiles({ name: "example-crest.png", mimeType: "image/png", buffer: png });
   await page.getByLabel("Club name", { exact: true }).fill("Verification Club - example only");
@@ -139,7 +135,7 @@ test("C3 complete coaching workflow: import, author, pin, accept, recover, round
   expect(saved.package.document.session.activities).toHaveLength(4);
   expect(saved.package.document.session.activities[2].name).toBe("Cool-down - mobility and reflection");
   await page.reload(); await expect(workspace(page)).toContainText("Complete local plan recovered");
-  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Overview", exact: true }).click();
   await capture(page, info, "recovered-session-overview");
   const wait = page.waitForEvent("download");
   await openDesignerDisclosure(page, "Session files");

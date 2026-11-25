@@ -1,5 +1,5 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
-import { openDesignerDisclosure } from "../fixtures/designer-controls";
+import { openDesignerCoachingEditor, openDesignerDisclosure, openDesignerSessionTools } from "../fixtures/designer-controls";
 import { assertDialogTabCycle } from "../fixtures/dialog-focus";
 import { readFile } from "node:fs/promises";
 import { buildSync } from "esbuild";
@@ -13,11 +13,10 @@ const bundle = buildSync({ entryPoints: ["tests/fixtures/companion-browser.ts"],
 const workspace = (page: Page) => page.getByRole("region", { name: "Local diagram workspace", exact: true });
 const panel = (page: Page) => page.getByRole("region", { name: "Activity tactical diagrams", exact: true });
 const diagram = (page: Page) => panel(page).locator(".scene-diagram");
-async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
 
 test("normalized complete plans recover without discarding raw whitespace in the text draft", async ({ page }) => {
   const source = await seed(page), id = await openPlan(page, source.documentId);
-  await coaching(page);
+  await openDesignerCoachingEditor(page);
   await page.getByLabel("Activity name", { exact: true }).fill("5v2 Rondo  ");
   await page.getByLabel("Setup & delivery instructions", { exact: true }).fill("Keep possession.\nRotate defenders.\n\n");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click();
@@ -28,7 +27,7 @@ test("normalized complete plans recover without discarding raw whitespace in the
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("5v2 Rondo  ");
   await page.reload(); await expect(workspace(page)).toContainText("Complete local plan recovered");
   await expect(page.getByRole("region", { name: "Diagram recovery", exact: true })).toHaveCount(0);
-  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await coaching(page);
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await openDesignerCoachingEditor(page);
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("5v2 Rondo  ");
   await expect(diagram(page)).toHaveAttribute("data-revision", "1");
   await expect(workspace(page).getByRole("button", { name: "Save complete plan", exact: true })).toBeEnabled();
@@ -141,9 +140,9 @@ test("activity switching and refresh retain stable attachment identities and ful
   expect(Number(await pitch.getAttribute("width")) / Number(await pitch.getAttribute("height"))).toBeCloseTo(105 / 68, 6);
   await capture(page, info, "full-pitch-attached");
   await expandCapture(page, info, "full-pitch-expanded");
-  await coaching(page); await page.getByRole("button", { name: "Move activity up", exact: true }).click(); await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
+  await openDesignerCoachingEditor(page); await page.getByRole("button", { name: "Move activity up", exact: true }).click(); await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].id)).toBe("activity-2");
-  await page.reload(); await expect(workspace(page)).toContainText("Complete local plan recovered"); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-11v11");
+  await page.reload(); await expect(workspace(page)).toContainText("Complete local plan recovered"); await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-11v11");
   expect(new URL(page.url()).searchParams.get("localPlan")).toBe(id);
 });
 
@@ -175,7 +174,7 @@ test("linked missing package preserves the reference-only draft and offers expli
   const source = await seed(page); await openPlan(page, source.documentId);
   await expect.poll(() => page.evaluate(() => localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY))).not.toBeNull();
   await page.goto("/session-designer?localPlan=missing-plan&localVersion=1"); await expect(workspace(page)).toContainText("linked local package is missing");
-  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await expect(panel(page)).toContainText("Reference-only diagram");
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await expect(panel(page)).toContainText("Reference-only diagram");
   await workspace(page).scrollIntoViewIfNeeded(); const path = info.outputPath(`missing-recovery-${info.project.name}.png`); await page.screenshot({ path });
   await page.getByRole("button", { name: "Keep reference-only text draft", exact: true }).click(); expect(new URL(page.url()).searchParams.has("localPlan")).toBe(false);
   expect(parseSessionJson(await download(page, "Download text & references JSON")).session.activities[0].diagrams[0].scene.revision).toBe(1);
@@ -192,7 +191,7 @@ test("corrupt current snapshot offers verified previous copy without repairing t
 
 test("newer text draft versus complete snapshot requires a deliberate choice without automatic merging", async ({ page }) => {
   const source = await seed(page), id = await openPlan(page, source.documentId);
-  await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Unsaved text revision");
+  await openDesignerCoachingEditor(page); await page.getByLabel("Activity name", { exact: true }).fill("Unsaved text revision");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Unsaved text revision");
   await page.reload(); await expect(workspace(page)).toContainText("linked package version or text draft differs");
   expect((await download(page, "Download text & references JSON"))).toContain("Unsaved text revision");
@@ -205,7 +204,7 @@ test("newer text draft versus complete snapshot requires a deliberate choice wit
 });
 
 test("concurrent complete-owner save requires deliberate recovery and cannot overwrite a newer owner", async ({ page, context }) => {
-  const source = await seed(page), id = await openPlan(page, source.documentId); await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Draft A");
+  const source = await seed(page), id = await openPlan(page, source.documentId); await openDesignerCoachingEditor(page); await page.getByLabel("Activity name", { exact: true }).fill("Draft A");
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Draft A");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
   const second = await context.newPage(); await second.goto(page.url()); await expect(workspace(second)).toContainText("Complete local plan recovered");
@@ -218,8 +217,8 @@ test("a concurrent text edit blocks attachment without changing either the draft
   const source = await seed(page), id = await openPlan(page, source.documentId);
   await expect(page.getByRole("status").filter({ hasText: "Draft saved in this browser" })).toBeVisible();
   const second = await context.newPage(); await second.goto(page.url()); await expect(workspace(second)).toContainText("Complete local plan recovered");
-  await second.getByRole("button", { name: "Edit session", exact: true }).click();
-  await coaching(second); await second.getByLabel("Activity name", { exact: true }).fill("Another coach's text");
+  await openDesignerSessionTools(second); await second.getByRole("button", { name: "Edit session", exact: true }).click();
+  await openDesignerCoachingEditor(second); await second.getByLabel("Activity name", { exact: true }).fill("Another coach's text");
   await expect.poll(() => second.evaluate(() => JSON.parse(localStorage.getItem(window.companionTest.DESIGNER_DRAFT_KEY) ?? "null")?.document?.session.activities[0].name)).toBe("Another coach's text");
   await browse(page, source.documentId); await panel(page).getByRole("button", { name: "Attach as diagram 2", exact: true }).click();
   await expect(workspace(page).getByRole("alert")).toContainText("Another tab changed the text draft");
@@ -254,10 +253,10 @@ test("text changed during IDB commit preserves both versions and never applies p
 
 test("unfinished text stays editable and previewable while complete saving remains strict", async ({ page }) => {
   const source = await seed(page), id = await openPlan(page, source.documentId), before = await stored(page, id);
-  await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill(""); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-rondo");
+  await openDesignerCoachingEditor(page); await page.getByLabel("Activity name", { exact: true }).fill(""); await expect(diagram(page)).toHaveAttribute("data-scene-id", "example-rondo");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("Too small");
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue(""); expect(await stored(page, id)).toEqual(before);
-  await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("Completed coaching title");
+  await openDesignerCoachingEditor(page); await page.getByLabel("Activity name", { exact: true }).fill("Completed coaching title");
   await workspace(page).getByRole("button", { name: "Save complete plan", exact: true }).click(); await expect(workspace(page)).toContainText("owner v2");
 });
 
