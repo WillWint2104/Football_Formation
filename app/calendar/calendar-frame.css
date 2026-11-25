@@ -1,0 +1,42 @@
+/* The Calendar uses the shared application navigation with its light programme theme. */
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) {
+  --calendar-nav-height:56px;
+  --calendar-nav-inset:clamp(22px,1.8vw,35px);
+  color:#142e48; background:#f7f9fc;
+}
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) > div { padding-top:var(--calendar-nav-height); }
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) > div > .calendar-frame-header {
+  height:var(--calendar-nav-height); width:100%; z-index:45; align-items:stretch;
+  padding-right:var(--calendar-nav-inset); background:#fff; color:#142e48;
+  border-bottom-color:#d8e3ed; box-shadow:0 1px 4px #152d4510;
+}
+.calendar-frame-header .programme-frame-brand {
+  gap:10px; padding-inline:var(--calendar-nav-inset) 25px; white-space:nowrap;
+  color:#173b5d; font:800 21px/1 var(--font-hanken),sans-serif;
+}
+.calendar-frame-header .programme-brand-shield {
+  display:grid; place-items:center; width:28px; height:34px; color:#1b4872;
+}
+.calendar-frame-header .programme-brand-shield svg { width:28px; height:34px; fill:#e6f0f8; stroke:#285883; }
+.calendar-frame-header .programme-brand-shield b { inset:0; display:grid; place-items:center; font-size:16px; }
+.calendar-frame-header .programme-primary-navigation > a {
+  align-self:center; height:34px; gap:6px; padding-inline:12px; margin-inline:2px;
+  border:0; border-radius:6px; background:transparent; color:#355168;
+  font-size:13px; font-weight:680; white-space:nowrap;
+}
+.calendar-frame-header .programme-primary-navigation > a[aria-current=page] { background:#e9f1f9; color:#174b78; }
+.calendar-frame-header .programme-primary-navigation > a:hover { background:#eff5fb; color:#174b78; }
+.calendar-frame-header .programme-primary-navigation svg { width:17px; height:17px; }
+.calendar-frame-header .programme-frame-context { display:flex; align-items:center; color:#526e85; font-size:12px; }
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) > aside {
+  --color-shell-panel:#eaf2f9; --color-shell-muted:#54728b; --color-shell-accent:#276c9c;
+  height:calc(100dvh - var(--calendar-nav-height)); margin-top:var(--calendar-nav-height); top:var(--calendar-nav-height);
+  background:#f9fbfd; color:#21435e; border-right-color:#dbe5ee;
+}
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) > aside nav :is(a,span[aria-disabled]) { color:#405e78; }
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) > aside nav a[aria-current=page] { background:#e6f0fa; color:#154b78; box-shadow:inset 3px 0 #5b9dd0; }
+.application-shell:has(> div > .programme-frame-header.calendar-frame-header) > aside nav a:hover { background:#eff5fb; }
+@media(max-width:1023px) {
+  .calendar-frame-header .programme-frame-brand { padding-inline:14px; font-size:17px; }
+  .calendar-frame-header .programme-frame-context { display:none; }
+}

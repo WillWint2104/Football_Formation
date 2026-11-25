@@ -36,12 +36,12 @@ test("missing session, team mismatch and foreign organisation never expose anoth
 });
 test("fixture inspector presents the real match and venue without training activities, diagrams or coaching actions",()=>{
   const bundle=inspectorExample(),event=bundle.events.find(e=>e.kind==="fixture")!;
-  const html=markup(bundle,event);assert.match(html,/Match details/);assert.match(html,/Riverside FC vs Western United/);assert.match(html,/Main Pitch/);
-  assert.doesNotMatch(html,/Session plan|Coaching emphasis|Open Session|Coaching Guide|class="scene-diagram"/);
+  const html=markup(bundle,event);assert.match(html,/Kickoff/);assert.match(html,/Riverside FC vs Western United/);assert.match(html,/Main Pitch/);
+  assert.doesNotMatch(html,/Activity sequence|Coaching notes|Open Session|Coaching Guide|class="scene-diagram"/);
 });
 test("unknown durations, times and absent diagrams remain explicit in the actual inspector",()=>{
   const {bundle,event}=source();event.status="draft";event.startsAt=null;event.endsAt=null;
   const session=bundle.sessions.find(s=>s.id==="sample-3")!;session.content.objective=null;
   for(const a of session.content.activities){a.durationMinutes=null;a.content.diagrams=[];}
-  const html=markup(bundle,event);assert.match(html,/Duration unknown/);assert.match(html,/Time unassigned/);assert.match(html,/Not attached/);assert.match(html,/TBC/);assert.match(html,/Coaching content has not been added/);
+  const html=markup(bundle,event);assert.match(html,/Duration unknown/);assert.match(html,/Time unassigned/);assert.match(html,/No tactical diagrams attached/);assert.match(html,/TBC/);assert.match(html,/Coaching content has not been added/);
 });

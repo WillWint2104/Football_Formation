@@ -6,6 +6,9 @@ import "./planning.css";
 import "./programme.css";
 import "./inspector.css";
 import "./programme-polish.css";
+import "./calendar-frame.css";
+import "./focused-programme.css";
+import "./booking-preview.css";
 import Link from "next/link";
 import { parseCalendarNavigation } from "@/lib/calendar/navigation";
 

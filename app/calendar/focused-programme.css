@@ -1,0 +1,184 @@
+/* Focused Week layout and responsive fixture placement. */
+.calendar-programme-week:has(.focused-programme) .calendar-grid-footer { justify-content:flex-end; margin-top:9px; }
+.calendar-programme-week:has(.focused-programme) .calendar-grid-footer > span:first-child { display:none; }
+.calendar-programme-week :is(.calendar-main,.calendar-navigation-controls,.focused-programme) { min-width:0; }
+.calendar-programme-week:has(.focused-programme) .programme-tools-row { margin-bottom:12px; }
+
+.focused-programme {
+  --programme-ink:#102c46;
+  --programme-subtle:#47647a;
+  --programme-border:#cfdeea;
+  display:grid; gap:13px; color:var(--programme-ink);
+}
+.focused-programme button:focus-visible { outline:3px solid #116b65; outline-offset:-3px; }
+.focused-programme [data-family] { --family-ink:#195c90; --family-soft:#eaf3fc; }
+.focused-programme [data-family=goalkeeper] { --family-ink:#21604c; --family-soft:#e7f4ed; }
+.focused-programme [data-family=recovery] { --family-ink:#654384; --family-soft:#f0eaf8; }
+.focused-programme [data-family=fixture] { --family-ink:#143e63; --family-soft:#e7f1fb; }
+.focused-programme [data-family=other] { --family-ink:#4c6274; --family-soft:#eef3f7; }
+.focused-programme-week-strip {
+  display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:0;
+  border:1px solid var(--programme-border); border-radius:11px; background:#fff; overflow:hidden;
+}
+.calendar-programme .focused-programme-week-strip > button {
+  display:grid; align-content:start; gap:3px; min-width:0; min-height:80px; padding:8px 10px 9px;
+  border:0; border-inline-end:1px solid #dce7ef; border-radius:0; background:white;
+  color:var(--programme-subtle); text-align:left; font:670 12px/1.15 var(--font-hanken),sans-serif;
+}
+.calendar-programme .focused-programme-week-strip > button:last-child { border-inline-end:0; }
+.calendar-programme .focused-programme-week-strip > button:hover { background:#f1f7fc; }
+.calendar-programme .focused-programme-week-strip > button[aria-pressed=true] { background:#e7f2fe; box-shadow:inset 0 -3px #236caf; }
+.focused-programme-day-top { display:flex; align-items:center; justify-content:space-between; gap:3px; }
+.focused-programme-day-count {
+  display:grid; place-items:center; min-width:19px; height:19px; padding-inline:4px;
+  background:#edf2f7; border-radius:50px; color:#3b5d79; font-size:11px; font-variant-numeric:tabular-nums;
+}
+[aria-pressed=true] .focused-programme-day-count { background:#124d80; color:white; }
+.focused-programme-week-strip > button > strong { font-size:16px; color:var(--programme-ink); }
+.focused-programme-day-families { display:flex; flex-wrap:wrap; align-items:center; gap:3px 6px; margin-top:4px; font-size:11px; }
+.focused-programme-day-families > span { display:inline-flex; align-items:center; gap:3px; color:var(--family-ink); }
+.focused-programme-day-families i { width:6px; height:6px; background:currentColor; border-radius:50%; flex:none; }
+.focused-programme-day-families > .focused-programme-unbooked { color:#546d82; }
+
+.focused-programme-day {
+  min-width:0; border:1px solid var(--programme-border); border-radius:12px; overflow:hidden;
+  background:#fff; box-shadow:0 3px 11px #16374f0b;
+}
+.focused-programme-day-heading {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 10px;
+  padding:13px 15px; border-bottom:1px solid #dce8f0; background:linear-gradient(100deg,#fff,#f4f8fc);
+}
+.focused-programme-day-heading h2 { font:800 25px/1.15 var(--font-hanken),sans-serif; letter-spacing:-.025em; }
+.focused-programme-day-heading p { margin:3px 0 0; font-size:12px; color:var(--programme-subtle); }
+.focused-programme-day-heading p > span { margin:0 3px; }
+.focused-programme-day-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.calendar-programme .focused-programme-day-actions > button {
+  display:inline-flex; align-items:center; gap:5px; min-height:33px; padding:6px 9px;
+  border:1px solid #c7daeb; border-radius:6px; color:#1f527b; background:white; font-size:12px; font-weight:650;
+}
+.calendar-programme .focused-programme-day-actions > button:first-child { background:#eaf4fe; color:#144f83; }
+.calendar-programme .focused-programme-day-actions > button:hover { border-color:#7ca8ce; background:#e5f1fd; }
+.focused-programme-bookings { display:grid; margin:0; padding:5px 9px; list-style:none; }
+.focused-programme-bookings > li + li { border-top:1px solid #e1ebf3; }
+.calendar-programme .focused-programme-booking {
+  width:100%; min-width:0; display:grid; grid-template-columns:80px 36px minmax(0,1fr) 24px;
+  gap:12px; align-items:center; background:white; color:var(--programme-ink); text-align:left;
+  border:0; border-radius:7px; padding:10px 11px; min-height:87px; font-family:inherit;
+}
+.calendar-programme .focused-programme-booking:hover { background:#f3f8fc; }
+.calendar-programme .focused-programme-booking[aria-pressed=true] { background:#e9f3fd; box-shadow:inset 3px 0 #1d69a7; }
+.focused-programme-booking-clock { display:grid; align-content:center; align-self:stretch; border-right:1px solid #ccdfed; padding-right:10px; }
+.focused-programme-booking-clock > time { color:#174c73; font:800 20px/1.12 var(--font-hanken),sans-serif; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.focused-programme-booking-clock > small { margin-top:3px; color:var(--programme-subtle); font-size:11px; line-height:1.2; overflow-wrap:anywhere; }
+.focused-programme-booking-icon,.focused-programme-next-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:9px; }
+.focused-programme-booking-icon { color:var(--family-ink); background:var(--family-soft); }
+.focused-programme-booking-icon > svg { width:19px; height:19px; }
+.focused-programme-booking-copy { min-width:0; display:grid; gap:3px; }
+.focused-programme-booking-copy > strong { font:780 21px/1.16 var(--font-hanken),sans-serif; letter-spacing:-.016em; overflow-wrap:anywhere; }
+.focused-programme-booking-objective { color:#2f516c; font-size:13px; line-height:1.28; overflow-wrap:anywhere; }
+.focused-programme-booking-meta { display:flex; align-items:center; flex-wrap:wrap; gap:3px 9px; font-size:11.5px; color:var(--programme-subtle); }
+.focused-programme-category { background:var(--family-soft); color:var(--family-ink); padding:2px 6px; border-radius:4px; font-weight:700; }
+.focused-programme-booking-place { display:inline-flex; gap:4px; align-items:center; }
+.focused-programme-booking-place svg { flex:none; }
+.focused-programme-selection-mark { display:grid; place-items:center; color:#37668a; justify-self:end; }
+.focused-programme-booking[aria-pressed=true] .focused-programme-selection-mark { background:#175c94; color:white; width:23px; height:23px; border-radius:50%; }
+.calendar-programme .focused-programme-booking[data-family=fixture] {
+  margin-block:3px; min-height:106px; background:linear-gradient(105deg,#e6f0fa,#f2f7fc 76%);
+}
+.calendar-programme .focused-programme-booking[data-family=fixture][aria-pressed=true] { box-shadow:inset 3px 0 #175489,inset 0 0 0 1px #87b5d9; }
+.focused-programme-booking[data-family=fixture] .focused-programme-booking-icon,.focused-programme-next-icon { color:#fff; background:#153e62; }
+.focused-programme-booking[data-family=fixture] .focused-programme-booking-copy > strong { font-size:24px; }
+.focused-programme-status { color:#784216; font-weight:700; text-transform:capitalize; }
+.focused-programme-booking[data-status=cancelled] .focused-programme-booking-copy > strong { text-decoration:line-through; }
+.focused-programme-empty { display:flex; align-items:center; gap:9px; color:var(--programme-subtle); padding:24px 16px; }
+.calendar-programme .focused-programme-next {
+  display:grid; grid-template-columns:36px minmax(0,1fr) auto 19px; gap:10px; min-width:0; align-items:center;
+  padding:9px 13px; border:1px solid #c8dbea; border-radius:9px; background:#f0f6fb; color:#204968; text-align:left;
+}
+.calendar-programme .focused-programme-next:hover { background:#e6f1fa; border-color:#8cb6d7; }
+.focused-programme-next-title,.focused-programme-next-context { display:grid; gap:2px; }
+.focused-programme-next-title > small { font-size:11px; color:#49667e; }
+.focused-programme-next-title > strong { font:760 16px/1.15 var(--font-hanken),sans-serif; overflow-wrap:anywhere; }
+.focused-programme-next-context { text-align:right; font-size:12px; }
+.focused-programme-next-context > span { display:flex; justify-content:end; align-items:center; gap:4px; color:var(--programme-subtle); }
+
+@media(min-width:1024px) and (max-width:1500px) {
+  .calendar-programme-week.calendar-inspector-open > .calendar-planning { grid-template-columns:minmax(0,1fr) 356px; }
+}
+@media(min-width:1501px) {
+  .calendar-programme-week.calendar-inspector-open > .calendar-planning { grid-template-columns:minmax(0,1fr) 420px; }
+}
+@media(max-width:1023px) {
+  .calendar-programme:has(.focused-programme) :is(.programme-page-heading,.programme-heading-controls,.programme-tools-row,.programme-utility-row,.calendar-filters) { flex-wrap:wrap; }
+  .calendar-programme:has(.focused-programme) .programme-heading-controls { flex-shrink:1; }
+  .calendar-programme.calendar-inspector-open:has(.focused-programme) .programme-inspector { min-width:0; }
+}
+@media(max-width:840px) {
+  .focused-programme-week-strip { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .calendar-programme .focused-programme-week-strip > button { min-height:66px; padding:7px; border-block-end:1px solid #dce7ef; }
+  .calendar-programme .focused-programme-week-strip > button:nth-child(4) { border-inline-end:0; }
+}
+@media(max-width:540px) {
+  .calendar-programme .focused-programme-booking { grid-template-columns:54px 27px minmax(0,1fr) 23px; gap:5px; padding-inline:6px; }
+  .focused-programme-booking-icon { width:27px; height:27px; }
+  .focused-programme-booking-clock { padding-right:4px; }
+  .focused-programme-booking-clock > time { font-size:16px; }
+  .focused-programme-booking-copy > strong,.focused-programme-booking[data-family=fixture] .focused-programme-booking-copy > strong { font-size:17px; }
+  .calendar-programme .focused-programme-next { grid-template-columns:36px minmax(0,1fr) 19px; }
+  .focused-programme-next-context { grid-column:2; text-align:left; }
+  .focused-programme-next-context > span { justify-content:start; }
+  .focused-programme-next > svg { grid-row:1; grid-column:3; }
+}
+
+@media (min-width:1250px) and (max-width:1500px) {
+  .calendar-programme.calendar-programme-week .programme-heading-controls { gap:9px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-period { gap:5px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-period button { min-width:38px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-period button:last-child { padding-inline:11px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-primary { padding-inline:10px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-views button { padding-inline:9px; }
+}
+@media (min-width:1320px) and (max-width:1500px) {
+  .calendar-programme.calendar-programme-week .programme-page-heading { gap:9px; }
+  .calendar-programme.calendar-programme-week.calendar-inspector-open .programme-page-heading { flex-wrap:nowrap; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls { gap:6px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-primary { padding-inline:9px; }
+  .calendar-programme.calendar-programme-week .programme-heading-controls .calendar-period > button[aria-label] {
+    width:35px; min-width:35px; padding-inline:4px;
+  }
+}
+
+.calendar-programme.calendar-inspector-open:has(.focused-programme-fixture-preview) > .calendar-planning {
+  grid-template-columns:minmax(0,1fr);
+  width:100%;
+}
+.focused-programme-fixture-preview { min-width:0; }
+@media (min-width:1200px) {
+  .calendar-programme.calendar-inspector-open:has(.focused-programme-fixture-preview) > .calendar-planning {
+    max-width:1540px; margin-inline:auto;
+  }
+  .focused-programme:has(> .focused-programme-fixture-preview) {
+    grid-template-columns:minmax(0,1fr) clamp(390px,26vw,500px);
+    column-gap:20px; row-gap:17px; align-items:start;
+  }
+  .focused-programme:has(> .focused-programme-fixture-preview) > .focused-programme-week-strip { grid-column:1/-1; }
+  .focused-programme:has(> .focused-programme-fixture-preview) > .focused-programme-day { grid-column:1; }
+  .focused-programme-fixture-preview { grid-column:2; grid-row:2 / span 2; }
+  .focused-programme:has(> .focused-programme-fixture-preview) > .focused-programme-next { grid-column:1; }
+  .calendar-programme .focused-programme:has(> .focused-programme-fixture-preview) .focused-programme-booking[data-family=fixture] {
+    min-height:128px; padding:18px; gap:16px;
+    grid-template-columns:88px 46px minmax(0,1fr) 24px;
+  }
+  .focused-programme:has(> .focused-programme-fixture-preview) .focused-programme-booking[data-family=fixture] .focused-programme-booking-icon {
+    width:44px; height:44px;
+  }
+  .focused-programme:has(> .focused-programme-fixture-preview) .focused-programme-booking[data-family=fixture] .focused-programme-booking-copy > strong {
+    font-size:clamp(22px,1.55vw,29px);
+  }
+}
+
+.focused-programme-booking-copy > :is(strong,.focused-programme-booking-objective) {
+  display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
+}
+.focused-programme-booking-copy > strong { -webkit-line-clamp:3; }
+.focused-programme-booking-objective { -webkit-line-clamp:2; }

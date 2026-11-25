@@ -30,6 +30,7 @@ async function openEditor(page:Page){await page.getByRole('link',{name:'Open Ses
 
 for(const view of ['week','month'] as const) test(`scheduled reuse, explicit latest preview, independent editing and exact ${view} Calendar return`,async({page},info)=>{
   const m=await storage(page,{historical:true});await page.goto(m.root.replace('view=week',`view=${view}`));await loaded(page);
+  await page.getByText('Booking & reuse',{exact:true}).click();
   await page.getByRole('button',{name:'Schedule Another Copy',exact:true}).click();
   const preview=page.getByRole('region',{name:'Saved session preview'});
   await expect(preview).toContainText('Historical session revision 1');
@@ -71,6 +72,7 @@ for(const view of ['week','month'] as const) test(`scheduled reuse, explicit lat
 
 test('copy team selection only offers teams eligible for every retained coach',async({page})=>{
   const m=await storage(page,{crossTeam:true});await page.goto(m.root);await loaded(page);
+  await page.getByText('Booking & reuse',{exact:true}).click();
   await page.getByRole('button',{name:'Schedule Another Copy',exact:true}).click();await page.getByRole('button',{name:'Schedule independent copy',exact:true}).click();
   const form=page.getByRole('dialog');await form.getByLabel('Team',{exact:true}).selectOption('youth-team');
   await form.getByLabel('Start time').fill('17:00');await form.getByLabel('End time').fill('18:00');await form.getByRole('button',{name:'Save booking',exact:true}).click();
