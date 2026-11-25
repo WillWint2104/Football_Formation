@@ -99,6 +99,16 @@ test("neutral conversion is explicit, translated and undoable; physical region a
   const after = await coordinates(page); expect(Number(after[0][1]) - Number(before[0][1])).toBe(35); expect(Number(after[0][2]) - Number(before[0][2])).toBe(20);
   await page.getByRole("button", { name: "Undo", exact: true }).click(); expect(await coordinates(page)).toEqual(before);
   await apply(page, "full"); const full = await coordinates(page); await openTacticalDisclosure(page, "Field setup"); await page.getByLabel("Physical region").selectOption("defensive-third"); await page.getByLabel("Attack direction").selectOption("negative-x"); await openTacticalDisclosure(page, "Fit"); await page.getByRole("button", { name: "Fit all", exact: true }).click(); expect(await coordinates(page)).toEqual(full);
+  await page.getByLabel("Physical region").selectOption("set-piece");
+  await expect(page.getByLabel("Set-piece focus")).toBeVisible();
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect.poll(async () => {
+    const board = (await page.locator(".editor-surface .scene-diagram").boundingBox())!;
+    return board.y + board.height;
+  }).toBeLessThanOrEqual(page.viewportSize()!.height - 40);
+  await openTacticalDisclosure(page, "Fit");
+  await page.getByRole("button", { name: "Fit all", exact: true }).click();
+  expect(await coordinates(page)).toEqual(full);
 });
 
 test("calendar → activity → editor save/reopen → exact guide; history and reusable sources remain independent", async ({ page }, info) => {

@@ -38,7 +38,7 @@
   .recovery-tactical-editor .editor-layout { grid-template-columns:minmax(0,1fr) clamp(250px,20vw,325px); gap:12px; }
   .recovery-tactical-editor:not([data-properties-open]) .editor-layout { grid-template-columns:minmax(0,1fr); }
   .recovery-tactical-editor .editor-surface {
-    height:clamp(390px,calc(100dvh - 201px),1030px);
+    height:clamp(390px,min(calc(100dvh - 201px),var(--editor-available-height,100dvh)),1030px);
     border:1px solid #688545;
     border-radius:8px;
     background-color:#6a8644;
@@ -62,7 +62,7 @@
   .recovery-tactical-editor .editor-help { color:#426078; margin-top:12px; }
   @media(min-width:1451px) {
     .recovery-tactical-editor:not(.editor-animation):not(.editor-expanded) .editor-surface {
-      height:clamp(390px,calc(100dvh - 204px),1030px);
+      height:clamp(390px,min(calc(100dvh - 204px),var(--editor-available-height,100dvh)),1030px);
     }
   }
   @media(max-width:1023px) {

@@ -64,7 +64,7 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   // Hold the overview while authoring; moving an outer anchor must not change the pointer projection mid-drag.
   const [exerciseArea, setExerciseArea] = useState(() => coaching ? coachingExerciseArea(initial) : undefined);
   const padding = customArea ? 32 : recoveryWorkspace ? 18 : 24;
-  const [example, setExample] = useState("full"), [message, setMessage] = useState("Select objects; Shift adds to selection. Drag to move. Wheel zooms around the pointer."), [expanded, setExpanded] = useState(false), [canvasHeight, setCanvasHeight] = useState(360);
+  const [example, setExample] = useState("full"), [message, setMessage] = useState("Select objects; Shift adds to selection. Drag to move. Wheel zooms around the pointer."), [expanded, setExpanded] = useState(false), [canvasHeight, setCanvasHeight] = useState<number>();
   const surface = useRef<HTMLDivElement>(null), root = useRef<HTMLDivElement>(null), expandButton = useRef<HTMLButtonElement>(null), gesture = useRef<Gesture | null>(null);
   const stageSettings = useRef<HTMLDetailsElement>(null);
   const live = useRef({ scene, fit, camera, rotation, focus, customArea, padding, exerciseArea });
@@ -163,11 +163,16 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
   useEffect(() => {
     const element = surface.current; if (!element) return;
     /** Reserve visible viewport space for the canvas without resizing it in response to page scrolling. */
-    const measure = () => setCanvasHeight(Math.max(animation ? 230 : 280, window.innerHeight - (element.getBoundingClientRect().top + (expanded ? (root.current?.scrollTop ?? 0) : window.scrollY)) - (animation ? 175 : 76)));
-    const observer = new ResizeObserver(measure); observer.observe(element.parentElement!); measure();
+    const bottomSpace = animation ? 175 : recoveryWorkspace ? 8 : 76;
+    const measure = () => setCanvasHeight(Math.max(animation ? 230 : 280, window.innerHeight - (element.getBoundingClientRect().top + (expanded ? (root.current?.scrollTop ?? 0) : window.scrollY)) - bottomSpace));
+    const observer = new ResizeObserver(measure);
+    observer.observe(element.parentElement!);
+    const toolbar = recoveryWorkspace ? root.current?.querySelector(".editor-command-strip") : null;
+    if (toolbar) observer.observe(toolbar);
+    measure();
     window.addEventListener("resize", measure); document.addEventListener("toggle", measure, true);
     return () => { observer.disconnect(); window.removeEventListener("resize", measure); document.removeEventListener("toggle", measure, true); };
-  }, [expanded, animation]);
+  }, [expanded, animation, recoveryWorkspace]);
   /** Apply metre-grid or nearby-object snapping at a fixed screen-space tolerance. */
   function snapped(at: Point, view: Projection, ids = selected) { return snapPoint(at, animation ? { ...scene, entities: previewEntities } : scene, ids, snap ? grid : null, objects, 10 / view.scale); }
   /** Insert the current object or a first-stage overlay, using practical sizes for click insertion. */
@@ -303,7 +308,10 @@ export function TacticalEditor({ initial, readOnly, onDirty, onSave, canSave, sa
     <div className="editor-layout"><section className="editor-canvas-column" aria-label="Drawing workspace">
       {coaching && <p className="editor-gesture-guidance" role="status" aria-label="Drawing guidance" aria-live="polite">{tool === "select" && animation ? "Drag a player or ball for its timed pose; drag arrows, areas or notes for the active stage. Shift + click toggles selection. Place equipment in Layout." : gestureGuidance[tool]} Esc cancels the current gesture{expanded ? " and exits the expanded board" : ""}. {readOnly ? "Editing and undo are unavailable while the diagram is read only." : "Ctrl/Cmd + Z undoes."}</p>}
       <div ref={surface} className={`editor-surface editor-tool-${tool}${recoveryWorkspace ? " recovery-turf" : ""}`}
-        style={recoveryWorkspace ? { "--editor-available-height": `${canvasHeight}px` } as CSSProperties : coaching ? undefined : { height: canvasHeight }}>
+        style={{
+          height: !coaching && !recoveryWorkspace ? canvasHeight ?? 360 : undefined,
+          "--editor-available-height": recoveryWorkspace && canvasHeight !== undefined ? `${canvasHeight}px` : undefined,
+        } as CSSProperties}>
         <SceneDiagram scene={scene} title="Editable tactical diagram" screenMode={coaching || expanded || recoveryWorkspace ? "expanded" : "standard"} options={{ padding, fit, surface: recoveryWorkspace ? "transparent" : undefined, paint: coaching || recoveryWorkspace ? "coaching-light" : undefined, exerciseArea, customArea, camera, rotation, setPieceFocus: focus, seconds: time, poseStageId: animation && !playing ? stage?.id : undefined, gridMetres: showGrid ? grid : undefined, guides, labels: true, paths: animation ? paths : "stage", selectedIds: selected, ghosts: ghostPositions }} interaction={{ down, move, up, cancel }} />
       </div>
       <div className="editor-status"><span>{animation ? `${framing}${camera ? " · manual" : ""}` : "Blue / red · yellow neutral"}</span><span>→ Pass · ⇢ Run · Press · ↝ Rotation</span><span>{scene.entities.length} objects · {selected.length} selected · {Math.round((camera?.zoom ?? 1) * 100)}% · {rotation}°</span></div>
