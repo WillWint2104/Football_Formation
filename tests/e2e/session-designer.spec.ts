@@ -203,7 +203,14 @@ test("incomplete drafts recover, and another tab's draft is never silently overw
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("0");
   await expect(page.getByRole("status")).toContainText("Draft saved in this browser");
   await page.reload(); await expect(page.getByRole("status")).toContainText("Draft recovered");
-  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await openDesignerCoachingEditor(page);
+  const sessionTools = page.locator(".recovery-session-tools");
+  if (!await sessionTools.isVisible()) await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  await openDesignerDisclosure(page, "Session tools");
+  await expect(sessionTools).toHaveAttribute("open", "");
+  await sessionTools.getByRole("button", { name: "Edit session", exact: true }).press("Enter");
+  await expect(sessionTools).not.toHaveAttribute("open");
+  await expect(sessionTools.locator("summary")).toBeFocused();
+  await openDesignerCoachingEditor(page);
   await expect(page.getByLabel("Session title")).toHaveValue("");
   await expect(page.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("0");
   const stored = await page.evaluate((key) => { const existing = localStorage.getItem(key)!; const draft = JSON.parse(existing); draft.document.session.name = "Other tab work"; const text = JSON.stringify(draft); localStorage.setItem(key, text); return text; }, DESIGNER_DRAFT_KEY);

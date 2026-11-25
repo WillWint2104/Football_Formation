@@ -51,7 +51,11 @@ export function DiagramWorkspaceStatus({ controller: c, heading, draftStatus, fi
             }}>Browse local plans</button>
           </div>
         </details>
-        {sessionActions && <details className="designer-workspace-disclosure recovery-session-tools" onKeyDown={event => {
+        {sessionActions && <details className="designer-workspace-disclosure recovery-session-tools" onClick={event => {
+          if (!(event.target instanceof Element) || !event.target.closest("nav button")) return;
+          event.currentTarget.open = false;
+          event.currentTarget.querySelector("summary")?.focus();
+        }} onKeyDown={event => {
           if (event.key !== "Escape" || !event.currentTarget.open) return;
           event.stopPropagation();
           event.currentTarget.open = false;
