@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
-import { addAnnotation, addEntity, arrangeObjects, convertSpace, moveObjects, recordEdit, removeObjects, snapPoint, travel, type History } from "../../lib/tactical/authoring";
+import { addAnnotation, addEntity, arrangeObjects, convertSpace, moveObjects, recordEdit, removeObjects, reviseArrow, snapPoint, travel, type History } from "../../lib/tactical/authoring";
 import { editorExamples } from "../../lib/tactical/editor-examples";
 import { tacticalExamples } from "../../lib/tactical/examples";
 import { coachingSample } from "../../lib/coaching/sample";
@@ -13,6 +13,36 @@ import { animationExamples } from "../../lib/tactical/animation-examples";
 import { setStageVisible } from "../../lib/tactical/animation";
 
 const fixture = () => structuredClone(editorExamples[3].scene);
+test("straight arrow endpoints change independently in the authored stage and reuse exact undo/redo", () => {
+  const example = tacticalExamples[0].scene;
+  const arrow = { kind: "arrow", from: { x: 20, y: 16 }, to: { x: 29, y: 21 }, movement: "pass" } as const;
+  const [first, second] = example.stages;
+  const onFirst = addAnnotation(example, arrow, () => "shared-route", first.id);
+  const source = addAnnotation(onFirst, arrow, () => "shared-route", second.id);
+  const original = structuredClone(source);
+  const draft = reviseArrow(source, second.id, "shared-route", { from: { x: 22.5, y: 16 } });
+  const expected = structuredClone(original);
+  const secondArrow = expected.stages[1].tracks.at(-1);
+  if (secondArrow?.kind !== "annotation" || secondArrow.annotation.kind !== "arrow") throw new Error("Expected an arrow");
+  secondArrow.annotation.from.x = 22.5;
+  assert.deepEqual(draft, expected);
+  assert.deepEqual(source, original);
+  const changed = reviseArrow(draft, second.id, "shared-route", { to: { x: 31, y: 22.25 } });
+  secondArrow.annotation.to = { x: 31, y: 22.25 };
+  assert.deepEqual(changed, expected);
+
+  const history = recordEdit({ past: [], present: source, future: [] }, changed);
+  assert.equal(history.past.length, 1);
+  assert.deepEqual(travel(history, "undo").present, original);
+  assert.deepEqual(travel(travel(history, "undo"), "redo").present, expected);
+  assert.equal(recordEdit(history, reviseArrow(changed, second.id, "shared-route", { from: { x: 22.5, y: 16 } })).past.length, 1);
+
+  assert.throws(() => reviseArrow(source, second.id, "shared-route", { to: arrow.from }), /separate/);
+  assert.throws(() => reviseArrow(source, second.id, "shared-route", { to: { x: 10001, y: 1 } }), /renderer limits/);
+  assert.throws(() => reviseArrow(source, second.id, "shared-route", { from: { x: Number.NaN, y: 1 } }));
+  assert.throws(() => reviseArrow(source, "missing-stage", "shared-route", { from: { x: 5, y: 1 } }), /authored stage/);
+  assert.deepEqual(source, original);
+});
 function target(): DiagramTarget { return { kind: "session", id: "sample-3", revision: 1, activity: "activity-1", event: "sample-4", booking: 1, diagram: null }; }
 function draft(bundle = coachingSample()) { return { ...fixture(), id: "new-scene", organizationId: bundle.organizationId }; }
 

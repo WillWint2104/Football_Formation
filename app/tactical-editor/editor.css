@@ -28,6 +28,35 @@
 .editor-surface { min-width: 0; border: 1px solid var(--color-shell-edge); touch-action: none; user-select: none; }
 .editor-surface .scene-diagram { position: relative; width: 100%; height: 100%; overflow: hidden; }
 .editor-surface svg { display: block; }
+.editor-surface .arrow-endpoint-handle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: var(--endpoint-hit-size, 36px);
+  height: var(--endpoint-hit-size, 36px);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+.arrow-endpoint-handle::after {
+  content: "";
+  width: 15px;
+  height: 15px;
+  border: 2px solid #174465;
+  border-radius: 50%;
+  background: #f6fbff;
+  box-shadow: 0 0 0 2px #f6fbff;
+}
+.arrow-endpoint-handle[data-arrow-endpoint="to"]::after { border-radius: 4px; }
+.arrow-endpoint-handle:active { cursor: grabbing; }
+.arrow-endpoint-handle:hover::after, .arrow-endpoint-handle:focus-visible::after { background: #a8e3ff; }
+.arrow-endpoint-handle:focus-visible { outline: 2px solid #f6fbff; outline-offset: 1px; box-shadow: 0 0 0 4px #174465; }
+.editor-arrow-endpoints fieldset { margin: 0; padding: 0; border: 0; }
+.editor-arrow-endpoints legend { color: var(--color-shell-text); font-size: 12px; font-weight: 650; }
 .editor-surface .scene-diagram-caption { position: absolute; bottom: 10px; left: 10px; padding: 5px 8px; background: var(--color-shell); color: var(--color-shell-text); border-radius: 3px; font-size: 10px; pointer-events: none; }
 .editor-tool-pan { cursor: grab; }
 .editor-tool-select [data-entity-id], .editor-tool-select [data-annotation-id] { cursor: move; }

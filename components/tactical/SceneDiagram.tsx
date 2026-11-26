@@ -18,7 +18,8 @@ type DiagramProps = {
   sizingSeconds?: number;
   autoFitContent?: boolean;
   viewer?: { caption?: ReactNode; frameNote?: string; onShowAll?: () => void; overlay?: ReactNode; coachingFrame?: string };
-  interaction?: { down: DiagramPointer; move: DiagramPointer; up: DiagramPointer; cancel: () => void };
+  interaction?: { down: DiagramPointer; move: DiagramPointer; up: DiagramPointer; cancel: (event: PointerEvent<HTMLDivElement>) => void;
+    overlay?: (view: Projection) => ReactNode; heldView?: Projection; lostCapture?: (event: PointerEvent<HTMLDivElement>) => void };
 };
 
 export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSeconds, autoFitContent, viewer, interaction }: DiagramProps) {
@@ -45,7 +46,8 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
     try {
       const screen = screenMode ? { mode: screenMode, id: id.replace(/[^\w-]/g, "_"), sizingSeconds, inspected, viewer: !!viewer } : undefined;
       const drawOptions = { ...options, ...size, screen };
-      drawing = drawScene(scene, drawOptions);
+      const held = interaction?.heldView;
+      drawing = drawScene(scene, drawOptions, held?.width === size.width && held.height === size.height ? held : undefined);
       if (autoFitContent && options.fit === "exercise" && (drawing.clippedEntities || drawing.croppedDetails)) {
         drawing = drawScene(scene, { ...drawOptions, fit: "all" });
         fittedAll = true;
@@ -71,7 +73,8 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
     onPointerDown={interaction && drawing ? (e) => interaction.down(e, drawing.view) : undefined}
     onPointerMove={interaction && drawing ? (e) => interaction.move(e, drawing.view) : undefined}
     onPointerUp={interaction && drawing ? (e) => interaction.up(e, drawing.view) : undefined}
-    onPointerCancel={interaction?.cancel}>
+    onPointerCancel={interaction?.cancel}
+    onLostPointerCapture={interaction?.lostCapture}>
     {compactFallback ? <span className="programme-diagram-available">Diagram in session preview</span> : drawing && size ? <>
     <svg role="img" aria-labelledby={`${id}-title`} aria-describedby={`${id}-desc`} width="100%" height="100%" viewBox={`0 0 ${size.width} ${size.height}`} overflow="hidden">
       <title id={`${id}-title`}>{title}</title><desc id={`${id}-desc`}>Scene {scene.id}, revision {scene.revision}. Metres. {scene.field.length} by {scene.field.width}. Snapshot {drawing.seconds} seconds. {drawing.stage ?? "Static scene"}. {drawing.clippedEntities} cropped markers. {drawing.outsideField} anchors outside pitch. {drawing.labelCollisions} label overlaps.{compact ? " Player and equipment details are available in the session preview." : screen ? " Inspect diagram labels and players below the pitch." : ""}</desc>
@@ -81,6 +84,7 @@ export function SceneDiagram({ scene, title, options = {}, screenMode, sizingSec
     {!screenMode && crop && options.paint === "coaching-light" && <span className="scene-diagram-crop-warning" role="status" style={{ position: "absolute", top: 6, left: 8, right: 8, padding: "4px 8px", background: "#fff7df", color: "#25341f", fontSize: 13, borderRadius: 3 }}>This frame crops {drawing.clippedEntities} markers / {drawing.croppedDetails} authored details. Use Fit all content to inspect them.</span>}
     </> : size && <span className="scene-diagram-error" role="alert">Diagram unavailable: {errorMessage}</span>}
     {viewer?.overlay}
+    {drawing && interaction?.overlay?.(drawing.view)}
   </Surface>;
   if (!screenMode || compact) return board;
   return <div className="screen-diagram-layout">

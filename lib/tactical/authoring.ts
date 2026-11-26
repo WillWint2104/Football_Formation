@@ -1,5 +1,5 @@
 import { type TacticalScene, type TacticalEntity, type FieldContext, type TrainingArea } from "../domain/tactical-scene";
-import { prepareScene, type Point } from "./evaluate";
+import { prepareScene, type AnnotationTrack, type Point } from "./evaluate";
 import { translateScene } from "./translate";
 
 export type History = { past: TacticalScene[]; present: TacticalScene; future: TacticalScene[] };
@@ -75,6 +75,19 @@ export function addEntity(source: TacticalScene, at: Point, kind: "player" | "ba
   return prepareScene(scene);
 }
 export type TacticalEntityEquipment = Extract<TacticalEntity, { kind: "equipment" }>["equipment"];
+export type ArrowAnnotation = Extract<AnnotationTrack["annotation"], { kind: "arrow" }>;
+
+/** Change only the chosen arrow in its own stage. Coordinates remain in world metres. */
+export function reviseArrow(source: TacticalScene, stageId: string, id: string, change: Partial<Omit<ArrowAnnotation, "kind">>): TacticalScene {
+  const scene = structuredClone(source);
+  const track = scene.stages.find(stage => stage.id === stageId)?.tracks.find(item => item.id === id);
+  if (track?.kind !== "annotation" || track.annotation.kind !== "arrow") throw new Error("Select an arrow in its authored stage.");
+  const arrow = { ...track.annotation, ...change };
+  if (Math.hypot(arrow.to.x - arrow.from.x, arrow.to.y - arrow.from.y) <= .000001) throw new Error("Arrow endpoints must be separate.");
+  track.annotation = arrow;
+  return prepareScene(scene);
+}
+
 /** Author static overlays in the first stage without flattening existing animation stages or changing durations. */
 export function addAnnotation(source: TacticalScene, annotation: { kind: "arrow"; from: Point; to: Point; movement: "pass" | "run" | "press" | "rotation" } | { kind: "area"; area: TrainingArea; label: string } | { kind: "note"; position: Point; text: string }, allocate = () => crypto.randomUUID(), stageId?: string): TacticalScene {
   const scene = structuredClone(source);

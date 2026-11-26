@@ -18,7 +18,7 @@ const title = (text: string) => node("title", {}, text);
 type Box = ScreenBox;
 
 /** One portable drawing tree drives React, standalone SVG and later illustrated exports. No persisted geometry is changed. */
-export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing {
+export function drawScene(input: unknown, options: DrawingOptions, heldView?: Projection): SceneDrawing {
   const profile = options.screen;
   const glyphs = profile && screenGlyphs(profile.mode, options.width, options.height);
   const compact = profile?.mode === "compact";
@@ -27,7 +27,7 @@ export function drawScene(input: unknown, options: DrawingOptions): SceneDrawing
   const c = light ? viewer ? viewerCoachingPalette : profile ? screenCoachingPalette : coachingLightPalette : defaultPaint;
   const numberSize = glyphs?.numberSize ?? 13;
   const scene = prepareScene(input), seconds = options.seconds ?? 0, evaluated = evaluateScene(options.poseStageId ? posePreview(scene, options.poseStageId, seconds) : scene, seconds);
-  const view = fitViewport(scene, {
+  const view = heldView ?? fitViewport(scene, {
     ...options, fit: options.fit ?? "exercise", compact, includeContextGoals: !!profile,
     padding: compact && glyphs ? Math.max(8, Math.ceil(glyphs.radius + 3)) : options.padding,
   });
