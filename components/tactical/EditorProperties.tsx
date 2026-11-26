@@ -7,9 +7,9 @@ import { SpaceConversion } from "./SpaceConversion";
 import { tacticalPalette } from "@/lib/tactical/palette";
 import { useState } from "react";
 
-type Props = { scene: TacticalScene; selected: string[]; mutate: (fn: (draft: TacticalScene) => void) => void; edit: (scene: TacticalScene) => void; onFrame: () => void; stageId?: string; animation?: boolean };
+type Props = { scene: TacticalScene; selected: string[]; mutate: (fn: (draft: TacticalScene) => void) => void; edit: (scene: TacticalScene) => void; onFrame: () => void; stageId?: string; animation?: boolean; collapseField?: boolean };
 /** Context-specific properties share the existing domain contracts; camera controls never enter this component. */
-export function EditorProperties({ scene, selected, mutate, edit, onFrame, stageId, animation }: Props) {
+export function EditorProperties({ scene, selected, mutate, edit, onFrame, stageId, animation, collapseField }: Props) {
   const [error, setError] = useState("");
   const entity = !animation && selected.length === 1 ? scene.entities.find((e) => `entity:${e.id}` === selected[0]) : undefined;
   const stage = (stageId ? scene.stages.find((s) => s.id === stageId) : scene.stages[0]);
@@ -19,6 +19,7 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame, stage
   const area = contextArea(scene), dataKey = JSON.stringify({ field: scene.field, context });
   /** Read numeric form values; the scene validator remains authoritative for world limits. */
   const numeric = (data: FormData, key: string) => Number(data.get(key));
+  const FieldPanel = collapseField ? "details" : "section";
   return <>{error && <p role="alert">{error}</p>}
     {entity && <section key={JSON.stringify(entity)}><p className="calendar-eyebrow">Selected {entity.kind}</p><h2>{entity.kind === "player" ? `#${entity.number} · Team ${entity.team.toUpperCase()}` : entity.kind === "equipment" ? entity.equipment : "Ball"}</h2>
       <form onSubmit={(event) => { event.preventDefault(); try { const data = new FormData(event.currentTarget); let next = moveObjects(scene, selected, numeric(data, "x") - entity.position.x, numeric(data, "y") - entity.position.y); next = structuredClone(next);
@@ -45,7 +46,7 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame, stage
         {annotation.kind === "arrow" ? <><div className="editor-row"><label>End X (m)<input name="endX" type="number" step="any" defaultValue={annotation.to.x} required /></label><label>End Y (m)<input name="endY" type="number" step="any" defaultValue={annotation.to.y} required /></label></div><label>Movement<select name="movement" defaultValue={annotation.movement}>{["pass", "run", "press", "rotation"].map((m) => <option key={m}>{m}</option>)}</select></label><p className="calendar-muted">{Math.hypot(annotation.to.x - annotation.from.x, annotation.to.y - annotation.from.y).toFixed(2)} m route · selected-stage timing retained</p></> : <><label>Label<input name="text" maxLength={200} defaultValue={annotation.kind === "note" ? annotation.text : annotation.label} required /></label>{annotation.kind === "area" && <div className="editor-row"><label>Length (m)<input name="length" type="number" min=".01" step="any" defaultValue={annotation.area.length} required /></label><label>Width (m)<input name="width" type="number" min=".01" step="any" defaultValue={annotation.area.width} required /></label></div>}</>}
         <button>Apply overlay properties</button></form>
     </section>}
-    <section key={dataKey}><p className="calendar-eyebrow">Field context</p><h2>{context.kind === "neutral" ? "Independent training area" : context.region.replaceAll("-", " ")}</h2>
+    <FieldPanel className={collapseField ? "recovery-board-option" : undefined}>{collapseField ? <summary>Field setup</summary> : <p className="calendar-eyebrow">Field context</p>}<div key={dataKey}><h2>{context.kind === "neutral" ? "Independent training area" : context.region.replaceAll("-", " ")}</h2>
       {context.kind === "pitch" ? <>
         <label>Physical region<select aria-label="Physical region" value={context.region} onChange={(e) => { mutate((draft) => { draft.context = { ...context, region: e.target.value as typeof context.region, ...(e.target.value === "custom" && !context.area ? { area: { origin: { x: 35, y: 20 }, length: 35, width: 28 } } : {}), ...(e.target.value === "set-piece" && !context.setPiece ? { setPiece: { type: "corner", phase: "attacking", side: "left" } } : {}) }; }); onFrame(); }}>
           {["full", "attacking-third", "defensive-third", "midfield", "attacking-half", "defensive-half", "set-piece", "custom"].map((r) => <option key={r} value={r}>{r.replaceAll("-", " ")}</option>)}</select></label>
@@ -60,6 +61,6 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame, stage
       <form onSubmit={(e) => { e.preventDefault(); const data = new FormData(e.currentTarget); mutate((draft) => { draft.field = { length: numeric(data, "fieldL"), width: numeric(data, "fieldW") }; }); onFrame(); }}><div className="editor-row"><label>{context.kind === "pitch" ? "Pitch length" : "Area length"} (m)<input name="fieldL" type="number" min={context.kind === "pitch" ? 70 : .1} max="1000" step="any" defaultValue={scene.field.length} required /></label><label>{context.kind === "pitch" ? "Pitch width" : "Area width"} (m)<input name="fieldW" type="number" min={context.kind === "pitch" ? 45 : .1} max="1000" step="any" defaultValue={scene.field.width} required /></label></div><button>Apply dimensions</button></form>
       <p className="calendar-muted">{area.length.toFixed(1)} × {area.width.toFixed(1)} m context. Changing dimensions never scales or relocates objects; Fit all reveals anchors beyond a reduced boundary.</p>
       <SpaceConversion key={dataKey} scene={scene} edit={edit} onFrame={onFrame} />
-    </section>
+    </div></FieldPanel>
   </>;
 }

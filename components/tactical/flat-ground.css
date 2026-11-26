@@ -15,7 +15,8 @@
 .viewer-tactical:has(.p6c-grid-board[data-ready="true"]):not(:has(.p6d-overview)) .coaching-preview-surface { flex:0 0 auto; height:clamp(432px,calc(100dvh - 348px),792px); min-height:432px; }
 .ground-layout-designation select { max-width:172px; }
 .p6c-grid-board,
-.p6c-practice-surface {
+.p6c-practice-surface,
+.recovery-turf {
   --ground-light: #6c8845;
   --ground-dark: #6a8644;
   --ground-band: 6.25%;

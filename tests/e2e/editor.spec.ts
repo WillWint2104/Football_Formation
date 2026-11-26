@@ -1,10 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
+import { openTacticalDisclosure } from "../fixtures/tactical-controls";
 import { editorExamples } from "../../lib/tactical/editor-examples";
 import { coachingSample } from "../../lib/coaching/sample";
 import { domainBundleSchema } from "../../lib/domain/validation";
 import { diagramHref, type DiagramTarget } from "../../lib/tactical/persistence";
 import { guideHref } from "../../lib/documents/contracts";
 import { contextArea } from "../../lib/tactical/context";
+import { screenCoachingPalette } from "../../lib/tactical/screen-presentation";
 import { tacticalPalette } from "../../lib/tactical/palette";
 
 const target: DiagramTarget = { kind: "session", id: "sample-3", revision: 1, activity: "activity-1", event: "sample-4", booking: 1, diagram: null };
@@ -25,7 +27,7 @@ async function storage(page: Page, status?: number) {
 /** Wait for the validated organisation graph rather than a hydration timing assumption. */
 async function loaded(page: Page) { await expect(page.locator(".calendar-connection [role=status]")).toContainText("Loaded saved organisation snapshot"); }
 /** Explicitly apply an illustrative setup through the same authoring UI available to coaches. */
-async function apply(page: Page, id: string) { await page.getByLabel("Example setup", { exact: true }).selectOption(id); await page.getByRole("button", { name: "Apply setup", exact: true }).click(); }
+async function apply(page: Page, id: string) { await openTacticalDisclosure(page, "Examples"); await page.getByLabel("Example setup", { exact: true }).selectOption(id); await page.getByRole("button", { name: "Apply setup", exact: true }).click(); }
 /** Inspect rendered world anchors by identity; SVG paint order is not scene-array order. */
 async function coordinates(page: Page) { return page.locator(".editor-surface [data-entity-id]").evaluateAll((nodes) => nodes.map((n) => [n.getAttribute("data-entity-id"), n.getAttribute("data-world-x"), n.getAttribute("data-world-y")])); }
 
@@ -47,15 +49,18 @@ for (const example of editorExamples) test(`editor context: ${example.title} at 
 
 test("drag, snapping, multi-object selection, numeric properties, undo and redo affect actual SVG geometry", async ({ page }, info) => {
   await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "rondo");
-  await page.getByLabel("Grid spacing", { exact: true }).selectOption("1");
+  await openTacticalDisclosure(page, "Grid & guides"); await page.getByLabel("Grid spacing", { exact: true }).selectOption("1");
   const anchor = page.locator('.editor-surface [data-entity-id="a3"]'), id = await anchor.getAttribute("data-entity-id"), oldX = Number(await anchor.getAttribute("data-world-x")), oldY = Number(await anchor.getAttribute("data-world-y"));
   const box = (await anchor.locator("circle").first().boundingBox())!, scale = Number(await page.locator(".scene-diagram").getAttribute("data-scale"));
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + scale * 1.1, box.y + box.height / 2 + scale * .1, { steps: 10 }); await page.mouse.up();
   const movedX = Number(await anchor.getAttribute("data-world-x")); expect(movedX).toBe(Math.round(oldX + 1.1));
-  await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); await expect(anchor).toHaveAttribute("data-world-x", String(oldX)); await expect(anchor).toHaveAttribute("data-world-y", String(oldY));
-  await page.getByRole("button", { name: "↷ Redo", exact: true }).click(); await expect(anchor).toHaveAttribute("data-world-x", String(movedX));
+  await page.getByRole("button", { name: "Undo", exact: true }).click(); await expect(anchor).toHaveAttribute("data-world-x", String(oldX)); await expect(anchor).toHaveAttribute("data-world-y", String(oldY));
+  await page.getByRole("button", { name: "Redo", exact: true }).click(); await expect(anchor).toHaveAttribute("data-world-x", String(movedX));
   await page.getByLabel("Object X", { exact: true }).fill("3.25"); await page.getByLabel("Object Y", { exact: true }).fill("4.5"); await page.getByRole("button", { name: "Apply object properties" }).click();
   await expect(page.locator(`[data-entity-id="${id}"]`)).toHaveAttribute("data-world-x", "3.25");
+  const selected = await coordinates(page);
+  await page.locator("summary").and(page.getByText("Fit", { exact: true })).press("ArrowRight");
+  expect(await coordinates(page)).toEqual(selected);
   await page.getByText(/Objects & keyboard selection/).click(); const buttons = page.locator(".editor-object-list button[data-object-id]"), ids = [await buttons.nth(0).getAttribute("data-object-id"), await buttons.nth(1).getAttribute("data-object-id")]; await buttons.nth(0).click(); await buttons.nth(1).click({ modifiers: ["Shift"] });
   await page.getByRole("button", { name: "Align Y", exact: true }).click(); const positions = (await coordinates(page)).filter((p) => ids.includes(p[0])); expect(positions[0][2]).toBe(positions[1][2]);
   await page.getByLabel("Centre spacing", { exact: true }).fill("2"); await page.getByRole("button", { name: "Apply spacing", exact: true }).click(); const spaced = (await coordinates(page)).filter((p) => ids.includes(p[0])); expect(Math.abs(Number(spaced[0][1]) - Number(spaced[1][1]))).toBe(2);
@@ -82,18 +87,28 @@ test("wheel zoom, pan, camera rotation, fullscreen and dimension edits preserve 
   const scale = Number(await diagram.getAttribute("data-scale")), b = (await diagram.boundingBox())!;
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.wheel(0, -140); await expect.poll(async () => Number(await diagram.getAttribute("data-scale"))).toBeGreaterThan(scale);
   await page.getByRole("button", { name: "✥ Pan", exact: true }).click(); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down(); await page.mouse.move(b.x + b.width / 2 + 30, b.y + b.height / 2 + 20, { steps: 5 }); await page.mouse.up();
-  await page.getByRole("button", { name: "Fit exercise", exact: true }).click(); await page.getByLabel("Camera rotation").selectOption("270"); expect(await coordinates(page)).toEqual(before);
-  await page.getByLabel("Area length (m)", { exact: true }).fill("16"); await page.getByRole("button", { name: "Apply dimensions" }).click(); expect(await coordinates(page)).toEqual(before);
+  await openTacticalDisclosure(page, "Fit"); await page.getByRole("button", { name: "Fit exercise", exact: true }).click(); await page.getByLabel("Camera rotation").selectOption("270"); expect(await coordinates(page)).toEqual(before);
+  await openTacticalDisclosure(page, "Field setup"); await page.getByLabel("Area length (m)", { exact: true }).fill("16"); await page.getByRole("button", { name: "Apply dimensions" }).click(); expect(await coordinates(page)).toEqual(before);
   await page.getByRole("button", { name: "Expand board", exact: true }).click(); await expect(page.getByRole("dialog", { name: "Tactical diagram editor" })).toBeVisible();
   await page.screenshot({ path: info.outputPath("editor-expanded.png") }); await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0); await expect(page.getByRole("button", { name: "Expand board", exact: true })).toBeFocused(); expect(await coordinates(page)).toEqual(before);
 });
 
 test("neutral conversion is explicit, translated and undoable; physical region and attack changes only reframe", async ({ page }) => {
   await storage(page); await page.goto("/tactical-editor"); await loaded(page); await apply(page, "rondo"); const before = await coordinates(page);
-  await page.getByText("Convert coordinate space", { exact: true }).click(); await page.getByRole("button", { name: "Convert to physical pitch", exact: true }).click();
+  await openTacticalDisclosure(page, "Field setup"); await page.getByText("Convert coordinate space", { exact: true }).click(); await page.getByRole("button", { name: "Convert to physical pitch", exact: true }).click();
   const after = await coordinates(page); expect(Number(after[0][1]) - Number(before[0][1])).toBe(35); expect(Number(after[0][2]) - Number(before[0][2])).toBe(20);
-  await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); expect(await coordinates(page)).toEqual(before);
-  await apply(page, "full"); const full = await coordinates(page); await page.getByLabel("Physical region").selectOption("defensive-third"); await page.getByLabel("Attack direction").selectOption("negative-x"); await page.getByRole("button", { name: "Fit all", exact: true }).click(); expect(await coordinates(page)).toEqual(full);
+  await page.getByRole("button", { name: "Undo", exact: true }).click(); expect(await coordinates(page)).toEqual(before);
+  await apply(page, "full"); const full = await coordinates(page); await openTacticalDisclosure(page, "Field setup"); await page.getByLabel("Physical region").selectOption("defensive-third"); await page.getByLabel("Attack direction").selectOption("negative-x"); await openTacticalDisclosure(page, "Fit"); await page.getByRole("button", { name: "Fit all", exact: true }).click(); expect(await coordinates(page)).toEqual(full);
+  await page.getByLabel("Physical region").selectOption("set-piece");
+  await expect(page.getByLabel("Set-piece focus")).toBeVisible();
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect.poll(async () => {
+    const board = (await page.locator(".editor-surface .scene-diagram").boundingBox())!;
+    return board.y + board.height;
+  }).toBeLessThanOrEqual(page.viewportSize()!.height - 40);
+  await openTacticalDisclosure(page, "Fit");
+  await page.getByRole("button", { name: "Fit all", exact: true }).click();
+  expect(await coordinates(page)).toEqual(full);
 });
 
 test("calendar → activity → editor save/reopen → exact guide; history and reusable sources remain independent", async ({ page }, info) => {
@@ -135,7 +150,7 @@ test("team edits retain palette inheritance unless the coach changes the custom 
   const mock = await storage(page); await page.goto(diagramHref(target)); await loaded(page);
   await page.getByRole("button", { name: "● Player", exact: true }).click(); await page.getByRole("button", { name: "Insert at centre" }).click();
   await page.getByRole("combobox", { name: "Team", exact: true }).selectOption("b"); await page.getByRole("button", { name: "Apply object properties" }).click();
-  await expect(page.getByLabel("Marker colour")).toHaveValue(tacticalPalette.b); await expect(page.locator(`.editor-surface circle[fill="${tacticalPalette.b}"]`)).toHaveCount(1);
+  await expect(page.getByLabel("Marker colour")).toHaveValue(tacticalPalette.b); await expect(page.locator(`.editor-surface circle[fill="${screenCoachingPalette.b}"]`)).toHaveCount(1);
   await page.getByRole("button", { name: "Save diagram", exact: true }).click(); await expect(page).toHaveURL(/revision=2/);
   expect(mock.bundle().scenes[0].entities[0]).not.toHaveProperty("color");
   await page.locator(".editor-surface [data-entity-id]").first().click();

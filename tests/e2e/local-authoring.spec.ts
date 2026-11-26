@@ -1,4 +1,6 @@
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
+import { openTacticalDisclosure } from "../fixtures/tactical-controls";
+import { openDesignerCoachingEditor, openDesignerDisclosure, openDesignerSessionTools } from "../fixtures/designer-controls";
 import { buildSync } from "esbuild";
 import { attachmentExample } from "../fixtures/attachments";
 import type {} from "../fixtures/companion-browser";
@@ -9,7 +11,6 @@ const host = (p: Page) => p.getByRole("region", { name: "Local tactical editor",
 const panel = (p: Page) => p.getByRole("region", { name: "Activity tactical diagrams", exact: true });
 const status = (p: Page) => p.getByRole("region", { name: "Local diagram workspace", exact: true });
 const context = (p: Page) => JSON.parse(new URL(p.url()).searchParams.get("localAuthoring")!);
-async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
 
 async function read(p: Page, id: string) {
   const r = await p.evaluate((id) => window.companionTest.browserCompanionRepository().read(id), id);
@@ -20,8 +21,9 @@ async function open(p: Page, noDiagrams = false) {
   if (noDiagrams) { pkg.sceneNamespace = null as never; pkg.scenes = []; pkg.document.session.activities.forEach((a) => a.diagrams = []); }
   const r = await p.evaluate((pkg) => window.companionTest.browserCompanionRepository().create(pkg), pkg);
   if (!r.ok) throw new Error(JSON.stringify(r));
+  await openDesignerDisclosure(p, "Session files");
   await status(p).getByRole("button", { name: "Browse local plans", exact: true }).click();
-  await status(p).getByText(/Saved local plans \(/).click();
+  await expect(status(p).getByText(/Saved local plans \(/)).toBeVisible();
   await status(p).getByRole("button", { name: `Review plan ${r.value.documentId}`, exact: true }).click();
   p.once("dialog", (d) => d.accept()); await p.getByRole("button", { name: "Open reviewed plan as independent copy", exact: true }).click();
   await expect(panel(p)).toBeVisible();
@@ -52,7 +54,7 @@ test("edit imported scene using real tools, append native revisions, explicitly 
   const saveButton = host(page).getByRole("button", { name: "Save Local Copy", exact: true }); await saveButton.hover();
   await expect(saveButton).toHaveCSS("background-color", "rgb(18, 84, 155)");
   await shot(page, info, "local-editor");
-  await page.getByRole("button", { name: "↶ Undo", exact: true }).click(); await save(page);
+  await page.getByRole("button", { name: "Undo", exact: true }).click(); await save(page);
   const saved = await read(page, firstContext.candidate.id); expect(saved.package.scenes.slice(0, first.package.scenes.length)).toEqual(first.package.scenes); expect(saved.package.scenes.at(-1)!.revision).toBe(2);
   await review(page); await expect(host(page).locator(".scene-diagram")).toHaveAttribute("data-time", "2"); await expect(host(page).locator(".scene-diagram")).toHaveAttribute("data-revision", "2");
   await shot(page, info, "candidate-review"); await host(page).getByRole("button", { name: "Accept Diagram", exact: true }).click();
@@ -64,8 +66,10 @@ test("edit imported scene using real tools, append native revisions, explicitly 
   await shot(page, info, "accepted-local-copy");
 });
 test("create a new diagram in a null-namespace plan, use existing editor setup and accept as append", async ({ page }) => {
-  const origin = await open(page, true); await panel(page).getByRole("button", { name: "Create Diagram", exact: true }).click();
-  await page.getByLabel("Example setup", { exact: true }).selectOption("rondo"); await page.getByRole("button", { name: "Apply setup", exact: true }).click();
+  const origin = await open(page, true);
+  await openDesignerDisclosure(page, "Manage diagrams");
+  await panel(page).getByRole("button", { name: "Create Diagram", exact: true }).click();
+  await openTacticalDisclosure(page, "Examples"); await page.getByLabel("Example setup", { exact: true }).selectOption("rondo"); await page.getByRole("button", { name: "Apply setup", exact: true }).click();
   await save(page); await review(page); await host(page).getByRole("button", { name: "Accept Diagram", exact: true }).click(); await expect(host(page)).toHaveCount(0);
   const saved = await read(page, origin.documentId); expect(saved.package.sceneNamespace).toMatch(/^local-/); expect(saved.package.document.session.activities[0].diagrams).toHaveLength(1);
   expect(saved.package.document.session.activities[1]).toEqual(origin.package.document.session.activities[1]);
@@ -120,14 +124,15 @@ for (const fault of ["quota", "interrupted"] as const) test(`${fault} transactio
 test("lost URL leaves candidate discoverable without automatic attachment", async ({ page }) => {
   const origin = await open(page); await edit(page); await save(page); const ctx = context(page), url = new URL(page.url()); url.searchParams.delete("localAuthoring");
   await page.goto(url.href); await expect(page.getByRole("button", { name: "Recover Saved Candidate", exact: true })).toHaveCount(0);
-  await status(page).getByRole("button", { name: "Browse local plans", exact: true }).click(); await status(page).getByText(/Saved local plans \(/).click();
+  await openDesignerDisclosure(page, "Session files");
+  await status(page).getByRole("button", { name: "Browse local plans", exact: true }).click(); await expect(status(page).getByText(/Saved local plans \(/)).toBeVisible();
   await expect(status(page).getByRole("button", { name: `Review plan ${ctx.candidate.id}`, exact: true })).toBeVisible(); expect(await read(page, origin.documentId)).toEqual(origin);
 });
 test("shortening the actual animation requires a new representative time before acceptance", async ({ page }, info) => {
   const origin = await open(page); await edit(page);
   // Shorten every stage through the real animation controls; the original pin is at 2 seconds.
   const stages = page.locator(".animation-stages button");
-  for (let i = 0; i < await stages.count(); i++) { await stages.nth(i).click(); await page.getByLabel("Stage duration (seconds)", { exact: true }).fill("0.25"); await page.getByRole("button", { name: "Apply stage timing", exact: true }).click(); }
+  for (let i = 0; i < await stages.count(); i++) { await stages.nth(i).click(); await openTacticalDisclosure(page, "Stage settings"); await page.getByLabel("Stage duration (seconds)", { exact: true }).fill("0.25"); await page.getByRole("button", { name: "Apply stage timing", exact: true }).click(); }
   await save(page); await review(page);
   await expect(host(page).getByLabel("Representative time (seconds)")).toHaveValue("2");
   await expect(host(page).getByRole("button", { name: "Accept Diagram", exact: true })).toBeDisabled();
@@ -164,13 +169,14 @@ test("legacy text-only import can create its first complete local plan without a
   const pkg = attachmentExample(); pkg.document.session.activities.forEach((a) => a.diagrams = []);
   await page.getByLabel("Choose session JSON", { exact: true }).setInputFiles({ name: "legacy.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(pkg.document)) });
   await page.getByRole("button", { name: "Open imported session", exact: true }).click();
+  await openDesignerDisclosure(page, "Manage diagrams");
   await panel(page).getByRole("button", { name: "Create Diagram", exact: true }).click(); await expect(host(page)).toBeVisible();
   const ctx = context(page); expect(ctx.candidate).toBeNull(); const origin = await read(page, ctx.origin.id); expect(origin.package.scenes).toEqual([]); expect(origin.package.document).toEqual(pkg.document);
   await save(page); await review(page); await host(page).getByRole("button", { name: "Accept Diagram", exact: true }).click(); await expect(host(page)).toHaveCount(0);
   expect((await read(page, ctx.origin.id)).package.document.session.activities[0].diagrams[0].scene.id).toBe(ctx.sceneId);
 });
 test("incomplete activity text stays editable and prevents starting a candidate", async ({ page }) => {
-  const origin = await open(page); await coaching(page); await page.getByLabel("Activity name", { exact: true }).fill("");
+  const origin = await open(page); await openDesignerCoachingEditor(page); await page.getByLabel("Activity name", { exact: true }).fill("");
   await panel(page).getByRole("button", { name: "Edit Diagram", exact: true }).click();
   await expect(page.getByRole("region", { name: "Local copy recovery" }).getByRole("alert")).toBeVisible();
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue(""); expect(await read(page, origin.documentId)).toEqual(origin);
@@ -183,7 +189,7 @@ test("undo after a local save still warns before discarding newer editor state",
   await page.getByRole("button", { name: "● Player", exact: true }).click();
   await page.getByRole("button", { name: "Insert at centre", exact: true }).click();
   await save(page);
-  await page.getByRole("button", { name: "↶ Undo", exact: true }).click();
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
   const confirmations: string[] = [];
   page.once("dialog", async dialog => { confirmations.push(dialog.message()); await dialog.dismiss(); });
   await host(page).getByRole("button", { name: "Return to Activity", exact: true }).click();
@@ -206,7 +212,7 @@ for (const direction of ["back", "forward"] as const) test(`declining browser ${
     await page.evaluate(() => { const url = new URL(location.href); url.searchParams.set("history-test", "future"); history.pushState(null, "", url); });
     await page.goBack(); await expect(page).toHaveURL(originalUrl); await page.reload();
     await expect(status(page)).toContainText("Complete local plan recovered");
-    await page.getByRole("button", { name: "Edit session", exact: true }).click();
+    await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click();
   }
   await edit(page); await page.getByRole("button", { name: "Layout", exact: true }).click();
   await page.getByRole("button", { name: "● Player", exact: true }).click();

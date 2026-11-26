@@ -155,7 +155,10 @@ test("Calendar light navigation preserves Saved Sessions and Session Designer ro
   await expect(page.locator(".programme-frame-header")).toBeHidden();
   await expect(page.locator("body > aside")).toHaveCSS("width", "240px");
   await page.goto("/session-designer");
-  await expect(page.locator(".programme-frame-header")).toHaveCount(0);
+  const designerHeader = page.locator(".programme-frame-header.authoring-frame-header");
+  await expect(designerHeader).toBeVisible();
+  await expect(designerHeader).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(navigation.getByRole("link", { name: "Sessions", exact: true })).toHaveAttribute("aria-current", "location");
   await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Session Designer", exact: true })).toHaveAttribute("aria-current", "page");
   unchanged();
 });

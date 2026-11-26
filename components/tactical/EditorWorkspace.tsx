@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useCoaching } from "@/components/coaching/CoachingProvider";
 import { WorkspaceStatus } from "@/components/coaching/WorkspaceStatus";
 import { useUnsavedChanges } from "@/components/coaching/useUnsavedChanges";
@@ -21,14 +21,21 @@ export function EditorWorkspace({ target, calendar }: { target?: DiagramTarget; 
   let resolved: ReturnType<typeof resolveDiagramTarget> | undefined, failure = "";
   try { if (target && !loading) resolved = resolveDiagramTarget(snapshot.bundle, target); } catch (error) { failure = error instanceof Error ? error.message : "Diagram unavailable"; }
   if (calendar && !loading) failure ||= calendarReturnProblem(snapshot.bundle, calendar, target?.event, target?.booking) ?? "";
-  return <div className={`calendar-workspace editor-workspace${calendar ? " coaching-from-calendar calendar-integrated" : ""}`}><details className="editor-storage" open={blocked || undefined}><summary>{mode === "sample" ? "Illustrative sample data · memory only" : `Organisation storage · snapshot v${snapshot.version}`}<span>Connection & storage details</span></summary><WorkspaceStatus /></details>
-    {loading ? <p>Loading validated coaching records…</p> : failure ? <div role="alert"><h1>Requested diagram is unavailable</h1><p>{failure}</p><Link href="/sessions">Open sessions</Link></div> :
-      <BoundEditor key={`${scope}:${snapshot.version}:${JSON.stringify(target)}`} target={target} resolved={resolved} calendar={calendar} />}
+  const storage = <details className="editor-storage" open={blocked || undefined}>
+    <summary>Connection &amp; storage details</summary>
+    <div className="editor-storage-content">
+      <p>{mode === "sample" ? "Illustrative sample data · memory only" : `Organisation storage · snapshot v${snapshot.version}`}</p>
+      <WorkspaceStatus />
+    </div>
+  </details>;
+  return <div className={`calendar-workspace editor-workspace${calendar ? " coaching-from-calendar calendar-integrated" : " recovery-editor-workspace"}`}>
+    {loading ? <>{storage}<p>Loading validated coaching records…</p></> : failure ? <>{storage}<div role="alert"><h1>Requested diagram is unavailable</h1><p>{failure}</p><Link href="/sessions">Open sessions</Link></div></> :
+      <BoundEditor key={`${scope}:${snapshot.version}:${JSON.stringify(target)}`} target={target} resolved={resolved} calendar={calendar} storage={storage} />}
   </div>;
 }
 
 /** Keep the opened graph as the save base; a later graph can never silently replace an unsaved draft. */
-function BoundEditor({ target, resolved, calendar }: { target?: DiagramTarget; resolved?: ReturnType<typeof resolveDiagramTarget>; calendar?: CalendarReturn }) {
+function BoundEditor({ target, resolved, calendar, storage }: { target?: DiagramTarget; resolved?: ReturnType<typeof resolveDiagramTarget>; calendar?: CalendarReturn; storage: ReactNode }) {
   const { snapshot, mode, busy, blocked, commit, markDirty } = useCoaching(), router = useRouter();
   const [base] = useState(snapshot), [dirty, setDirty] = useState(false), [error, setError] = useState("");
   const [scene] = useState<TacticalScene>(() => resolved?.scene ? structuredClone(resolved.scene) : {
@@ -41,15 +48,21 @@ function BoundEditor({ target, resolved, calendar }: { target?: DiagramTarget; r
   useUnsavedChanges(dirty || timeDirty);
   const back = target?.kind === "session" ? target.event ? `/sessions?event=${encodeURIComponent(target.event)}&revision=${target.booking}` : `/sessions?session=${encodeURIComponent(target.id)}&revision=${target.revision}`
     : target ? `/${target.kind === "exercise" ? "exercises" : "templates"}?item=${encodeURIComponent(target.id)}&revision=${target.revision}` : "/sessions";
+  const context = scene.context?.kind === "neutral" ? "Independent practice" : "Football pitch";
+  const representativeField = target && <label className="representative-time">Representative preview time (seconds)<input aria-label="Representative preview time (seconds)" type="number" min="0" step="any" value={representative} disabled={!!resolved?.readOnly || busy || blocked} onChange={e => setRepresentative(e.target.value)} /><span>Previous moment: {previousTime}s. Valid range for the last checked scene: 0–{duration}s. Save validates the edited timeline; no moment is silently reset.</span></label>;
   return <><div className="editor-heading"><div><p className="calendar-eyebrow">{target ? `${target.kind} · immutable owner v${target.revision}` : "Practice canvas · examples never uploaded"}</p>
-    <h1>{resolved?.title ?? "2D tactical editor"}</h1><p className="calendar-muted">{resolved?.readOnly ? "Historical snapshot · read only" : dirty ? "Unsaved diagram changes" : "World geometry in metres · camera changes do not move objects"}</p></div>
+    <h1>{resolved?.title ?? "2D Tactical Editor"}</h1><p className="calendar-muted">{resolved?.readOnly ? "Historical snapshot · read only" : dirty ? "Unsaved diagram changes" : !calendar && target ? `${context} · ${scene.field.length} × ${scene.field.width} m · Diagram r${scene.revision}` : "World geometry in metres · camera changes do not move objects"}</p></div>
     <div className="editor-actions"><Link href={withCalendar(back, calendar)}>← {target ? "Return to plan" : "Choose a saved activity"}</Link>
       {calendar && <Link href={calendarHref(calendar)}>Cancel / Return to Calendar</Link>}
-      {target?.kind === "session" && <Link href={withCalendar(guideHref({ session: target.id, revision: target.revision, ...(target.event ? { event: target.event, bookingRevision: target.booking } : {}) }), calendar)}>Open exact guide →</Link>}</div></div>
-    {target && <label className="representative-time">Representative preview time (seconds)<input aria-label="Representative preview time (seconds)" type="number" min="0" step="any" value={representative} disabled={!!resolved?.readOnly || busy || blocked} onChange={e => setRepresentative(e.target.value)} /><span>Previous moment: {previousTime}s. Valid range for the last checked scene: 0–{duration}s. Save validates the edited timeline; no moment is silently reset.</span></label>}
+      {target?.kind === "session" && <Link href={withCalendar(guideHref({ session: target.id, revision: target.revision, ...(target.event ? { event: target.event, bookingRevision: target.booking } : {}) }), calendar)}>Open exact guide →</Link>}
+      {!calendar && target && <details className="editor-storage"><summary>Saved moment</summary><div className="editor-storage-content">{representativeField}</div></details>}
+      <details className="editor-workspace-links"><summary>Tactics workspaces</summary><nav aria-label="Tactics workspaces"><Link href="/lineup">Lineups</Link><Link href="/tactical-renderer">Renderer preview</Link><Link href="/presentations">2D Presentation</Link></nav></details>
+      {storage}
+    </div></div>
+    {calendar && representativeField}
     {error && <p role="alert" className="coaching-notice">{error}</p>}
     <TacticalEditor initial={target ? scene : { ...structuredClone(editorExamples[0].scene), organizationId: scene.organizationId, id: scene.id }} readOnly={!!resolved?.readOnly || busy || blocked}
-      presentation={calendar ? "coaching" : undefined} onDirty={setDirty} saveLabel={calendar ? "Save Diagram & Return" : mode === "sample" ? "Save sample diagram" : "Save diagram"} canSave={!!target && (dirty || timeDirty) && !resolved?.readOnly && !busy && !blocked}
+      presentation={calendar ? "coaching" : undefined} recoveryWorkspace={!calendar} initialSeconds={calendar ? 0 : previousTime} onDirty={setDirty} saveLabel={calendar ? "Save Diagram & Return" : mode === "sample" ? "Save sample diagram" : "Save diagram"} canSave={!!target && (dirty || timeDirty) && !resolved?.readOnly && !busy && !blocked}
       onSave={async (draft) => {
         if (!target) return;
         try {

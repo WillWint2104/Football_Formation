@@ -101,7 +101,7 @@ test("three fit targets preserve the same saved moment and keep long annotations
 test("expanded local preview framing stays coordinated with the parent and preserves the complete package",async({page,context})=>{
   await preparePrintPage(page,context);const id=await openPrintPlan(page,printExample());
   const before=await page.evaluate(id=>window.companionTest.browserCompanionRepository().read(id),id);
-  await page.getByRole('combobox',{name:'Diagram framing',exact:true}).selectOption('all');
+  await page.getByRole('group',{name:'Fit diagram',exact:true}).getByRole('button',{name:'Fit all content',exact:true}).click();
   await page.getByRole('button',{name:'Expand diagram',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Expanded activity diagram'});
   await dialog.getByRole('button',{name:'Fit exercise',exact:true}).click();
   await expect(dialog.locator('.scene-diagram')).toHaveAttribute('data-frame-length','12');
@@ -110,6 +110,6 @@ test("expanded local preview framing stays coordinated with the parent and prese
   await dialog.getByRole('button',{name:'Fit all content',exact:true}).click();await expect(dialog.locator('.scene-diagram')).toHaveAttribute('data-time','6');
   await dialog.getByRole('button',{name:'Fit exercise',exact:true}).click();await expect(dialog.locator('.scene-diagram')).toHaveAttribute('data-time','6');
   await dialog.getByRole('button',{name:'Close diagram · Esc',exact:true}).click();
-  await expect(page.getByRole('combobox',{name:'Diagram framing',exact:true})).toHaveValue('exercise');
+  await expect(page.getByRole('group',{name:'Fit diagram',exact:true}).getByRole('button',{name:'Fit exercise',exact:true})).toHaveAttribute('aria-pressed','true');
   expect(await page.evaluate(id=>window.companionTest.browserCompanionRepository().read(id),id)).toEqual(before);
 });

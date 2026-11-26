@@ -1,22 +1,10 @@
 /* The viewer keeps the programme navigation and its workspace drawer. */
 .application-shell:has(.session-viewer) { --viewer-shell-height:64px; }
+.application-shell:has(> div > .viewer-frame-header.calendar-frame-header) { --calendar-nav-height:var(--viewer-shell-height, 56px); }
 .application-shell:has(.session-viewer) > aside { display:none; }
 .application-shell:has(.session-viewer) > div:has(> .viewer-frame-header) { padding-top:var(--viewer-shell-height); }
-.application-shell:has(.session-viewer) > div > .viewer-frame-header.programme-frame-header {
-  height:var(--viewer-shell-height);
-  background:#102e4b;
-}
-.application-shell:has(.session-viewer) .programme-frame-brand {
-  min-width:0; padding-inline:30px 38px; gap:10px; font-size:24px; white-space:nowrap;
-}
-.application-shell:has(.session-viewer) .programme-brand-shield,
-.application-shell:has(.session-viewer) .programme-brand-shield svg { width:34px; height:39px; }
-.application-shell:has(.session-viewer) .programme-brand-shield b { inset:4px 0 0; font-size:22px; line-height:30px; }
-.application-shell:has(.session-viewer) .programme-primary-navigation > a { padding-inline:20px; gap:7px; font-size:14px; }
-.application-shell:has(.session-viewer) .programme-primary-navigation > a[aria-current=page] {
-  background:#1d4267; border-bottom-color:#9bc7f4;
-}
-.application-shell:has(.session-viewer) .programme-frame-context { border:0; padding-right:0; }
+.application-shell .viewer-frame-header .programme-frame-brand { min-width:0; }
+.application-shell .viewer-frame-header :is(a,button):focus-visible { outline:3px solid #087a77; outline-offset:-3px; }
 .application-shell:has(.session-viewer) .viewer-workspace-menu { display:block; margin-inline:12px 24px; }
 
 #main-content:has(.session-viewer) {
@@ -288,7 +276,6 @@
 
 @media (max-width:1500px) {
   .application-shell:has(.session-viewer) { --viewer-shell-height:56px; }
-  .application-shell:has(.session-viewer) .programme-frame-brand { padding-inline:22px 26px; font-size:21px; }
   .application-shell:has(.session-viewer) .viewer-workspace-menu { margin-left:auto; }
   #main-content:has(.session-viewer) { padding-inline:22px; }
   .viewer-workspace { gap:14px; }

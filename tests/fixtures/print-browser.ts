@@ -3,6 +3,7 @@ import { buildSync } from "esbuild";
 import { writeFile } from "node:fs/promises";
 import { PDFDocument, PDFRawStream, decodePDFRawStream } from "pdf-lib";
 import { printExample as fixture } from "./print-session";
+import { openDesignerDisclosure, openDesignerSessionTools } from "./designer-controls";
 import type {} from "./companion-browser";
 
 const bundle=buildSync({entryPoints:["tests/fixtures/companion-browser.ts"],bundle:true,write:false,format:"iife",platform:"browser",target:"es2022"}).outputFiles[0].text;
@@ -10,11 +11,16 @@ const status=(p:Page)=>p.getByRole("region",{name:"Local diagram workspace",exac
 const plan=(p:Page)=>p.getByLabel("Branded session plan",{exact:true});
 export async function openPrintPlan(p:Page,input=fixture()) {
   const saved=await p.evaluate(pkg=>window.companionTest.browserCompanionRepository().create(pkg),input);if(!saved.ok)throw Error(saved.error.message);
-  await status(p).getByRole("button",{name:"Browse local plans",exact:true}).click();await status(p).getByText(/Saved local plans \(/).click();
+  await openDesignerDisclosure(p, "Session files");
+  await status(p).getByRole("button",{name:"Browse local plans",exact:true}).click();await expect(status(p).getByText(/Saved local plans \(/)).toBeVisible();
   await status(p).getByRole("button",{name:`Review plan ${saved.value.documentId}`,exact:true}).click();p.once("dialog",d=>d.accept());await p.getByRole("button",{name:"Open reviewed plan as independent copy",exact:true}).click();
-  await expect(p.getByRole("button",{name:input.document.session.activities[0]?.diagrams.length?"Edit Diagram":"Create Diagram",exact:true})).toBeEnabled();return new URL(p.url()).searchParams.get("localPlan")!;
+  const hasDiagram = !!input.document.session.activities[0]?.diagrams.length;
+  if (!hasDiagram) await openDesignerDisclosure(p, "Manage diagrams");
+  await expect(p.getByRole("button",{name:hasDiagram?"Edit Diagram":"Create Diagram",exact:true})).toBeEnabled();
+  if (!hasDiagram) await p.keyboard.press("Escape");
+  return new URL(p.url()).searchParams.get("localPlan")!;
 }
-export async function previewPrintPlan(p:Page){await p.getByRole("button",{name:"Branded preview",exact:true}).click();await expect(plan(p)).toBeVisible();}
+export async function previewPrintPlan(p:Page){await openDesignerSessionTools(p);await p.getByRole("button",{name:"Branded preview",exact:true}).click();await expect(plan(p)).toBeVisible();}
 export async function capturePrintOutput(p:Page,info:TestInfo,name:string){
   await p.evaluate(async()=>{await document.fonts.ready;await Promise.all(Array.from(document.querySelectorAll<HTMLImageElement>('.designer-print img')).map(img=>img.decode()));});
   await p.evaluate(()=>scrollTo(0,0));await p.screenshot({path:info.outputPath(`${name}-${info.project.name}.png`)});

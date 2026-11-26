@@ -11,6 +11,12 @@ import "./local-authoring.css";
 import "./light-foundation.css";
 import "./tactical-workspace.css";
 import "./diagram-print.css";
+import "../calendar/programme.css";
+import "../calendar/calendar-frame.css";
+import "../authoring-frame.css";
+import "../tactical-editor/light-workspace.css";
+import "./workspace-consolidation.css";
+import "./visual-recovery.css";
 
 export const metadata: Metadata = { title: "Session Designer | Football Formation" };
 

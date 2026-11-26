@@ -1,0 +1,106 @@
+@media screen {
+  #main-content:has(.editor-workspace) { padding:12px clamp(12px,1.35vw,25px); }
+  .editor-workspace .editor-heading { margin:8px 0 10px; }
+  .editor-workspace .editor-heading h1 { font-size:clamp(24px,2vw,32px); overflow-wrap:anywhere; }
+  .editor-workspace .editor-heading .calendar-eyebrow { color:var(--color-shell-muted); font-family:inherit; }
+  .editor-workspace .editor-actions { align-items:center; gap:8px 12px; }
+  .editor-workspace .editor-actions a { font-weight:650; }
+  .editor-workspace :is(.editor-workspace-links,.editor-storage) { position:relative; }
+  .editor-workspace :is(.editor-workspace-links,.editor-storage) > summary {
+    padding:6px 9px;
+    border:1px solid var(--color-shell-edge);
+    border-radius:5px;
+    background:white;
+    cursor:pointer;
+  }
+  .editor-workspace :is(.editor-workspace-links nav,.editor-storage-content) {
+    position:absolute;
+    z-index:3;
+    inset:calc(100% + 5px) 0 auto auto;
+    display:grid;
+    min-width:166px;
+    padding:6px;
+    border:1px solid var(--color-shell-edge);
+    border-radius:7px;
+    background:white;
+    box-shadow:0 6px 16px #18375420;
+  }
+  .editor-workspace-links nav a { padding:7px 8px; }
+  .editor-workspace .editor-storage { border:0; padding:0; font-size:12px; }
+  .editor-workspace .editor-storage > summary { display:list-item; margin:0; }
+  .editor-storage-content { width:min(445px,calc(100vw - 40px)); }
+  .editor-workspace .representative-time {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:5px 10px;
+    margin-bottom:8px;
+    padding:5px 8px;
+    border:1px solid var(--color-shell-edge);
+    border-radius:6px;
+    background:white;
+    font-size:12px;
+  }
+  .editor-workspace .representative-time input { width:6.5ch; padding:4px 6px; }
+  .editor-workspace .representative-time span { color:var(--color-shell-muted); }
+  .tactical-editor .editor-topbar { gap:6px; padding:6px; margin-bottom:6px; border-radius:7px; }
+  .tactical-editor .editor-pitch-tools {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    background:white;
+    border:1px solid var(--color-shell-edge);
+    border-radius:7px;
+    margin-bottom:8px;
+    padding:4px;
+  }
+  .tactical-editor .editor-pitch-tools :is(.editor-tools,.editor-viewbar) { border:0; padding:2px; gap:3px; }
+  .tactical-editor .editor-tools button {
+    display:grid;
+    place-items:center;
+    width:33px;
+    min-height:32px;
+    padding:4px;
+    color:#234b70;
+  }
+  .tactical-editor button[aria-pressed=true] { background:#e6f1fb; color:#154e80; border-color:#91b6d7; }
+  .tactical-editor .editor-tools button[aria-pressed=true] { background:#1763b6; border-color:#1763b6; color:white; }
+  .tactical-editor .editor-viewbar { flex:1 1 auto; }
+  .tactical-editor .editor-viewbar label { flex-direction:row; }
+  .tactical-editor .editor-viewbar :is(button,select) { padding:5px 8px; min-height:30px; }
+  .tactical-editor .editor-layout { gap:10px; }
+  .tactical-editor:not([data-properties-open]) .editor-layout { grid-template-columns:minmax(0,1fr); }
+  .tactical-editor .editor-surface { border-radius:8px 8px 0 0; overflow:hidden; }
+  .tactical-editor .editor-surface .scene-diagram-caption { background:#142e48; color:white; }
+  .tactical-editor .editor-inspector { border-radius:8px; padding-inline:12px; }
+  .tactical-editor .editor-inspector-heading {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+    margin-inline:-12px;
+    padding:10px 12px;
+    border-bottom:1px solid var(--color-shell-edge);
+    background:#f0f5fa;
+  }
+  .tactical-editor .editor-inspector-heading h2 { margin:0; }
+  .tactical-editor .editor-inspector-heading span { color:var(--color-shell-muted); font-size:12px; }
+  .tactical-editor .editor-inspector section { padding-block:11px; }
+  .tactical-editor .editor-inspector :is(label,p,summary) { font-size:12px; }
+  .tactical-editor :is(button,a,input,select,summary):focus-visible,
+  .tactical-editor:focus-visible { outline:3px solid #087a77; outline-offset:2px; }
+  .tactical-editor .editor-inspector[hidden] { display:none; }
+  .editor-workspace .editor-coaching .editor-surface { height:max(280px,calc(100dvh - 300px)); }
+  .editor-workspace .editor-coaching.editor-animation .editor-surface { height:max(240px,calc(100dvh - 415px)); }
+  .editor-workspace .editor-coaching.editor-expanded .editor-surface { height:max(280px,calc(100dvh - 165px)); }
+  .editor-workspace .editor-coaching.editor-animation.editor-expanded .editor-surface { height:max(240px,calc(100dvh - 265px)); }
+  @media (max-width:1023px) {
+    .tactical-editor[data-properties-open] .editor-layout { grid-template-columns:minmax(0,1fr); }
+    .tactical-editor .editor-inspector { height:auto; max-height:none; }
+    .editor-workspace .editor-heading { flex-wrap:wrap; gap:8px; }
+    .editor-workspace .editor-actions { justify-content:flex-start; }
+    .editor-workspace .editor-workspace-links nav { inset-inline:0 auto; }
+    .editor-workspace .editor-storage[open] { flex-basis:100%; }
+    .editor-workspace .editor-storage-content { position:static; margin-top:5px; max-width:100%; }
+  }
+}

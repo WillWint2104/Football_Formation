@@ -12,6 +12,7 @@
 @media print{
   .application-shell:has(.session-designer){display:block!important;background:white!important;color:#1e3042!important;min-height:0!important}
   .application-shell:has(.session-designer)>aside,.application-shell:has(.session-designer)>a,.application-shell:has(.session-designer)>div>header{display:none!important}
+  .application-shell:has(.session-designer)>div{padding-top:0!important}
   #main-content:has(.session-designer){padding:0!important;max-width:none!important;background:white!important}
   .session-designer [data-no-print]{display:none!important}.session-designer .designer-edit-layout{display:block!important}.session-designer .designer-print[hidden],.session-designer .designer-edit-layout[hidden]{display:block!important}
   .designer-print{display:block!important;page:designer-plan;box-shadow:none;border-radius:0;overflow:visible;font-size:var(--plan-body-size);line-height:1.38;color:#1e3042;print-color-adjust:exact;-webkit-print-color-adjust:exact}

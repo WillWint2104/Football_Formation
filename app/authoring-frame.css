@@ -1,0 +1,41 @@
+/* The authoring routes use the Calendar's light navigation and reserve screen space for the pitch. */
+@media screen {
+  .application-shell:has(> div > :is(.authoring-frame-header,.viewer-frame-header)) {
+    color-scheme:light;
+    --color-shell:#f7f9fc;
+    --color-shell-panel:#fff;
+    --color-shell-edge:#ccdbe7;
+    --color-shell-text:#142e48;
+    --color-shell-muted:#49647c;
+    --color-shell-accent:#1763b6;
+    --color-shell-active:#e9f1f9;
+    background:var(--color-shell);
+    color:var(--color-shell-text);
+  }
+  .application-shell:has(> div > .programme-frame-header.authoring-frame-header) > aside { width:104px; }
+  .application-shell:has(> div > .programme-frame-header.authoring-frame-header) > aside nav { padding:12px 4px 12px 0; gap:5px; }
+  .application-shell:has(> div > .programme-frame-header.authoring-frame-header) > aside nav :is(a,[aria-disabled]) {
+    padding:8px 4px;
+    min-height:57px;
+    gap:4px;
+    font-size:12px;
+    opacity:1;
+  }
+  .application-shell:has(> div > .programme-frame-header.authoring-frame-header) > aside nav svg { width:21px; height:21px; }
+  .application-shell .authoring-frame-header .programme-primary-navigation > a[aria-current=location] {
+    background:#e9f1f9;
+    color:#174b78;
+  }
+  .application-shell .authoring-frame-header :is(a,button):focus-visible,
+  .application-shell:has(> div > .authoring-frame-header) > aside a:focus-visible {
+    outline:3px solid #087a77;
+    outline-offset:-3px;
+  }
+  @media (max-width:1500px) {
+    .application-shell:has(> div > .programme-frame-header.authoring-frame-header) > aside { width:92px; }
+  }
+  @media (max-width:1023px) {
+    .application-shell .authoring-frame-header .programme-frame-brand { min-width:0; }
+    .application-shell .authoring-frame-header .programme-frame-context { display:none; }
+  }
+}

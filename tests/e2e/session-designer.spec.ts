@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { openDesignerCoachingEditor, openDesignerDisclosure, openDesignerSessionTools } from "../fixtures/designer-controls";
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
 import { PDFDocument } from "pdf-lib";
@@ -6,7 +7,6 @@ import { parseSessionJson } from "../../lib/designer/contract";
 import { DESIGNER_DRAFT_KEY } from "../../lib/designer/drafts";
 
 const samplePath = "public/samples/session-designer-possession.json";
-async function coaching(p: Page) { const toggle = p.getByRole("button", { name: "Coaching information", exact: true }); if (await toggle.isVisible()) await toggle.click(); }
 
 async function open(page: Page) {
   await page.goto("/session-designer", { waitUntil: "domcontentloaded" });
@@ -15,10 +15,11 @@ async function open(page: Page) {
 async function acceptFile(page: Page, path = samplePath) {
   await page.getByLabel("Choose session JSON").setInputFiles(path);
   await expect(page.getByRole("region", { name: "Import preview" })).toBeVisible();
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await openDesignerCoachingEditor(page);
   await expect(page.getByRole("region", { name: "Local session editor" })).toBeVisible();
 }
 async function branding(page: Page, visible = true) {
+  await openDesignerSessionTools(page);
   const toggle = page.getByRole("button", { name: "Club Branding", exact: true });
   if ((await toggle.getAttribute("aria-expanded")) !== String(visible)) { if (visible) await toggle.click(); else await page.getByRole("button", { name: "Close branding", exact: true }).click(); }
 }
@@ -50,7 +51,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await expect(page.getByRole("region", { name: "Import preview" }).locator("li")).toHaveCount(5);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("designer-importer.png") });
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await openDesignerCoachingEditor(page);
   const editor = page.getByRole("region", { name: "Local session editor" });
   await editor.locator(".designer-session-details > summary").click();
   await editor.getByLabel("Session title").fill("Build Through Pressure — Edited");
@@ -72,9 +73,9 @@ test("five activities → edit → dropped transparent crest → brand → print
   await editor.locator(".designer-session-details > summary").click();
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("designer-editor.png") });
-  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Overview", exact: true }).click();
   await page.screenshot({ path: info.outputPath("designer-overview.png") });
-  await page.getByRole("button", { name: "Branded preview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Branded preview", exact: true }).click();
   const preview = page.getByLabel("Branded session plan", { exact: true });
   await expect(preview).toContainText("Review Club · Example Only");
   await expect(preview.locator("article")).toHaveCount(5);
@@ -82,6 +83,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await expect(preview.locator(".designer-plan-header")).toHaveCSS("background-color", "rgb(36, 90, 66)");
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: info.outputPath("designer-branded-preview.png") });
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Print / Save as PDF", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-print-invoked", "true");
   const pdfBytes = await page.pdf({ path: info.outputPath("branded-session-plan.pdf"), printBackground: true, preferCSSPageSize: true });
@@ -92,6 +94,7 @@ test("five activities → edit → dropped transparent crest → brand → print
   await page.screenshot({ path: info.outputPath("designer-print-preview.png"), fullPage: true });
   await page.emulateMedia({ media: "screen" });
   const downloadEvent = page.waitForEvent("download");
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const download = await downloadEvent, exported = await readFile((await download.path())!, "utf8"), portable = parseSessionJson(exported);
   await download.saveAs(info.outputPath("branded-session-round-trip.json"));
@@ -101,13 +104,15 @@ test("five activities → edit → dropped transparent crest → brand → print
   expect(pixels.info.channels).toBe(4); expect(pixels.data[3]).toBe(0);
   expect(exported).not.toContain("organizationId");
   await page.reload({ waitUntil: "domcontentloaded" }); await expect(page.getByRole("status")).toContainText("Draft recovered from this browser");
-  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await coaching(page);
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Edit session", exact: true }).click(); await openDesignerCoachingEditor(page);
   await expect(editor.getByLabel("Session title")).toHaveValue(portable.session.name);
   await expect(editor.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("12");
   await expect(page.getByAltText("Club logo preview")).toHaveAttribute("src", portable.branding.logo!.dataUrl);
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Import JSON", exact: true }).click();
   await page.getByLabel("Choose session JSON").setInputFiles({ name: "round-trip.json", mimeType: "application/json", buffer: Buffer.from(exported) });
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await openDesignerCoachingEditor(page);
+  await openDesignerDisclosure(page, "Session files");
   const roundTripEvent = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   expect(parseSessionJson(await readFile((await (await roundTripEvent).path())!, "utf8"))).toEqual(portable);
   expect(apiRequests).toEqual([]); expect(errors).toEqual([]);
@@ -118,12 +123,12 @@ test("JSON drop accepts a different session without branding, diagrams or invent
   await open(page);
   await drop(page, '[data-testid="json-drop"]', "recovery.json", "application/json", await readFile("public/samples/session-designer-recovery.json"));
   await expect(page.getByRole("region", { name: "Import preview" })).toContainText("2 activities");
-  await page.getByRole("button", { name: "Open imported session" }).click(); await coaching(page);
+  await page.getByRole("button", { name: "Open imported session" }).click(); await openDesignerCoachingEditor(page);
   await expect(page.getByLabel("Session type", { exact: true })).toHaveValue("recovery");
   await expect(page.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("");
   await expect(page.getByLabel("Participants", { exact: true })).toHaveValue("");
   await expect(page.getByAltText("Club logo preview")).toHaveCount(0);
-  await page.getByRole("button", { name: "Branded preview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Branded preview", exact: true }).click();
   await expect(page.getByLabel("Branded session plan", { exact: true })).toContainText("0 known minutes");
   await expect(page.getByLabel("Branded session plan", { exact: true })).toContainText("2 untimed activities");
   await expect(page.getByLabel("Branded session plan", { exact: true }).locator(".designer-plan-references")).toHaveCount(0);
@@ -134,12 +139,14 @@ test("shared activity editor adds, reorders and removes independent activities a
   await page.getByRole("button", { name: "Add activity", exact: true }).click();
   await page.getByLabel("Activity name", { exact: true }).fill("Extra decision game");
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("8");
+  await openDesignerCoachingEditor(page);
   await page.getByRole("button", { name: "Move activity up", exact: true }).click();
   await expect(page.locator(".coaching-activity-list li").nth(4)).toContainText("Extra decision game");
   await page.getByText("Exact diagram references", { exact: true }).click(); await page.getByRole("button", { name: "Add diagram reference", exact: true }).click();
   await page.getByLabel("Scene ID 1", { exact: true }).fill("custom-scene");
   await page.getByLabel("Revision 1", { exact: true }).fill("3");
   await page.getByLabel("Preview seconds 1", { exact: true }).fill("2.5");
+  await openDesignerDisclosure(page, "Session files");
   const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const result = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(result.session.activities[4].diagrams[0]).toEqual({ scene: { id: "custom-scene", revision: 3 }, representativeSeconds: 2.5 });
@@ -160,7 +167,7 @@ test("paste validation and file/logo guards report errors without replacing exis
   await expect(page.locator(".session-designer").getByRole("alert")).toContainText("genuine PNG or JPEG");
   await expect(page.getByLabel("Session title")).toHaveValue("Build Through Pressure");
   await page.getByLabel("Primary HEX", { exact: true }).fill("#GG0000");
-  await page.getByRole("button", { name: "Branded preview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Branded preview", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Complete these fields" })).toContainText("six-digit HEX");
   await expect(page.getByRole("region", { name: "Local session editor" })).toBeVisible();
 });
@@ -184,6 +191,7 @@ test("storage quota denial leaves export usable and does not claim a browser sav
   await page.addInitScript(() => { Storage.prototype.setItem = () => { throw new DOMException("Quota exceeded", "QuotaExceededError"); }; });
   await open(page); await acceptFile(page);
   await expect(page.getByRole("status")).toContainText("Draft not saved");
+  await openDesignerDisclosure(page, "Session files");
   const download = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   expect((await download).suggestedFilename()).toBe("Build-Through-Pressure.json");
 });
@@ -195,7 +203,14 @@ test("incomplete drafts recover, and another tab's draft is never silently overw
   await page.getByLabel("Duration (minutes)", { exact: true }).fill("0");
   await expect(page.getByRole("status")).toContainText("Draft saved in this browser");
   await page.reload(); await expect(page.getByRole("status")).toContainText("Draft recovered");
-  await page.getByRole("button", { name: "Edit session", exact: true }).click(); await coaching(page);
+  const sessionTools = page.locator(".recovery-session-tools");
+  if (!await sessionTools.isVisible()) await page.getByRole("button", { name: "Edit session", exact: true }).click();
+  await openDesignerDisclosure(page, "Session tools");
+  await expect(sessionTools).toHaveAttribute("open", "");
+  await sessionTools.getByRole("button", { name: "Edit session", exact: true }).press("Enter");
+  await expect(sessionTools).not.toHaveAttribute("open");
+  await expect(sessionTools.locator("summary")).toBeFocused();
+  await openDesignerCoachingEditor(page);
   await expect(page.getByLabel("Session title")).toHaveValue("");
   await expect(page.getByLabel("Duration (minutes)", { exact: true })).toHaveValue("0");
   const stored = await page.evaluate((key) => { const existing = localStorage.getItem(key)!; const draft = JSON.parse(existing); draft.document.session.name = "Other tab work"; const text = JSON.stringify(draft); localStorage.setItem(key, text); return text; }, DESIGNER_DRAFT_KEY);
@@ -224,14 +239,16 @@ test("preview and print omit blank coaching lines exactly as JSON export does", 
   await page.getByLabel("Session objective").fill("First objective\n\nSecond objective\n");
   await page.locator(".designer-session-details > summary").click();
   await page.getByLabel("Setup & delivery instructions", { exact: true }).fill("Instruction one\n\nInstruction two\n");
-  await page.getByRole("button", { name: "Branded preview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Branded preview", exact: true }).click();
   const plan = page.getByLabel("Branded session plan", { exact: true });
   await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
   await expect(plan.locator("article").first().locator(".designer-plan-section").first().locator("li")).toHaveCount(2);
+  await openDesignerDisclosure(page, "Session files");
   const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const exported = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(exported.session.objectives).toEqual(["First objective", "Second objective"]);
   expect(exported.session.activities[0].instructions).toEqual(["Instruction one", "Instruction two"]);
+  await openDesignerDisclosure(page, "Session files");
   await page.getByRole("button", { name: "Print / Save as PDF", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-print-invoked", "true");
   await expect(plan.locator(".designer-plan-objectives li")).toHaveCount(2);
@@ -270,8 +287,9 @@ test("C2 keyboard rail navigation, reorder and deletion keep the stable selected
   await expect(rail.locator('[aria-current="step"]')).toContainText("5v2 Rondo");
   await expect(rail.locator('[aria-current="step"]')).toBeFocused();
   expect(await rail.locator('[aria-current="step"]').evaluate((el) => getComputedStyle(el).outlineWidth)).toBe("3px");
+  await openDesignerCoachingEditor(page);
   await page.getByRole("button", { name: "Move activity down", exact: true }).click();
-  await expect(rail.locator('[aria-current="step"]')).toContainText("03");
+  await expect(rail.locator('[aria-current="step"] .recovery-activity-number')).toHaveText("3.");
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("5v2 Rondo");
   await page.getByRole("button", { name: "Remove activity", exact: true }).click();
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("Build-Out Conditioned Game");
@@ -297,9 +315,10 @@ test("C2 editor scroll keeps the activity rail available and keyboard users can 
   await page.getByText("Advanced field controls", { exact: true }).click();
   await page.getByLabel("Origin X (m)", { exact: true }).fill("-2");
   await expect(page.getByLabel("Origin X (m)", { exact: true })).toHaveValue("-2");
-  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Overview", exact: true }).click();
   await page.getByRole("button", { name: /03.*Positional Possession/ }).click();
   await expect(page.getByLabel("Activity name", { exact: true })).toHaveValue("Positional Possession");
+  await openDesignerCoachingEditor(page);
   await expect(detail).toBeVisible(); expect(await detail.evaluate((el) => el.scrollTop)).toBe(0);
 });
 
@@ -309,7 +328,7 @@ test("C2 branding disclosure preserves content and Escape restores focus; unknow
   await page.getByLabel("Club name", { exact: true }).press("Escape");
   await expect(page.getByRole("button", { name: "Club Branding", exact: true })).toBeFocused();
   await branding(page); await expect(page.getByLabel("Club name", { exact: true })).toHaveValue("Local review identity");
-  await branding(page, false); await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await branding(page, false); await openDesignerSessionTools(page); await page.getByRole("button", { name: "Overview", exact: true }).click();
   const overview = page.getByRole("region", { name: "Session overview", exact: true });
   await expect(overview).toContainText("2 untimed activities"); await expect(overview).toContainText("Elapsed unknown");
   await expect(overview).toContainText("No staff or scheduling details have been inferred");
@@ -322,17 +341,18 @@ test("C2 long sessions and instructions retain accessible navigation, real print
   const input = JSON.parse(await readFile(samplePath, "utf8"));
   input.session.activities = Array.from({ length: 24 }, (_, i) => ({ ...input.session.activities[0], id: `long-${i}`, name: `Practice ${i + 1} with a longer descriptive coaching title`, instructions: i === 23 ? Array.from({ length: 45 }, (_, n) => `Delivery step ${n + 1}: Keep scanning and maintain a useful passing angle while the next receiver moves into space.`) : input.session.activities[0].instructions }));
   await open(page); await page.getByLabel("Choose session JSON").setInputFiles({ name: "long.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(input)) });
-  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await coaching(page);
+  await page.getByRole("button", { name: "Open imported session", exact: true }).click(); await openDesignerCoachingEditor(page);
   const rail = page.getByRole("navigation", { name: "Session activities", exact: true });
   await rail.getByRole("button").first().focus(); await page.keyboard.press("End");
   await expect(rail.locator('[aria-current="step"]')).toContainText("Practice 24");
   await expect(rail.locator('[aria-current="step"]')).toBeInViewport();
   await page.getByLabel("Setup & delivery instructions", { exact: true }).focus();
   await expect(page.getByLabel("Setup & delivery instructions", { exact: true })).toHaveValue(/Delivery step 45:/);
-  await page.getByRole("button", { name: "Branded preview", exact: true }).click();
+  await openDesignerSessionTools(page); await page.getByRole("button", { name: "Branded preview", exact: true }).click();
   const bytes = await page.pdf({ path: info.outputPath("long-session-plan.pdf"), preferCSSPageSize: true, printBackground: true });
   expect((await PDFDocument.load(bytes)).getPageCount()).toBeGreaterThan(3);
   await expect(page.getByLabel("Branded session plan", { exact: true })).toContainText("Delivery step 45:");
+  await openDesignerDisclosure(page, "Session files");
   const event = page.waitForEvent("download"); await page.getByRole("button", { name: /Download (text & references )?JSON/, exact: true }).click();
   const result = parseSessionJson(await readFile((await (await event).path())!, "utf8"));
   expect(result.session.activities[23].instructions).toEqual(input.session.activities[23].instructions);
