@@ -2,7 +2,7 @@
 
 import type { TacticalScene } from "@/lib/domain/tactical-scene";
 import { contextArea, deliveryLocation } from "@/lib/tactical/context";
-import { moveObjects } from "@/lib/tactical/authoring";
+import { moveObjects, reviseArrow, type ArrowAnnotation } from "@/lib/tactical/authoring";
 import { SpaceConversion } from "./SpaceConversion";
 import { tacticalPalette } from "@/lib/tactical/palette";
 import { useState } from "react";
@@ -36,14 +36,16 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame, stage
           <label>Position label<input name="label" maxLength={100} defaultValue={entity.positionLabel ?? ""} /></label><label>Marker colour<input name="color" aria-label="Marker colour" type="color" defaultValue={entity.color ?? tacticalPalette[entity.team === "neutral" ? "neutral" : entity.team]} /></label></>}
         <button>Apply object properties</button></form>
     </section>}
-    {annotation && track && <section key={JSON.stringify(annotation)}><p className="calendar-eyebrow">Selected overlay</p><h2>{annotation.kind === "arrow" ? `${annotation.movement} route` : annotation.kind === "area" ? "Training zone" : "Coaching note"}</h2>
+    {annotation?.kind === "arrow" && track && stage && <ArrowProperties key={JSON.stringify([stage.id, track.id])}
+      arrow={annotation} apply={(change) => edit(reviseArrow(scene, stage.id, track.id, change))} />}
+    {annotation && annotation.kind !== "arrow" && track && <section key={JSON.stringify(annotation)}><p className="calendar-eyebrow">Selected overlay</p><h2>{annotation.kind === "area" ? "Training zone" : "Coaching note"}</h2>
       <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); mutate((draft) => {
         const item = draft.stages.find((s) => s.id === stage?.id)?.tracks.find((t) => t.id === track.id); if (item?.kind !== "annotation") return; const a = item.annotation;
-        if (a.kind === "arrow") { a.from = { x: numeric(data, "x"), y: numeric(data, "y") }; a.to = { x: numeric(data, "endX"), y: numeric(data, "endY") }; a.movement = data.get("movement") as typeof a.movement; }
-        else if (a.kind === "area") { a.area = { origin: { x: numeric(data, "x"), y: numeric(data, "y") }, length: numeric(data, "length"), width: numeric(data, "width") }; a.label = String(data.get("text")); }
-        else { a.position = { x: numeric(data, "x"), y: numeric(data, "y") }; a.text = String(data.get("text")); }
-      }); }}><div className="editor-row"><label>Start X (m)<input name="x" type="number" step="any" defaultValue={annotation.kind === "arrow" ? annotation.from.x : annotation.kind === "area" ? annotation.area.origin.x : annotation.position.x} required /></label><label>Start Y (m)<input name="y" type="number" step="any" defaultValue={annotation.kind === "arrow" ? annotation.from.y : annotation.kind === "area" ? annotation.area.origin.y : annotation.position.y} required /></label></div>
-        {annotation.kind === "arrow" ? <><div className="editor-row"><label>End X (m)<input name="endX" type="number" step="any" defaultValue={annotation.to.x} required /></label><label>End Y (m)<input name="endY" type="number" step="any" defaultValue={annotation.to.y} required /></label></div><label>Movement<select name="movement" defaultValue={annotation.movement}>{["pass", "run", "press", "rotation"].map((m) => <option key={m}>{m}</option>)}</select></label><p className="calendar-muted">{Math.hypot(annotation.to.x - annotation.from.x, annotation.to.y - annotation.from.y).toFixed(2)} m route · selected-stage timing retained</p></> : <><label>Label<input name="text" maxLength={200} defaultValue={annotation.kind === "note" ? annotation.text : annotation.label} required /></label>{annotation.kind === "area" && <div className="editor-row"><label>Length (m)<input name="length" type="number" min=".01" step="any" defaultValue={annotation.area.length} required /></label><label>Width (m)<input name="width" type="number" min=".01" step="any" defaultValue={annotation.area.width} required /></label></div>}</>}
+        if (a.kind === "area") { a.area = { origin: { x: numeric(data, "x"), y: numeric(data, "y") }, length: numeric(data, "length"), width: numeric(data, "width") }; a.label = String(data.get("text")); }
+        else if (a.kind === "note") { a.position = { x: numeric(data, "x"), y: numeric(data, "y") }; a.text = String(data.get("text")); }
+      }); }}><div className="editor-row"><label>Start X (m)<input name="x" type="number" step="any" defaultValue={annotation.kind === "area" ? annotation.area.origin.x : annotation.position.x} required /></label><label>Start Y (m)<input name="y" type="number" step="any" defaultValue={annotation.kind === "area" ? annotation.area.origin.y : annotation.position.y} required /></label></div>
+        <label>Label<input name="text" maxLength={200} defaultValue={annotation.kind === "note" ? annotation.text : annotation.label} required /></label>
+        {annotation.kind === "area" && <div className="editor-row"><label>Length (m)<input name="length" type="number" min=".01" step="any" defaultValue={annotation.area.length} required /></label><label>Width (m)<input name="width" type="number" min=".01" step="any" defaultValue={annotation.area.width} required /></label></div>}
         <button>Apply overlay properties</button></form>
     </section>}
     <FieldPanel className={collapseField ? "recovery-board-option" : undefined}>{collapseField ? <summary>Field setup</summary> : <p className="calendar-eyebrow">Field context</p>}<div key={dataKey}><h2>{context.kind === "neutral" ? "Independent training area" : context.region.replaceAll("-", " ")}</h2>
@@ -63,4 +65,40 @@ export function EditorProperties({ scene, selected, mutate, edit, onFrame, stage
       <SpaceConversion key={dataKey} scene={scene} edit={edit} onFrame={onFrame} />
     </div></FieldPanel>
   </>;
+}
+
+function ArrowProperties({ arrow, apply }: { arrow: ArrowAnnotation; apply: (change: Omit<ArrowAnnotation, "kind">) => void }) {
+  const saved = { startX: String(arrow.from.x), startY: String(arrow.from.y), endX: String(arrow.to.x), endY: String(arrow.to.y), movement: arrow.movement };
+  type Values = typeof saved;
+  const [draft, setDraft] = useState<{ source: ArrowAnnotation; values: Values; error?: string }>();
+  const current = draft?.source === arrow ? draft : undefined;
+  const values = current?.values ?? saved;
+  const coordinate = (key: Exclude<keyof Values, "movement">, label: string) =>
+    <label>{label}<input type="number" step="any" value={values[key]} data-arrow-coordinate={key} required
+      onChange={event => setDraft({ source: arrow, values: { ...values, [key]: event.target.value } })} /></label>;
+  return <section><p className="calendar-eyebrow">Selected overlay</p><h2>{arrow.movement} route</h2>
+    <form className="editor-arrow-endpoints" onKeyDown={event => {
+      if (event.key !== "Escape" || !current) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setDraft(undefined);
+    }} onSubmit={event => {
+      event.preventDefault();
+      try {
+        apply({ from: { x: Number(values.startX), y: Number(values.startY) },
+          to: { x: Number(values.endX), y: Number(values.endY) }, movement: values.movement });
+        setDraft(undefined);
+      } catch (error) {
+        setDraft({ source: arrow, values, error: error instanceof Error ? error.message : "Arrow coordinates were rejected." });
+      }
+    }}>
+      <fieldset><legend>Start endpoint</legend><div className="editor-row">{coordinate("startX", "Start X (m)")}{coordinate("startY", "Start Y (m)")}</div></fieldset>
+      <fieldset><legend>End endpoint</legend><div className="editor-row">{coordinate("endX", "End X (m)")}{coordinate("endY", "End Y (m)")}</div></fieldset>
+      <label>Movement<select value={values.movement} onChange={event => setDraft({ source: arrow, values: { ...values, movement: event.target.value as ArrowAnnotation["movement"] } })}>
+        {["pass", "run", "press", "rotation"].map(movement => <option key={movement}>{movement}</option>)}</select></label>
+      {current?.error && <p role="alert">{current.error}</p>}
+      <p className="calendar-muted">{Math.hypot(arrow.to.x - arrow.from.x, arrow.to.y - arrow.from.y).toFixed(2)} m route</p>
+      <button>Apply overlay properties</button>
+    </form>
+  </section>;
 }
